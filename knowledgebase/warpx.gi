@@ -51,7 +51,7 @@ warpxConf := rec(
     confHandler := warpxOpts 
 );
 
-packages.fftx.FFTXGlobals.registerConf(warpxConf);
+fftx.FFTXGlobals.registerConf(warpxConf);
 
 
 

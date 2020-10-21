@@ -24,7 +24,7 @@ cudaConf := rec(
     confHandler := cudaOpts 
 );
 
-packages.fftx.FFTXGlobals.registerConf(cudaConf);
+fftx.FFTXGlobals.registerConf(cudaConf);
 
 #--
 Class(FFTXCUDADeviceOpts, FFTXOpts, simt.TitanVDefaults, rec(
@@ -56,6 +56,6 @@ cudaDeviceConf := rec(
     confHandler := cudaDeviceOpts 
 );
 
-packages.fftx.FFTXGlobals.registerConf(cudaDeviceConf);
+fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 

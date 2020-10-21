@@ -71,7 +71,7 @@ confFFTCUDADevice := rec(
     confHandler := fftCUDADeviceOpts 
 );
 
-packages.fftx.FFTXGlobals.registerConf(confFFTCUDADevice);
+fftx.FFTXGlobals.registerConf(confFFTCUDADevice);
 
 
 

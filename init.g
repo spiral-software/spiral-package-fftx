@@ -1,7 +1,6 @@
-# SPIRAL FFTX package loader   ## baseline component
-LoadImport(simt);
+# SPIRAL FFTX package loader
 
-# Load(fftx);
+LoadImport(simt);
 
 Import(realdft);
 Import(filtering);

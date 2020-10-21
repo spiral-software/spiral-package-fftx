@@ -84,7 +84,7 @@ confWarpXCUDADevice := rec(
     confHandler := warpXCUDADeviceOpts 
 );
 
-packages.fftx.FFTXGlobals.registerConf(confWarpXCUDADevice);
+fftx.FFTXGlobals.registerConf(confWarpXCUDADevice);
 
 
 
