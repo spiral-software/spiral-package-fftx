@@ -203,10 +203,10 @@ fixUpSigmaSPL := function(s, opts)
     s := fixGather(s, opts);
 
     s := SubstTopDown(s, [@(1,RCDiag, e->e.dims()=[2,2]), 
-           @(2, FDataOfs, e->e.var.value = V(Flat(List([1..e.var.value.t.size / 2], i->[V(1.0), V(0.0)])))), @(3, I)], e->I(2));
+           @(2, FDataOfs, e->IsBound(e.var.value) and e.var.value = V(Flat(List([1..e.var.value.t.size / 2], i->[V(1.0), V(0.0)])))), @(3, I)], e->I(2));
            
     s := SubstTopDown(s, [@(1,RCDiag, e->e.dims()=[4,4]), @(2, FDataOfs,
-            e->ForAll([1..e.var.value.t.size/4], i->e.var.value.v[4*i-3] = V(1.0)) and ForAll([1..e.var.value.t.size/4],
+            e->IsBound(e.var.value) and ForAll([1..e.var.value.t.size/4], i->e.var.value.v[4*i-3] = V(1.0)) and ForAll([1..e.var.value.t.size/4],
             i->e.var.value.v[4*i- 2] = V(0.0))), @(3, I)],
         e->let(vals := V(Flat(List([1..@(2).val.var.value.t.size/4], i->[@(2).val.var.value.v[4*i-1], @(2).val.var.value.v[4*i]]))),
             dt := Dat(vals.t).setValue(vals),

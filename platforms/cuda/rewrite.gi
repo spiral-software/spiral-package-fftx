@@ -7,7 +7,16 @@ RewriteRules(RulesSIMTFission, rec(
                 c1 := @(2).val.child(1) * gath, 
                 cn := scat * Last(@(2).val.children()),
                 cms := List(DropLast(Drop(@(2).val.children(), 1), 1), c->scat * c *gath),
-                Compose(List([c1]::cms::[cn], c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, c)))))
+                Compose(List([c1]::cms::[cn], c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, c))))),
+));
+
+RewriteRules(RulesSums, rec(
+    OO_Gath := Rule([@(1, Compose), OO, Gath], 
+        e -> ApplyFunc(OO, @(1).val.dims())),
+    Gath_OO := Rule([@(1, Compose), Scat, OO], 
+        e -> ApplyFunc(OO, @(1).val.dims())),
+    Scat_OO_Gath := Rule([@(1, Compose), Scat, OO, Gath], 
+        e -> ApplyFunc(OO, @(1).val.dims())),
 ));
 
 SIMT_NextLoop := (s, simtidx) -> 
@@ -33,13 +42,27 @@ FixUpCUDASigmaSPL := function(s, opts)
     s := SIMT_NextLoop(s, ASIMTBlockDimY);
     s := SIMT_NextLoop(s, ASIMTBlockDimX);
     
+    s:= SubstTopDown(s, @(1, SIMTSUM),
+        e->let(
+            its := @(1).val.simt_dim.params[1],
+            ii := Ind(its),
+            ch := @(1).val.children(),
+            nch := Length(ch),
+            SIMTISum(@(1).val.simt_dim, ii, nch, SUM(List([0..nch-1], 
+               i->COND(eq(ii, V(i)), ch[i+1], ApplyFunc(OO, ch[i+1].dims()))))))
+    );
+
+    
     if Length(Collect(s,  @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX))) > 0 then
-        s := SubstTopDown(s, [@@(1, SIMTISum, (e,cx)->ObjId(e.simt_dim) = ASIMTBlockDimY), @(2, BB)],
+        s := SubstTopDown(s, [@@(1, SIMTISum, (e,cx)->ObjId(e.simt_dim) = ASIMTBlockDimY), @(2, [BB, SUM])],
             (e,cx)->let(xdimcds := Collect(Filtered(cx.SIMTISum, s->ObjId(s.simt_dim) = ASIMTKernelFlag), @(0, SIMTISum, (e)->ObjId(e.simt_dim) = ASIMTBlockDimX)),
                 xdim := When(xdimcds <> [], xdimcds[1].domain, @@(1).val.domain),
                 SIMTISum(@@(1).val.simt_dim, @@(1).val.var, @@(1).val.domain, 
                     SIMTISum(ASIMTBlockDimX(xdim,[0,0]), Ind(1), 1, @@(1).val.child(1))))
         );
+        
+        s := ApplyStrategy(s, [RulesSIMTFission, RulesSums], BUA, opts);
+#        s := RulesSums(RulesSIMTFission(s));
         
         s := SubstTopDown(s, @@(1, SIMTSUM, (e,cx)->ObjId(e.simt_dim) = ASIMTBlockDimY and ForAll(e.children(), c->not ObjId(c) in [SIMTISum, SIMTSUM])),
             (e,cx)->let(xdimcds := Collect(Filtered(cx.SIMTISum, s->ObjId(s.simt_dim) = ASIMTBlockDimZ), @(0, SIMTISum, (e)->ObjId(e.simt_dim) = ASIMTBlockDimX)),
