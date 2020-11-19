@@ -34,6 +34,17 @@ SIMT_NextLoop := (s, simtidx) ->
     );
 
 
+_fBaseVar := function(s, i, v)
+    local cands;
+    
+    cands := Collect(s, @(0, fBase, e->e.params[1]=i.range and IsInt(e.params[2]) and e.params[2] = v));
+    if cands = [] then return s; fi;
+    
+    s := SubstTopDown(s, @(0, fBase, e->e.params[1]=i.range and IsInt(e.params[2]) and e.params[2] = v), 
+        e->fBase(i));
+    return s;
+end;
+
 FixUpCUDASigmaSPL := function(s, opts)
     local srt, kernels, i, _s, newv;
     
@@ -49,7 +60,7 @@ FixUpCUDASigmaSPL := function(s, opts)
             ch := @(1).val.children(),
             nch := Length(ch),
             SIMTISum(@(1).val.simt_dim, ii, nch, SUM(List([0..nch-1], 
-               i->COND(eq(ii, V(i)), ch[i+1], ApplyFunc(OO, ch[i+1].dims()))))))
+               i->COND(eq(ii, V(i)), _fBaseVar(ch[i+1], ii, i), ApplyFunc(OO, ch[i+1].dims()))))))
     );
 
     
@@ -104,7 +115,7 @@ FixUpCUDASigmaSPL := function(s, opts)
         e->let(ch := @(2).val.children(), nch := Length(ch),
             ii := Ind(nch),
             SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain,
-                SIMTISum(ASIMTBlockDimY(nch), ii, nch, SUM(List([0..nch-1], i->COND(eq(ii, V(i)), BB(ch[i+1]), ApplyFunc(OO, ch[i+1].dims())))))))
+                SIMTISum(ASIMTBlockDimY(nch), ii, nch, SUM(List([0..nch-1], i->COND(eq(ii, V(i)), BB(_fBaseVar(ch[i+1], ii, i)), ApplyFunc(OO, ch[i+1].dims())))))))
     );
 
     s := SubstTopDown(s, @(1, Grp), e->e.child(1));
