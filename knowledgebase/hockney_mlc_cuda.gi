@@ -276,6 +276,7 @@ hockneyMlcCUDADeviceOpts := function(arg)
     opts.breakdownRules.PrunedIPRDFT := List([ CopyFields(PrunedIPRDFT_base, rec(maxSize := 5)), PrunedIPRDFT_CT_rec_block ], _noT); 
     opts.breakdownRules.PrunedDFT := List([ PrunedDFT_base, PrunedDFT_CT_rec_block ], _noT); 
     opts.breakdownRules.IOPrunedMDRConv := List([ IOPrunedMDRConv_3D_2trip_zyx_freqdata ], _noT); 
+    opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
     
     wrap_rule_apply(opts.breakdownRules.PRDFT, wrap_apply);
     wrap_rule_apply(opts.breakdownRules.IPRDFT, wrap_apply);

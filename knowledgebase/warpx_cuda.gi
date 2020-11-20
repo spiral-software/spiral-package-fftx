@@ -25,7 +25,6 @@ warpXCUDADeviceOpts := function(arg) # specific to WarpX size 80 and 100... # th
         PRDFT_PD], _noT);
     opts.breakdownRules.IPRDFT := List([ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT,
             rec(allChildren := P ->Filtered(IPRDFT1_CT.allChildren(P), i->When(P[1] in [20, 80, 100], Cols(i[2]) = 4, true)))), 
-    
         IPRDFT_PD], _noT);
     opts.breakdownRules.IPRDFT2 := List([ IPRDFT2_Base1, IPRDFT2_Base2, IPRDFT2_CT ], _noT);
     opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT ], _noT);

@@ -21,7 +21,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
             
 # This is one mega promotion rule for Hockney that needs to be broken apart after MDRConv and/or PrunedMDRDFT is introduced
     Hockney_hack := ARule(Compose, [[@(6, Gath), @(8,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))],
-                                     @(1,IMDPRDFT), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], @(3,MDPRDFT),
+                                     @(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], 
+                                     @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1),
                                      [@(7, Scat), @(9,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))]],
         e-> let(ii := Ind(Rows(@(2).val)),
             sym := @(2).val.element.var,
@@ -45,12 +46,14 @@ RewriteRules(RulesFFTXPromoteNT, rec(
 
 RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
 # FIXME: the promotion rule does not (yet) have the guard to ensure the value of k is correct
-    IPRDFT_RCDiag_PRDFT__Circulant_ARule := ARule(Compose, [@(1,IPRDFT), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], @(3,PRDFT)],
+    IPRDFT_RCDiag_PRDFT__Circulant_ARule := ARule(Compose, [@(1,IPRDFT, e -> e.params[2] = 1), [@(2,RCDiag), 
+            @(4, FDataOfs, e->e.ofs = 0), @(5,I)], @(3,PRDFT, e -> e.params[2] = e.params[1]-1)],
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [Circulant(n, FDataNT(fdata.var, @(1).val), -n) ])),
             
 # FIXME: the promotion rule does not (yet) have the guard to ensure the value of k is correct
-    IMDPRDFT_RCDiag_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], @(3,MDPRDFT)],
+    IMDPRDFT_RCDiag_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], 
+            @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [MDRConv(n, fdata.var, true) ])),
             

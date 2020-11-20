@@ -45,9 +45,10 @@ Class(FFTXGlobals, rec(
                 opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_3D_2trip_zyx_freqdata];
                 opts.breakdownRules.MDDFT := [ MDDFT_Base, MDDFT_RowCol ];
                 opts.breakdownRules.GT := [ GT_NthLoop ];
-                opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, DFT_GoodThomas, DFT_PD ];
+                opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
                 opts.topTransforms := [DFT, MDDFT, PrunedDFT, PrunedIDFT, IOPrunedConv, PrunedPRDFT, PrunedIPRDFT, TTensorI, IOPrunedMDRConv, 
                     PRDFT, IPRDFT, PRDFT1, IPRDFT1, PRDFT2, IPRDFT2, PRDFT3, IPRDFT3, TTensorI ];
+                opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
                 return opts;
             end,
     ),
@@ -68,8 +69,9 @@ Class(FFTXGlobals, rec(
             opts.breakdownRules.IPRDFT := List([ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT, IPRDFT_PD, IPRDFT_Rader ], _noT);
             opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT ], _noT);
             opts.breakdownRules.MDDFT := [ MDDFT_Base, MDDFT_RowCol ];
-            opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, DFT_GoodThomas, DFT_PD ];
+            opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
             opts.breakdownRules.GT := [ GT_NthLoop ];
+            opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
             return opts;  
         end
 ));

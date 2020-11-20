@@ -34,7 +34,7 @@ Class(FFTXGenMixin, rec(
                         fi;
                         cc := SubstTopDown(cc, @(1).cond(e->IsList(e) and e = plist), e->plist1);
                        
-                        cc := SubstTopDown(cc, @(1, Value, e->e.t = TReal and let(delta := AbsFloat(e.v - IntDouble(e.v)), delta >0 and delta  < 0.00000000001 )),
+                        cc := SubstTopDown(cc, @(1, Value, e->e.t = TReal and IsDouble(e.v) and let(delta := AbsFloat(e.v - IntDouble(e.v)), delta >0 and delta  < 0.00000000001 )),
                             e->Value(TReal, IntDouble(@(1).val.v))
                         );
 

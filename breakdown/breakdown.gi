@@ -4,10 +4,10 @@ NewRulesFor(Circulant, rec(
     	switch           := true,
     
     	applicable       := nt -> ObjId(nt.params[2]) = FDataNT and ObjId(nt.params[2].nt) = IPRDFT and 
-                                  nt.params[2].nt.params = [nt.params[1], nt.params[1]-1] and nt.params[1] = -nt.params[3],
+                                  nt.params[2].nt.params = [nt.params[1], 1] and nt.params[1] = -nt.params[3],
     
     	children      := nt -> let(n := nt.params[1],
-    	    [[ spiral.transforms.realdft.IPRDFT(n, -1), spiral.transforms.realdft.PRDFT(n) ]]),
+    	    [[ spiral.transforms.realdft.IPRDFT(n, 1), spiral.transforms.realdft.PRDFT(n, -1) ]]),
     
         apply := (nt, C, cnt) -> C[1] * RCDiag(FDataOfs(nt.params[2].var, Cols(nt.params[2].nt), 0)) * C[2]
     )
