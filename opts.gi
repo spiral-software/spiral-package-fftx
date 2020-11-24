@@ -59,7 +59,7 @@ Class(FFTXGlobals, rec(
             local opts, rfields;
             if Length(arg) >= 2 then
                 rfields := Filtered(RecFields(arg[2]), i -> not IsSystemRecField(i));
-                if Length(rfields) = 1 and IsBound(arg[1].supportedConfs.(rfields[1])) then
+                if Length(rfields) >= 1 and IsBound(arg[1].supportedConfs.(rfields[1])) then
                     return ApplyFunc(arg[1].supportedConfs.(rfields[1]), Drop(arg, 1));
                 fi;
             fi;    
@@ -67,6 +67,7 @@ Class(FFTXGlobals, rec(
             opts.breakdownRules.Circulant := [Circulant_PRDFT_FDataNT];
             opts.breakdownRules.PRDFT := List([PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT, PRDFT1_PF, PRDFT_PD, PRDFT_Rader], _noT);
             opts.breakdownRules.IPRDFT := List([ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT, IPRDFT_PD, IPRDFT_Rader ], _noT);
+            opts.breakdownRules.IPRDFT2 := List([ IPRDFT2_Base1, IPRDFT2_Base2, IPRDFT2_CT], _noT);
             opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT ], _noT);
             opts.breakdownRules.MDDFT := [ MDDFT_Base, MDDFT_RowCol ];
             opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];

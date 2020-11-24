@@ -85,24 +85,26 @@ FixUpCUDASigmaSPL := function(s, opts)
         s := SubstTopDown(s, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and Set(Flat(e.simt_dim.simt_all_ranges())) = [0]), @(2, ISum)],
             e -> SIMTISum(ASIMTBlockDimX(@(2).val.domain), @(2).val.var, @(2).val.domain, @(2).val.child(1))
         );
-        
-        kernels := s.children();
 
-        for i in [1..Length(kernels)] do
-            _s := kernels[i];
-            if Length(Collect(_s,  @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX))) > 0 then
-                newv := Maximum(List(List(Collect(_s, @(1, [SIMTSUM, SIMTISum], e->ObjId(e.simt_dim) = ASIMTBlockDimX)), e-> e.simt_dim), i->i.params[1]));
-                _s := SubstTopDown(_s, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX),
-                    e->SIMTISum(ApplyFunc(ASIMTBlockDimX, [newv]::Drop(@(1).val.simt_dim.params, 1)), @(1).val.var, @(1).val.domain, @(1).val.child(1)) 
-                );
-            
-                _s := SubstTopDown(_s, @(1, SIMTSUM, e->ObjId(e.simt_dim) = ASIMTBlockDimX),
-                    e->SIMTSUM(ApplyFunc(ASIMTBlockDimX, [newv]::Drop(@(1).val.simt_dim.params, 1)), @(1).val.children()) 
-                );
-            fi;    
-            kernels[i] := _s;
-        od;
-        s := Compose(kernels);
+        if ObjId(s) = Compose then         
+            kernels := s.children();
+    
+            for i in [1..Length(kernels)] do
+                _s := kernels[i];
+                if Length(Collect(_s,  @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX))) > 0 then
+                    newv := Maximum(List(List(Collect(_s, @(1, [SIMTSUM, SIMTISum], e->ObjId(e.simt_dim) = ASIMTBlockDimX)), e-> e.simt_dim), i->i.params[1]));
+                    _s := SubstTopDown(_s, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX),
+                        e->SIMTISum(ApplyFunc(ASIMTBlockDimX, [newv]::Drop(@(1).val.simt_dim.params, 1)), @(1).val.var, @(1).val.domain, @(1).val.child(1)) 
+                    );
+                
+                    _s := SubstTopDown(_s, @(1, SIMTSUM, e->ObjId(e.simt_dim) = ASIMTBlockDimX),
+                        e->SIMTSUM(ApplyFunc(ASIMTBlockDimX, [newv]::Drop(@(1).val.simt_dim.params, 1)), @(1).val.children()) 
+                    );
+                fi;    
+                kernels[i] := _s;
+            od;
+            s := Compose(kernels);
+        fi;
     
         s := SubstTopDown(s, [@(1, SIMTSUM, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(2,BB), @(3, ISum)], 
             e->SIMTSUM(ApplyFunc(ObjId(@(1).val.simt_dim),  [@(1).val.simt_dim.params[1], [0, @(3).val.domain-1], [@(3).val.domain,@(3).val.domain]]), 

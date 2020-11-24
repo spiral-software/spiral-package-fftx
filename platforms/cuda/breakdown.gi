@@ -98,8 +98,8 @@ NewRulesFor(IMDPRDFT, rec(
                                tags := nt.getTags(),
                                taglen := Length(tags),
                                rtags1 := tags{[2]},
-                               [[ MDDFT(DropLast(a_lengths, 1), -a_exp).withTags(rtags1),
-                                  IPRDFT1(Last(a_lengths), -a_exp) ]]),
+                               [[ MDDFT(DropLast(a_lengths, 1), a_exp).withTags(rtags1),
+                                  IPRDFT1(Last(a_lengths), a_exp) ]]),
 
         # nonterminal, children, children non-terminals
         # NOT YET CORRECT
