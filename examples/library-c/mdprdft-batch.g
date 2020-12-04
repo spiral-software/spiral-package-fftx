@@ -6,10 +6,15 @@ ImportAll(fftx);
 conf := FFTXGlobals.defaultConf();
 opts := FFTXGlobals.getOpts(conf);
 
-t := let(batch := 16,
+nbatch := 16;
+szns := [5, 4, 8];
+
+PrintLine("mdprdft-batch: batch = ", nbatch, " ns = ", szns, ";\t\t##PICKME##");
+
+t := let(batch := nbatch,
     apat := When(true, APar, AVec),
     dft := When(true, MDPRDFT, IMDPRDFT),
-    ns := [5, 4, 8],
+    ns := szns,
     k := -1,
     name := dft.name::StringInt(Length(ns))::"d_batch",  
     TFCall(TTensorI(dft(ns, k), batch, apat, apat), 

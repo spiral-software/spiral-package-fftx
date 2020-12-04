@@ -6,7 +6,11 @@ ImportAll(fftx);
 conf := FFTXGlobals.defaultConf();
 opts := FFTXGlobals.getOpts(conf);
 
-t := let(ns := [5, 4, 8],
+szns := [5, 4, 8];
+
+PrintLine("mdprdft: ns = ", szns, ";\t\t##PICKME##");
+
+t := let(ns := szns,
     k := -1,
     dft := When(true, MDPRDFT, IMDPRDFT),
     name := dft.name::StringInt(Length(ns))::"d",  

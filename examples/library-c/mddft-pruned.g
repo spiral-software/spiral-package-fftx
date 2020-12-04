@@ -6,8 +6,13 @@ ImportAll(fftx);
 conf := FFTXGlobals.defaultConf();
 opts := FFTXGlobals.getOpts(conf);
 
-t := let(ns := [6, 4, 8],
-    nzs := 2,
+szns := [6, 4, 8];
+sznzs := 2;
+
+PrintLine("mddft-pruned: ns = ", szns, " nzs = ", sznzs, ";\t\t##PICKME##");
+
+t := let(ns := szns,
+    nzs := sznzs,
     fwd := true,
     ppat := List(ns, n->[1..Int(n/nzs)]),
     k := -1,

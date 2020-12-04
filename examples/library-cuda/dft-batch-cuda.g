@@ -8,6 +8,9 @@ opts := FFTXGlobals.getOpts(conf);
 
 n := 2;
 N := 2;
+
+PrintLine("dft-batch-cuda: X/Y/Z dim = ", n, " N = ", N, ";\t\t##PICKME##");
+
 xdim := n;
 ydim := n;
 zdim := n;

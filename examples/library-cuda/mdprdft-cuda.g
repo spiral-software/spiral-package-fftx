@@ -6,9 +6,14 @@ ImportAll(fftx);
 conf := FFTXGlobals.confWarpXCUDADevice();
 opts := FFTXGlobals.getOpts(conf);
 
-t := let(batch := 4,
+nbatch := 4;
+szcube := 80;
+
+PrintLine("mdprdft-cuda: batch = ", nbatch, " cube = ", szcube, "^3;\t\t##PICKME##");
+
+t := let(batch := nbatch,
     apat := AVec,
-    ns := [80, 80, 80],
+    ns := [szcube, szcube, szcube],
     name := "mdprdft_batch"::StringInt(Length(ns))::"d", 
     TFCall(TTensorI(MDPRDFT(ns, 1), batch, apat, apat), 
         rec(fname := name, params := [])).withTags(opts.tags)

@@ -17,6 +17,8 @@ ix := Ind(xdim);
 iy := Ind(ydim);
 iz := Ind(zdim);
 
+PrintLine("prdft-batch-cuda: X/Y/Z dim = ", n, " N = ", N, ";\t\t##PICKME##");
+
 t := let(
     name := "grid_prdft",
     TFCall(TMap(PRDFT(N, -1), [iz, iy, ix], APar, APar), 

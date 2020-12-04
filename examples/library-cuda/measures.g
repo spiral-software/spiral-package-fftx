@@ -7,6 +7,11 @@ if meas = false or (meas < 0) or (meas >= 1e+100) then
     TestFailExit();
 else
     PrintLine("Time measured = ", meas);
+    ##  Echo the file "time.txt" from the temporary output directory to stdout
+    tmpdir := _MakeOutDirString(opts);
+    timefile := tmpdir::"/time.txt";
+    cmdstr := "cat <"::timefile;
+    Exec(cmdstr);
 fi;
 
 if meas <> false then

@@ -9,6 +9,8 @@ opts := FFTXGlobals.getOpts(conf);
 cubeside := 80;
 nbatch := 4;
 
+PrintLine("mdrconv-batch: batch = ", nbatch, " cube = ", cubeside, "^3;\t\t##PICKME##");
+
 t := let(batch := nbatch,
     apat := When(true, APar, AVec),
     ns := [cubeside, cubeside, cubeside],
@@ -24,3 +26,5 @@ c := opts.fftxGen(t);
 opts.prettyPrint(c);
 fname := "bmdrconv"::StringInt(cubeside)::".c";
 ## PrintTo(fname, opts.prettyPrint(c));
+
+PrintLine("mdrconv-batch: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");

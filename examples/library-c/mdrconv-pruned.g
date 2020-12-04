@@ -16,6 +16,8 @@ ns := n/2;
 nd := n/2;
 name := "prconv"::StringInt(d);
 
+PrintLine("mdrconv-pruned: n = ", n, " nd = ", nd, " ns = ", ns, ";\t\t##PICKME##");
+
 t := let(name := name, 
         symvar := var("symvar", TPtr(TReal)),
     TFCall(
@@ -38,3 +40,4 @@ c := opts.fftxGen(t);
 opts.prettyPrint(c);
 PrintTo("name"::".c", opts.prettyPrint(c));
 
+PrintLine("mdrconv-pruned: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");

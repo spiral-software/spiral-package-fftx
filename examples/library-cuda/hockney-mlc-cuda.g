@@ -8,6 +8,8 @@ n := 130;
 ns := 33;
 nd := 96;
 
+PrintLine("hockney-mlc-cuda: n = ", n, " nd = ", nd, " ns = ", ns, ";\t\t##PICKME##");
+
 t := let(name := "hockney"::StringInt(n)::"_"::StringInt(nd)::"_"::StringInt(ns), 
         symvar := var("symbl", TPtr(TReal)),
     TFCall(
@@ -24,3 +26,4 @@ t := let(name := "hockney"::StringInt(n)::"_"::StringInt(nd)::"_"::StringInt(ns)
 c := opts.fftxGen(t);
 opts.prettyPrint(c);
 
+PrintLine("hockney-mlc-cuda: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");
