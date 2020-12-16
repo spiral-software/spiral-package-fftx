@@ -18,7 +18,7 @@ t := let(name := "warpx",
 
     symvar := var("sym", TPtr(TPtr(TReal))),
     cvar := var("PhysConst_c ", TReal),
-    ep0var := var("double PhysConst_ep0 ", TReal),
+    ep0var := var("PhysConst_ep0 ", TReal),
     c2 := cvar^2,
     invep0 := 1.0 / ep0var,
     ix := Ind(xdim),
