@@ -8,11 +8,12 @@ opts := FFTXGlobals.getOpts(conf);
 
 d := 3;
 szcube := 80;
+name := "mdprdft"::StringInt(d)::"d";
+
 
 PrintLine("mdprdft-cuda: d = ", d, " cube = ", szcube, "^3;\t\t##PICKME##");
 
 t := let(ns := Replicate(3, szcube),
-    name := "mdprdft"::StringInt(d)::"d", 
 #    TFCall(TTensorI(MDPRDFT(ns, 1), 1, AVec, AVec), 
     TFCall(MDPRDFT(ns, 1), 
         rec(fname := name, params := [])).withTags(opts.tags)
@@ -20,6 +21,6 @@ t := let(ns := Replicate(3, szcube),
 
 c := opts.fftxGen(t);
 opts.prettyPrint(c);
-PrintTo("imdprdft80b.c", opts.prettyPrint(c));
+PrintTo(name::".c", opts.prettyPrint(c));
 
 

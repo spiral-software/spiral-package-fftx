@@ -3,22 +3,23 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confWarpXCUDADevice();
+conf := FFTXGlobals.confFFTCUDADevice();
 opts := FFTXGlobals.getOpts(conf);
 
+d := 3;
 szcube := 80;
+name := "mddft"::StringInt(d)::"d";
 
-PrintLine("mddft-cuda: batch = ", nbatch, " cube = ", szcube, "^3;\t\t##PICKME##");
+PrintLine("mddft-cuda: d = ", d, " cube = ", szcube, "^3;\t\t##PICKME##");
 
-t := let(batch := nbatch,
-    apat := AVec,
-    ns := [szcube, szcube, szcube],
-    name := "mdprdft_batch"::StringInt(Length(ns))::"d", 
-    TFCall(TTensorI(MDPRDFT(ns, 1), batch, apat, apat), 
+t := let(ns := Replicate(3, szcube),
+#    TFCall(TTensorI(MDDFT(ns, 1), 1, AVec, AVec), 
+    TFCall(MDDFT(ns, 1), 
         rec(fname := name, params := [])).withTags(opts.tags)
 );
 
 c := opts.fftxGen(t);
 opts.prettyPrint(c);
-##  PrintTo("imdprdft80b.c", opts.prettyPrint(c));
+PrintTo(name::".c", opts.prettyPrint(c));
+
 
