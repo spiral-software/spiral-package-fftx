@@ -7,7 +7,7 @@ conf := FFTXGlobals.defaultConf();
 opts := FFTXGlobals.getOpts(conf);
 
 nbatch := 4;
-szns := [5, 4, 8];
+szns := [4, 5, 8];
 
 PrintLine("mddft-batch: batch = ", nbatch, " ns = ", szns, ";\t\t##PICKME##");
 
