@@ -13,6 +13,9 @@ Class(RulesFFTXPromoteNT_Cleanup, RuleSet);
 _toSymList := l -> [Minimum(l)..Maximum(l)];
 
 RewriteRules(RulesFFTXPromoteNT, rec(
+   batch1_MDXFFT := Rule(@@(1, [MDDFT, MDPRDFT, IMDPRDFT], (e,cx) -> not IsBound(cx.TTensorI) or cx.TTensorI = []),
+       e-> TTensorI(@@(1).val, 1, AVec, AVec)),
+
     Scat_Circulant_Gath__IOPrunedRConv := ARule(Compose, [[@(1, Gath), fAdd],  @(2,Circulant), [@(3, Scat), fAdd]], 
         e-> [IOPrunedRConv(@(2).val.params[1], 
             FDataOfs(@(2).val.params[2].var, 2*(@(2).val.params[1]/2+1), 0), 
