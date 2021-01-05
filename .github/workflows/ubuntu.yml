@@ -7,11 +7,13 @@ jobs:
     name: Check sprial-package-fftx on Linux
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout spiral-software
+      uses: actions/checkout@v2
       with:
         repository: spiral-software/spiral-software
-      	ref: develop
-	path: spiral
+        ref: develop
+        path: spiral
+    - name: Checkout repo
       uses: actions/checkout@v2
       with:
         path: spiral/namespaces/packages
@@ -27,7 +29,7 @@ jobs:
     - name: build SPIRAL
       run: |
         cd spiral
-	mkdir build && cd build
+        mkdir build && cd build
         cmake -D_codegen=CPU .. 
         make -j 2 install
         make test
