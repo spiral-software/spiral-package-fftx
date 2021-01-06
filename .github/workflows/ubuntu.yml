@@ -36,7 +36,6 @@ jobs:
         SPIRAL_HOME: ${{ github.workspace }}/spiral
       run: |
         cd spiral
-        echo $SPIRAL_HOME
         mkdir build && cd build
         cmake -D_codegen=CPU .. 
         make -j 2 install
