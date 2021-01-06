@@ -34,7 +34,7 @@ jobs:
     - name: build SPIRAL
       run: |
         cd spiral
-	echo "SPIRAL_HOME=$GITHUB_WORKSPACE/spiral" >> $GITHUB_ENV
+        echo "SPIRAL_HOME=$GITHUB_WORKSPACE/spiral" >> $GITHUB_ENV
         mkdir build && cd build
         cmake -D_codegen=CPU .. 
         make -j 2 install
