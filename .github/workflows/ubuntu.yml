@@ -32,9 +32,10 @@ jobs:
         sudo chmod a+x /usr/local/bin/cmake-easyinstall
         export CEI_SUDO="sudo"
     - name: build SPIRAL
+      env:
+        SPIRAL_HOME: $GITHUB_WORKSPACE/spiral
       run: |
         cd spiral
-        echo "SPIRAL_HOME=$GITHUB_WORKSPACE/spiral" >> $GITHUB_ENV
         mkdir build && cd build
         cmake -D_codegen=CPU .. 
         make -j 2 install
