@@ -12,16 +12,16 @@ jobs:
       with:
         repository: spiral-software/spiral-software
         ref: develop
-        path: $GITHUB_WORKSPACE/spiral
+        path: spiral
     - name: Checkout repo spiral-package-fftx
       uses: actions/checkout@v2
       with:
-        path: $GITHUB_WORKSPACE/spiral/namespaces/packages
+        path: spiral/namespaces/packages
     - name: Checkout repo spiral-package-simt
       uses: actions/checkout@v2
       with:
         repository: spiral-software/spiral-package-simt
-        path: $GITHUB_WORKSPACE/spiral/namespaces/packages
+        path: spiral/namespaces/packages
     - name: install dependencies
       run: |
         export DEBIAN_FRONTEND=noninteractive
