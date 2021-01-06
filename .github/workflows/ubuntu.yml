@@ -33,7 +33,7 @@ jobs:
         export CEI_SUDO="sudo"
     - name: build SPIRAL
       env:
-        SPIRAL_HOME: $GITHUB_WORKSPACE/spiral
+        SPIRAL_HOME: ${{ github.workspace }}/spiral
       run: |
         cd spiral
         echo $SPIRAL_HOME
