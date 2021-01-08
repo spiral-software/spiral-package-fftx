@@ -128,7 +128,7 @@ Class(TNoDiagPullin, Tagged_tSPL_Container, rec(
     HashId := self >> let(
     	p := self.params[1],
     	h := When(IsBound(p.HashId), p.HashId(), p),
-            [ TNoDiagPullin, h ] :: When(IsBound(self.tags), self.tags, [])
+            [ self.__name__, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
 
@@ -137,7 +137,7 @@ Class(TNoDiagPullinRight, Tagged_tSPL_Container, rec(
     HashId := self >> let(
     	p := self.params[1],
     	h := When(IsBound(p.HashId), p.HashId(), p),
-            [ TNoDiagPullinRight, h ] :: When(IsBound(self.tags), self.tags, [])
+            [ self.__name__, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
 
@@ -146,7 +146,7 @@ Class(TNoDiagPullinLeft, Tagged_tSPL_Container, rec(
     HashId := self >> let(
     	p := self.params[1],
     	h := When(IsBound(p.HashId), p.HashId(), p),
-            [ TNoDiagPullinLeft, h ] :: When(IsBound(self.tags), self.tags, [])
+            [ self.__name__, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
 
@@ -155,7 +155,7 @@ Class(TNoPullRight, Tagged_tSPL_Container, rec(
     HashId := self >> let(
     	p := self.params[1],
     	h := When(IsBound(p.HashId), p.HashId(), p),
-            [ TNoPullRight, h ] :: When(IsBound(self.tags), self.tags, [])
+            [ self.__name__, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
 
@@ -164,6 +164,6 @@ Class(TNoPullLeft, Tagged_tSPL_Container, rec(
     HashId := self >> let(
     	p := self.params[1],
     	h := When(IsBound(p.HashId), p.HashId(), p),
-            [ TNoPullLeft, h ] :: When(IsBound(self.tags), self.tags, [])
+            [ self.__name__, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
