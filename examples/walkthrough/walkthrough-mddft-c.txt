@@ -1,0 +1,466 @@
+spiral> 
+spiral> Load(fftx);
+"D:\\franzf\\Spiral\\spiral-software\\\\namespaces\\packages\\fftx\\init.g"
+spiral> ImportAll(fftx);
+spiral> 
+spiral> conf := FFTXGlobals.defaultConf();
+rec()
+spiral> opts := FFTXGlobals.getOpts(conf);
+<FFTX options record>
+spiral> 
+spiral> szns := [5, 4, 8];
+[ 5, 4, 8 ]
+spiral> 
+spiral> PrintLine("mddft: ns = ", szns, ";\t\t##PICKME##");
+mddft: ns = [ 5, 4, 8 ];		##PICKME##
+spiral> 
+spiral> t := let(ns := szns,
+>     k := -1,
+>     name := "dft"::StringInt(Length(ns))::"d",  
+>     TFCall(TRC(MDDFT(ns, k)), rec(fname := name, params := [])).withTags(opts.tags)
+> );
+TFCall(TRC(MDDFT([ 5, 4, 8 ], 159, false)), rec(
+  fname := "dft3d",
+  params := [  ] ))
+spiral> 
+spiral> # c := opts.fftxGen(t);
+spiral> tt := opts.preProcess(t);
+TFCall(TRC(TTensorI(MDDFT([ 5, 4, 8 ], 159, false), 1, AVec, AVec)), rec(
+  fname := "dft3d",
+  params := [  ] ))
+spiral> rt := opts.search(tt);
+TFCall_tag( TFCall(TRC(TTensorI(MDDFT([ 5, 4, 8 ], 159, false), 1, AVec, AVec)), rec(
+  fname := "dft3d",
+  params := [  ] )),
+  TRC_tag( TRC(TTensorI(MDDFT([ 5, 4, 8 ], 159, false), 1, AVec, AVec)),
+    AxI_base( TTensorI(MDDFT([ 5, 4, 8 ], 159, false), 1, AVec, AVec),
+      MDDFT_RowCol( MDDFT([ 5, 4, 8 ], 159, false),
+        MDDFT_RowCol( MDDFT([ 5, 4 ], 19, false),
+          MDDFT_Base( MDDFT([ 5 ], 4, false),
+            DFT_PD( DFT(5, 4) ) ),
+          MDDFT_Base( MDDFT([ 4 ], 3, false),
+            DFT_CT( DFT(4, 3),
+              DFT_Base( DFT(2, 1) ),
+              DFT_Base( DFT(2, 1) ) ) ) ),
+        MDDFT_Base( MDDFT([ 8 ], 7, false),
+          DFT_CT( DFT(8, 7),
+            DFT_CT( DFT(4, 3),
+              DFT_Base( DFT(2, 1) ),
+              DFT_Base( DFT(2, 1) ) ),
+            DFT_Base( DFT(2, 1) ) ) ) ) ) ) )
+spiral> s := opts.sumsRuleTree(rt);
+ISum(i2, 8,
+  ISum(i8, 4,
+    BB(
+      SUM(
+        Scat(fTensor(fBase(5, V(0)), fBase(i8), fBase(i2), fId(2))) * 
+        Gath(fTensor(fBase(5, 0), fId(2))), 
+        ISum(i19, 2,
+          Scat(fTensor(fCompose(RM(5, 4, 1, 2), fTensor(fId(2), fBase(i19))), fBase(i8), fBase(i2), fId(2))) * 
+          Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+          Gath(fTensor(fCompose(H(5, 4, 1, 1), fTensor(fId(2), fBase(i19))), fId(2)))
+        )
+      ) * 
+      Blk([ [ V(1), V(0), V(1), V(0), V(1), V(0), V(0), V(0), V(0), V(0) ], [ V(0), V(1), V(0), V(1), V(0), V(1), V(0), V(0), V(0), V(0) ], [ V(1.0), V(0.0), V(0.3090169943749474), V(0.0), V(-0.80901699437494745), V(0.0), V(0.0), V(0.0), V(0.0), V(0.0) ], [ V(0.0), V(1.0), V(0.0), V(0.3090169943749474), V(0.0), V(-0.80901699437494745), V(0.0), V(0.0), V(0.0), V(0.0) ], [ V(1.0), V(0.0), V(-0.80901699437494745), V(0.0), V(0.3090169943749474), V(0.0), V(0.0), V(0.0), V(0.0), V(0.0) ], [ V(0.0), V(1.0), V(0.0), V(-0.80901699437494745), V(0.0), V(0.3090169943749474), V(0.0), V(0.0), V(0.0), V(0.0) ], [ V(0), V(0), V(0), V(0), V(0), V(0), V(0.0), V(0.95105651629515353), V(0.0), V(-0.58778525229247314) ], [ V(0), V(0), V(0), V(0), V(0), V(0), V(-0.95105651629515353), V(0.0), V(0.58778525229247314), V(0.0) ], [ V(0), V(0), V(0), V(0), V(0), V(0), V(0.0), V(0.58778525229247314), V(0.0), V(0.95105651629515353) ], [ V(0), V(0), V(0), V(0), V(0), V(0), V(-0.58778525229247314), V(0.0), 
+      V(-0.95105651629515353), V(0.0) ] ]) * 
+      SUM(
+        Scat(fTensor(fBase(5, 0), fId(2))) * 
+        Gath(fTensor(fBase(5, V(0)), fBase(i8), fId(2))), 
+        ISum(i21, 2,
+          Scat(fTensor(fCompose(H(5, 4, 1, 1), fTensor(fId(2), fBase(i21))), fId(2))) * 
+          Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+          Gath(fTensor(fCompose(RM(5, 4, 1, 3), fTensor(fId(2), fBase(i21))), fBase(i8), fId(2)))
+        )
+      )
+    )
+  ) * 
+  ISum(i9, 5,
+    BB(
+      ISum(i23, 2,
+        Scat(fTensor(fBase(i9), fId(2), fBase(i23), fId(2))) * 
+        Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+        Gath(fTensor(fId(2), fBase(i23), fId(2)))
+      ) * 
+      ISum(i24, 2,
+        Scat(fTensor(fBase(i24), fId(4))) * 
+        RCDiag(fPrecompute(fCompose(RCData(fCompose(dOmega(4, 3), diagTensor(dLin(V(2), 1, 0, TInt), dLin(2, 1, 0, TInt)))), fTensor(fBase(i24), fId(4)))), I(2)) * 
+        Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+        Gath(fTensor(fBase(i9), fId(2), fBase(i24), fBase(i2), fId(2)))
+      )
+    )
+  )
+) * 
+ISum(i3, 5,
+  ISum(i5, 4,
+    BB(
+      ISum(i12, 2,
+        ISum(i27, 2,
+          Scat(fTensor(fBase(i3), fBase(i5), fId(2), fBase(i27), fBase(i12), fId(2))) * 
+          Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+          Gath(fTensor(fId(2), fBase(i27), fId(2)))
+        ) * 
+        ISum(i28, 2,
+          Scat(fTensor(fBase(i28), fId(4))) * 
+          RCDiag(fPrecompute(fCompose(RCData(fCompose(dOmega(4, 3), diagTensor(dLin(V(2), 1, 0, TInt), dLin(2, 1, 0, TInt)))), fTensor(fBase(i28), fId(4)))), I(2)) * 
+          Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+          Gath(fTensor(fId(2), fBase(i28), fBase(i12), fId(2)))
+        )
+      ) * 
+      ISum(i13, 4,
+        Scat(fTensor(fBase(i13), fId(4))) * 
+        RCDiag(fPrecompute(fCompose(RCData(fCompose(dOmega(8, 7), diagTensor(dLin(V(4), 1, 0, TInt), dLin(2, 1, 0, TInt)))), fTensor(fBase(i13), fId(4)))), I(2)) * 
+        Blk([ [ V(1), V(0), V(1), V(0) ], [ V(0), V(1), V(0), V(1) ], [ V(1), V(0), V(-1), V(0) ], [ V(0), V(1), V(0), V(-1) ] ]) * 
+        Gath(fTensor(fBase(i3), fBase(i5), fId(2), fBase(i13), fId(2)))
+      )
+    )
+  )
+)
+spiral> c := opts.codeSums(s);
+program(
+   chain(
+      func(TVoid, "init", [  ], 
+         chain()
+      ),
+      func(TVoid, "transform", [ Y, X ], 
+         decl([ T1 ],
+            chain(
+               loop(i3, [ 0 .. 4 ],
+                  loop(i5, [ 0 .. 3 ],
+                     decl([ a147, a148, a149, a150, a151, a152, a153, a154, a155, a156, a157, a158, a159, a160, a161, a162, a163, a164, a165, a166, s29, s30, s31, s32, t181, t182, t183, t184, t185, t186, t187, t188, t189, t190, t191, t192, t193, t194, t195, t196, t197, t198, t199, t200, t201, t202, t203, t204, t205, t206, t207, t208 ],
+                        chain(
+                           assign(a147, add(mul(V(64), i3), mul(V(16), i5))),
+                           assign(a148, add(a147, V(1))),
+                           assign(a149, add(a147, V(8))),
+                           assign(a150, add(a147, V(9))),
+                           assign(t181, add(deref(add(X, a147)), deref(add(X, a149)))),
+                           assign(t182, add(deref(add(X, a148)), deref(add(X, a150)))),
+                           assign(t183, sub(deref(add(X, a147)), deref(add(X, a149)))),
+                           assign(t184, sub(deref(add(X, a148)), deref(add(X, a150)))),
+                           assign(a151, add(a147, V(2))),
+                           assign(a152, add(a147, V(3))),
+                           assign(a153, add(a147, V(10))),
+                           assign(a154, add(a147, V(11))),
+                           assign(t185, add(deref(add(X, a151)), deref(add(X, a153)))),
+                           assign(t186, add(deref(add(X, a152)), deref(add(X, a154)))),
+                           assign(a155, mul(V(0.70710678118654757), sub(deref(add(X, a151)), deref(add(X, a153))))),
+                           assign(a156, mul(V(0.70710678118654757), sub(deref(add(X, a152)), deref(add(X, a154))))),
+                           assign(s29, add(a155, a156)),
+                           assign(s30, sub(a156, a155)),
+                           assign(a157, add(a147, V(4))),
+                           assign(a158, add(a147, V(5))),
+                           assign(a159, add(a147, V(12))),
+                           assign(a160, add(a147, V(13))),
+                           assign(t187, add(deref(add(X, a157)), deref(add(X, a159)))),
+                           assign(t188, add(deref(add(X, a158)), deref(add(X, a160)))),
+                           assign(t189, sub(deref(add(X, a157)), deref(add(X, a159)))),
+                           assign(t190, sub(deref(add(X, a158)), deref(add(X, a160)))),
+                           assign(a161, add(a147, V(6))),
+                           assign(a162, add(a147, V(7))),
+                           assign(a163, add(a147, V(14))),
+                           assign(a164, add(a147, V(15))),
+                           assign(t191, add(deref(add(X, a161)), deref(add(X, a163)))),
+                           assign(t192, add(deref(add(X, a162)), deref(add(X, a164)))),
+                           assign(a165, mul(V(0.70710678118654757), sub(deref(add(X, a162)), deref(add(X, a164))))),
+                           assign(a166, mul(V(0.70710678118654757), sub(deref(add(X, a161)), deref(add(X, a163))))),
+                           assign(s31, sub(a165, a166)),
+                           assign(s32, add(a166, a165)),
+                           assign(t193, add(t181, t187)),
+                           assign(t194, add(t182, t188)),
+                           assign(t195, sub(t181, t187)),
+                           assign(t196, sub(t182, t188)),
+                           assign(t197, add(t185, t191)),
+                           assign(t198, add(t186, t192)),
+                           assign(t199, sub(t185, t191)),
+                           assign(t200, sub(t186, t192)),
+                           assign(deref(add(T1, a147)), add(t193, t197)),
+                           assign(deref(add(T1, a148)), add(t194, t198)),
+                           assign(deref(add(T1, a149)), sub(t193, t197)),
+                           assign(deref(add(T1, a150)), sub(t194, t198)),
+                           assign(deref(add(T1, a157)), add(t195, t200)),
+                           assign(deref(add(T1, a158)), sub(t196, t199)),
+                           assign(deref(add(T1, a159)), sub(t195, t200)),
+                           assign(deref(add(T1, a160)), add(t196, t199)),
+                           assign(t201, add(t183, t190)),
+                           assign(t202, sub(t184, t189)),
+                           assign(t203, sub(t183, t190)),
+                           assign(t204, add(t184, t189)),
+                           assign(t205, add(s29, s31)),
+                           assign(t206, sub(s30, s32)),
+                           assign(t207, sub(s29, s31)),
+                           assign(t208, add(s30, s32)),
+                           assign(deref(add(T1, a151)), add(t201, t205)),
+                           assign(deref(add(T1, a152)), add(t202, t206)),
+                           assign(deref(add(T1, a153)), sub(t201, t205)),
+                           assign(deref(add(T1, a154)), sub(t202, t206)),
+                           assign(deref(add(T1, a161)), add(t203, t208)),
+                           assign(deref(add(T1, a162)), sub(t204, t207)),
+                           assign(deref(add(T1, a163)), sub(t203, t208)),
+                           assign(deref(add(T1, a164)), add(t204, t207))
+                        )
+                     )
+                  )
+               ),
+               loop(i2, [ 0 .. 7 ],
+                  decl([ T12 ],
+                     chain(
+                        loop(i9, [ 0 .. 4 ],
+                           decl([ a233, a234, a235, a236, a237, a238, a239, a240, a241, t249, t250, t251, t252, t253, t254, t255, t256 ],
+                              chain(
+                                 assign(a233, add(mul(V(2), i2), mul(V(64), i9))),
+                                 assign(a234, add(a233, V(1))),
+                                 assign(a235, add(a233, V(32))),
+                                 assign(a236, add(a233, V(33))),
+                                 assign(t249, add(deref(add(T1, a233)), deref(add(T1, a235)))),
+                                 assign(t250, add(deref(add(T1, a234)), deref(add(T1, a236)))),
+                                 assign(t251, sub(deref(add(T1, a233)), deref(add(T1, a235)))),
+                                 assign(t252, sub(deref(add(T1, a234)), deref(add(T1, a236)))),
+                                 assign(a237, add(a233, V(16))),
+                                 assign(a238, add(a233, V(17))),
+                                 assign(a239, add(a233, V(48))),
+                                 assign(a240, add(a233, V(49))),
+                                 assign(t253, add(deref(add(T1, a237)), deref(add(T1, a239)))),
+                                 assign(t254, add(deref(add(T1, a238)), deref(add(T1, a240)))),
+                                 assign(t255, sub(deref(add(T1, a237)), deref(add(T1, a239)))),
+                                 assign(t256, sub(deref(add(T1, a238)), deref(add(T1, a240)))),
+                                 assign(a241, mul(V(8), i9)),
+                                 assign(deref(add(T12, a241)), add(t249, t253)),
+                                 assign(deref(add(V(1), T12, a241)), add(t250, t254)),
+                                 assign(deref(add(V(4), T12, a241)), sub(t249, t253)),
+                                 assign(deref(add(V(5), T12, a241)), sub(t250, t254)),
+                                 assign(deref(add(V(2), T12, a241)), add(t251, t256)),
+                                 assign(deref(add(V(3), T12, a241)), sub(t252, t255)),
+                                 assign(deref(add(V(6), T12, a241)), sub(t251, t256)),
+                                 assign(deref(add(V(7), T12, a241)), add(t252, t255))
+                              )
+                           )
+                        ),
+                        loop(i8, [ 0 .. 3 ],
+                           decl([ a360, a361, a362, a363, a364, a365, a366, a367, a368, a369, a370, s79, s80, s81, s82, s83, s84, s85, s86, t297, t298, t299, t300, t301, t302, t303, t304 ],
+                              chain(
+                                 assign(a360, mul(V(2), i8)),
+                                 assign(a361, add(a360, V(1))),
+                                 assign(a362, add(a360, V(8))),
+                                 assign(a363, add(a360, V(9))),
+                                 assign(a364, add(a360, V(32))),
+                                 assign(a365, add(a360, V(33))),
+                                 assign(t297, add(deref(add(T12, a362)), deref(add(T12, a364)))),
+                                 assign(t298, add(deref(add(T12, a363)), deref(add(T12, a365)))),
+                                 assign(t299, sub(deref(add(T12, a362)), deref(add(T12, a364)))),
+                                 assign(t300, sub(deref(add(T12, a363)), deref(add(T12, a365)))),
+                                 assign(a366, add(a360, V(24))),
+                                 assign(a367, add(a360, V(25))),
+                                 assign(a368, add(a360, V(16))),
+                                 assign(a369, add(a360, V(17))),
+                                 assign(t301, add(deref(add(T12, a366)), deref(add(T12, a368)))),
+                                 assign(t302, add(deref(add(T12, a367)), deref(add(T12, a369)))),
+                                 assign(t303, sub(deref(add(T12, a366)), deref(add(T12, a368)))),
+                                 assign(t304, sub(deref(add(T12, a367)), deref(add(T12, a369)))),
+                                 assign(s79, add(sub(mul(V(0.3090169943749474), t297), mul(V(0.80901699437494745), t301)), deref(add(T12, a360)))),
+                                 assign(s80, add(sub(mul(V(0.3090169943749474), t298), mul(V(0.80901699437494745), t302)), deref(add(T12, a361)))),
+                                 assign(s81, add(sub(mul(V(0.3090169943749474), t301), mul(V(0.80901699437494745), t297)), deref(add(T12, a360)))),
+                                 assign(s82, add(sub(mul(V(0.3090169943749474), t302), mul(V(0.80901699437494745), t298)), deref(add(T12, a361)))),
+                                 assign(s83, sub(mul(V(0.95105651629515353), t300), mul(V(0.58778525229247314), t304))),
+                                 assign(s84, sub(mul(V(0.58778525229247314), t303), mul(V(0.95105651629515353), t299))),
+                                 assign(s85, add(mul(V(0.58778525229247314), t300), mul(V(0.95105651629515353), t304))),
+                                 assign(s86, add(mul(V(0.58778525229247314), t299), mul(V(0.95105651629515353), t303))),
+                                 assign(a370, add(mul(V(2), i2), mul(V(16), i8))),
+                                 assign(deref(add(Y, a370)), add(t297, t301, deref(add(T12, a360)))),
+                                 assign(deref(add(V(1), Y, a370)), add(t298, t302, deref(add(T12, a361)))),
+                                 assign(deref(add(V(64), Y, a370)), add(s79, s83)),
+                                 assign(deref(add(V(65), Y, a370)), add(s80, s84)),
+                                 assign(deref(add(V(256), Y, a370)), sub(s79, s83)),
+                                 assign(deref(add(V(257), Y, a370)), sub(s80, s84)),
+                                 assign(deref(add(V(128), Y, a370)), add(s81, s85)),
+                                 assign(deref(add(V(129), Y, a370)), sub(s82, s86)),
+                                 assign(deref(add(V(192), Y, a370)), sub(s81, s85)),
+                                 assign(deref(add(V(193), Y, a370)), add(s82, s86))
+                              )
+                           )
+                        )
+                     )
+                  )
+               )
+            )
+         )
+      ),
+      func(TVoid, "destroy", [  ], 
+         skip()
+      )
+   )
+)
+spiral> 
+spiral> opts.prettyPrint(c);
+
+/*
+ * This code was generated by Spiral 8.2.1a04, www.spiral.net
+ */
+
+#include <include/omega64.h>
+
+void init_dft3d() {
+}
+
+void dft3d(double  *Y, double  *X) {
+    static double T1[320];
+    for(int i3 = 0; i3 <= 4; i3++) {
+        for(int i5 = 0; i5 <= 3; i5++) {
+            double a155, a156, a165, a166, s29, s30, s31, s32, 
+                    t181, t182, t183, t184, t185, t186, t187, t188, 
+                    t189, t190, t191, t192, t193, t194, t195, t196, 
+                    t197, t198, t199, t200, t201, t202, t203, t204, 
+                    t205, t206, t207, t208;
+            int a147, a148, a149, a150, a151, a152, a153, a154, 
+                    a157, a158, a159, a160, a161, a162, a163, a164;
+            a147 = ((64*i3) + (16*i5));
+            a148 = (a147 + 1);
+            a149 = (a147 + 8);
+            a150 = (a147 + 9);
+            t181 = (*((X + a147)) + *((X + a149)));
+            t182 = (*((X + a148)) + *((X + a150)));
+            t183 = (*((X + a147)) - *((X + a149)));
+            t184 = (*((X + a148)) - *((X + a150)));
+            a151 = (a147 + 2);
+            a152 = (a147 + 3);
+            a153 = (a147 + 10);
+            a154 = (a147 + 11);
+            t185 = (*((X + a151)) + *((X + a153)));
+            t186 = (*((X + a152)) + *((X + a154)));
+            a155 = (0.70710678118654757*(*((X + a151)) - *((X + a153))));
+            a156 = (0.70710678118654757*(*((X + a152)) - *((X + a154))));
+            s29 = (a155 + a156);
+            s30 = (a156 - a155);
+            a157 = (a147 + 4);
+            a158 = (a147 + 5);
+            a159 = (a147 + 12);
+            a160 = (a147 + 13);
+            t187 = (*((X + a157)) + *((X + a159)));
+            t188 = (*((X + a158)) + *((X + a160)));
+            t189 = (*((X + a157)) - *((X + a159)));
+            t190 = (*((X + a158)) - *((X + a160)));
+            a161 = (a147 + 6);
+            a162 = (a147 + 7);
+            a163 = (a147 + 14);
+            a164 = (a147 + 15);
+            t191 = (*((X + a161)) + *((X + a163)));
+            t192 = (*((X + a162)) + *((X + a164)));
+            a165 = (0.70710678118654757*(*((X + a162)) - *((X + a164))));
+            a166 = (0.70710678118654757*(*((X + a161)) - *((X + a163))));
+            s31 = (a165 - a166);
+            s32 = (a166 + a165);
+            t193 = (t181 + t187);
+            t194 = (t182 + t188);
+            t195 = (t181 - t187);
+            t196 = (t182 - t188);
+            t197 = (t185 + t191);
+            t198 = (t186 + t192);
+            t199 = (t185 - t191);
+            t200 = (t186 - t192);
+            *((T1 + a147)) = (t193 + t197);
+            *((T1 + a148)) = (t194 + t198);
+            *((T1 + a149)) = (t193 - t197);
+            *((T1 + a150)) = (t194 - t198);
+            *((T1 + a157)) = (t195 + t200);
+            *((T1 + a158)) = (t196 - t199);
+            *((T1 + a159)) = (t195 - t200);
+            *((T1 + a160)) = (t196 + t199);
+            t201 = (t183 + t190);
+            t202 = (t184 - t189);
+            t203 = (t183 - t190);
+            t204 = (t184 + t189);
+            t205 = (s29 + s31);
+            t206 = (s30 - s32);
+            t207 = (s29 - s31);
+            t208 = (s30 + s32);
+            *((T1 + a151)) = (t201 + t205);
+            *((T1 + a152)) = (t202 + t206);
+            *((T1 + a153)) = (t201 - t205);
+            *((T1 + a154)) = (t202 - t206);
+            *((T1 + a161)) = (t203 + t208);
+            *((T1 + a162)) = (t204 - t207);
+            *((T1 + a163)) = (t203 - t208);
+            *((T1 + a164)) = (t204 + t207);
+        }
+    }
+    for(int i2 = 0; i2 <= 7; i2++) {
+        static double T12[40];
+        for(int i9 = 0; i9 <= 4; i9++) {
+            double t249, t250, t251, t252, t253, t254, t255, t256;
+            int a233, a234, a235, a236, a237, a238, a239, a240, 
+                    a241;
+            a233 = ((2*i2) + (64*i9));
+            a234 = (a233 + 1);
+            a235 = (a233 + 32);
+            a236 = (a233 + 33);
+            t249 = (*((T1 + a233)) + *((T1 + a235)));
+            t250 = (*((T1 + a234)) + *((T1 + a236)));
+            t251 = (*((T1 + a233)) - *((T1 + a235)));
+            t252 = (*((T1 + a234)) - *((T1 + a236)));
+            a237 = (a233 + 16);
+            a238 = (a233 + 17);
+            a239 = (a233 + 48);
+            a240 = (a233 + 49);
+            t253 = (*((T1 + a237)) + *((T1 + a239)));
+            t254 = (*((T1 + a238)) + *((T1 + a240)));
+            t255 = (*((T1 + a237)) - *((T1 + a239)));
+            t256 = (*((T1 + a238)) - *((T1 + a240)));
+            a241 = (8*i9);
+            *((T12 + a241)) = (t249 + t253);
+            *((1 + T12 + a241)) = (t250 + t254);
+            *((4 + T12 + a241)) = (t249 - t253);
+            *((5 + T12 + a241)) = (t250 - t254);
+            *((2 + T12 + a241)) = (t251 + t256);
+            *((3 + T12 + a241)) = (t252 - t255);
+            *((6 + T12 + a241)) = (t251 - t256);
+            *((7 + T12 + a241)) = (t252 + t255);
+        }
+        for(int i8 = 0; i8 <= 3; i8++) {
+            double s79, s80, s81, s82, s83, s84, s85, s86, 
+                    t297, t298, t299, t300, t301, t302, t303, t304;
+            int a360, a361, a362, a363, a364, a365, a366, a367, 
+                    a368, a369, a370;
+            a360 = (2*i8);
+            a361 = (a360 + 1);
+            a362 = (a360 + 8);
+            a363 = (a360 + 9);
+            a364 = (a360 + 32);
+            a365 = (a360 + 33);
+            t297 = (*((T12 + a362)) + *((T12 + a364)));
+            t298 = (*((T12 + a363)) + *((T12 + a365)));
+            t299 = (*((T12 + a362)) - *((T12 + a364)));
+            t300 = (*((T12 + a363)) - *((T12 + a365)));
+            a366 = (a360 + 24);
+            a367 = (a360 + 25);
+            a368 = (a360 + 16);
+            a369 = (a360 + 17);
+            t301 = (*((T12 + a366)) + *((T12 + a368)));
+            t302 = (*((T12 + a367)) + *((T12 + a369)));
+            t303 = (*((T12 + a366)) - *((T12 + a368)));
+            t304 = (*((T12 + a367)) - *((T12 + a369)));
+            s79 = (((0.3090169943749474*t297) - (0.80901699437494745*t301)) + *((T12 + a360)));
+            s80 = (((0.3090169943749474*t298) - (0.80901699437494745*t302)) + *((T12 + a361)));
+            s81 = (((0.3090169943749474*t301) - (0.80901699437494745*t297)) + *((T12 + a360)));
+            s82 = (((0.3090169943749474*t302) - (0.80901699437494745*t298)) + *((T12 + a361)));
+            s83 = ((0.95105651629515353*t300) - (0.58778525229247314*t304));
+            s84 = ((0.58778525229247314*t303) - (0.95105651629515353*t299));
+            s85 = ((0.58778525229247314*t300) + (0.95105651629515353*t304));
+            s86 = ((0.58778525229247314*t299) + (0.95105651629515353*t303));
+            a370 = ((2*i2) + (16*i8));
+            *((Y + a370)) = (t297 + t301 + *((T12 + a360)));
+            *((1 + Y + a370)) = (t298 + t302 + *((T12 + a361)));
+            *((64 + Y + a370)) = (s79 + s83);
+            *((65 + Y + a370)) = (s80 + s84);
+            *((256 + Y + a370)) = (s79 - s83);
+            *((257 + Y + a370)) = (s80 - s84);
+            *((128 + Y + a370)) = (s81 + s85);
+            *((129 + Y + a370)) = (s82 - s86);
+            *((192 + Y + a370)) = (s81 - s85);
+            *((193 + Y + a370)) = (s82 + s86);
+        }
+    }
+}
+
+void destroy_dft3d() {
+    /* skip */
+}
+spiral> 
+spiral> LogTo();
