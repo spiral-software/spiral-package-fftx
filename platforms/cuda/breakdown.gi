@@ -46,6 +46,16 @@ NewRulesFor(MDDFT, rec(
                                      SIMTTensor(_toSIMTDim(nt.getTags(){[1]}, n1), I(n1), 
                                          SIMTTensor(_toSIMTDim(nt.getTags(){[2]}, n2), I(n2),
                                              C[2])))
+    ),
+    MDDFT_tSPL_RowCol_3D_SIMT := rec(
+        info :="MDDFT(n_1,n_2,...,n_t) = (RC(MDDFT(n_1,n_2,...,n_{t-1}) x I(.))) (I(n_1*n_2*...*n_{t-1}) x PRDFT1(n_t))",
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[2],
+                               tags := nt.getTags(),
+                               [[ TTensorI(MDDFT(DropLast(a_lengths, 1), a_exp), Last(a_lengths), AVec, AVec).withTags(tags),
+                                  FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), DFT(Last(a_lengths), a_exp)).withTags(tags) ]]),
+        apply := (nt, C, cnt) -> C[1] * C[2]
     )
 ));
 
