@@ -167,3 +167,27 @@ Class(TNoPullLeft, Tagged_tSPL_Container, rec(
             [ TNoPullLeft, h ] :: When(IsBound(self.tags), self.tags, [])
         )
 ));
+
+#F   tSPL ColMajor -> RowMajor transformation
+Class(TColMajor, Tagged_tSPL_Container, rec(
+    _short_print := true,
+    abbrevs :=  [ (A) -> Checked(IsNonTerminal(A) or IsSPL(A), [A]) ],
+    dims := self >> 2*self.params[1].dims(),
+    terminate := self >> Mat(MatSPL(RC(self.params[1]))),
+
+    transpose := self >> ObjId(self)(
+	self.params[1].conjTranspose()).withTags(self.getTags()),
+
+    conjTranspose := self >> self.transpose(),
+
+    isReal := self >> true,
+
+    # Do not use doNotMeasure, this will prevent TRC_By_Def from ever being found!
+    doNotMeasure := false,
+    normalizedArithCost := self >> self.params[1].normalizedArithCost(),
+
+    HashId := self >> let(
+	h := [ When(IsBound(self.params[1].HashId), self.params[1].HashId(),
+		    self.params[1]) ],
+        When(IsBound(self.tags), Concatenation(h, self.tags), h))
+));

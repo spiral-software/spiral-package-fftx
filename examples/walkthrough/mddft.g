@@ -1,6 +1,6 @@
 # 1d and multidimensional complex DFTs
 
-LogTo("walkthrough-mddft.txt");
+LogTo("walkthrough-mddft-c.txt");
 
 Load(fftx);
 ImportAll(fftx);
