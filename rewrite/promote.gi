@@ -14,7 +14,7 @@ _toSymList := l -> [Minimum(l)..Maximum(l)];
 
 RewriteRules(RulesFFTXPromoteNT, rec(
    batch1_MDXFFT := Rule(@@(1, [MDDFT, MDPRDFT, IMDPRDFT, TColMajor], 
-       (e,cx) -> (not IsBound(cx.TTensorI) or cx.TTensorI = []) and (not IsBound(cx.TColMajor) or cx.TColMajor = [])),
+       (e,cx) -> ForAll([TTensorI, TColMajor, TDAG, TDAGNode], i -> (not IsBound(cx.(i.name)) or cx.(i.name) = []))),
        e-> TTensorI(@@(1).val, 1, AVec, AVec)),
 
     Scat_Circulant_Gath__IOPrunedRConv := ARule(Compose, [[@(1, Gath), fAdd],  @(2,Circulant), [@(3, Scat), fAdd]], 
@@ -41,8 +41,16 @@ RewriteRules(RulesFFTXPromoteNT, rec(
                  ch := Filtered(Drop(@(1).val.params[1],1) , i -> i<> nbr),
                  dn := TDAGNode(nbr.params[1] * @(2).val.params[1], nbr.params[2], @(2).val.params[3]),
                  TDAG([dn]::ch))),
-    DAG_remove := Rule([@(1,TDAG), @(2, TDAGNode), @(3), @(4)],
+    DAG_remove := Rule([@(1,TDAG), [@(2, TDAGNode), @(3), 
+            @(4).cond(e->IsList(e) and Length(e) = 1 and ObjId(e[1]) = var and e[1].id in ["Y", "Yptr"]), 
+            @(5).cond(e->IsList(e) and Length(e) = 1 and ObjId(e[1]) = var and e[1].id in ["X", "Xptr"]),
+            ...],...],
         e-> @(2).val.params[1]),
+        
+    propagate_ColMaj := Rule([@(1,TDAGNode), [TRC, @(2,MDDFT),...],
+            @(3).cond(e->ObjId(e[1])=tcast and ObjId(e[1].args[1].t) = TColMaj), 
+            @(4).cond(e->ObjId(e[1])=tcast and ObjId(e[1].args[1].t) = TColMaj),...],
+        e -> TDAGNode(TRC(TColMajor(@(2).val)), @(3).val[1].args[2], @(4).val[1].args[2])),    
         
     Drop_TDecl := Rule(@(1, TDecl, e->ForAll(e.params[2], i->not i in e.params[1].free())),
         e -> @(1).val.params[1]), 
