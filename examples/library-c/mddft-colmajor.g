@@ -17,9 +17,6 @@ t := let(ns := szns,
     TFCall(TRC(TColMajor(MDDFT(ns, k))), rec(fname := name, params := [])).withTags(opts.tags)
 );
 
-rt := opts.search(t);
-spl := SPLRuleTree(rt);
-
 c := opts.fftxGen(t);
 opts.prettyPrint(c);
 
