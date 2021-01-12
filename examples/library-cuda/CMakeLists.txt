@@ -39,12 +39,13 @@ else ()
     set ( _pre_fils "cuda_rqd_linux.g" )
 endif ()
 
+set ( _gpu_required_flag True )
 set ( _post_fils "measures.g" "vector-add.g" )
 message ( STATUS "Loop over the examples: ${_gpu_examples}" )
 
 foreach ( _example ${_gpu_examples} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
-    RunTestTarget(${_example} ${GPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${GPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
 
 ##  Currently can't automatically check examples expecting an input symbol, do codegen only
@@ -52,7 +53,7 @@ endforeach ()
 set ( _post_fils "" )
 foreach ( _example ${_gpu_nocheck} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
-    RunTestTarget(${_example} ${GPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${GPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
 
 set_tests_properties (${_gpu_examples} PROPERTIES LABELS "GPU examples")

@@ -34,12 +34,13 @@ set ( _cpu_nocheck
 ##  _pre_fils are files to preceed that example script; _post_fils are files to
 ##  follow the script.
 
+set ( _gpu_required_flag False )
 set ( _pre_fils "" )
 set ( _post_fils "../library-cuda/measures.g" "../library-cuda/vector-add.g" )
 
 foreach ( _example ${_cpu_examples} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
-    RunTestTarget(${_example} ${CPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${CPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
 
 ##  Currently can't automatically check example expecting an input symbol, do codegen only
@@ -47,7 +48,7 @@ endforeach ()
 set ( _post_fils "" )
 foreach ( _example ${_cpu_nocheck} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
-    RunTestTarget(${_example} ${CPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${CPU_EXAMPLES_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
 
 set_tests_properties (${_cpu_examples} PROPERTIES LABELS "CPU examples")
