@@ -28,7 +28,7 @@ t := let(batch := nbatch,
 tt := opts.preProcess(t);
 rt := opts.search(t);
 s := opts.sumsRuleTree(rt);
-c := opts.codeSUms(s);
+c := opts.codeSums(s);
 
 
 c := opts.fftxGen(t);
