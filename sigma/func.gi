@@ -31,3 +31,5 @@ Class(FDataNT, Function, rec(
 ));
 
 
+# These need to be implemented properly -- for now they are just markers in TDAG
+Class(TColMaj, TPtr);                             

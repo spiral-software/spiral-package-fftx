@@ -105,6 +105,8 @@ ExtractBox := (ns, nps) -> Gath(_toBox(ns, nps));
 BoxND := (l, stype) -> Cond(IsInt(l), TArray(stype, l), 
                              IsList(l) and Length(l) = 1, TArray(stype, l[1]), 
                              TArray(BoxND(Drop(l, 1), stype), l[1]));
+
+BoxNDcmj := (l, stype) -> TColMaj(BoxND(l, stype));
                              
 fBox := l -> fTensor(List(l, fId));
 fBoxInBox := (l2, l1, l3) ->fTensor(List([1..Length(l1)], _l -> fAdd(l1[_l], l2[_l], let(shft := l3[_l], When(IsInt(shft), shft, IntDouble(shft))))));
