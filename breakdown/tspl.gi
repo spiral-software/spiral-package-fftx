@@ -89,3 +89,37 @@ NewRulesFor(TNoPullRight, rec(
         apply := (nt, c, cnt) -> NoPullRight(c[1])
     )
 ));
+
+NewRulesFor(TColMajor, rec(
+    TColMajor_MDDFT_2D := rec(
+        forTransposition := false,
+        switch := false,
+        applicable := (self, nt) >> ObjId(nt.params[1]) = MDDFT and Length(nt.params[1].params[1]) = 2,
+
+        children := nt -> [[ nt.params[1].withTags(nt.getTags()) ]],
+        apply := (nt, c, cnt) -> let(n1 := nt.params[1].params[1][1], n2 := nt.params[2][1].params[1][2], 
+            prm := L(n1*n2, n2),
+            iprm := prm.transpose(),
+            iprm * c[1] * prm)
+    ),
+    TColMajor_MDDFT_3D := rec(
+        forTransposition := false,
+        switch := false,
+        applicable := (self, nt) >> ObjId(nt.params[1]) = MDDFT and Length(nt.params[1].params[1]) = 3,
+
+        children := nt -> [[ nt.params[1].withTags(nt.getTags()) ]],
+        apply := (nt, c, cnt) -> let(n1 := nt.params[1].params[1][1], n2 := nt.params[1].params[1][2], n3 := nt.params[1].params[1][3], 
+            # prm := Tensor(I(n1), L(n2*n3, n3)) * L(n1*n2*n3, n2*n3),
+            prm := Prm(fCompose(L(n1*n2*n3, n2*n3), fTensor(fId(n1), L(n2*n3, n3)))),
+            # iprm := L(n1*n2*n3, n1) * Tensor(I(n1), L(n2*n3, n2)),
+            iprm := prm.transpose(),
+            iprm * c[1] * prm)
+    ),
+    TColMajor_MDDFT_tensorFlip := rec(
+        forTransposition := false,
+        applicable := (self, nt) >> ObjId(nt.params[1]) = MDDFT,
+
+        children := nt -> [[ ApplyFunc(MDDFT, [Reversed(nt.params[1].params[1])]::Drop(nt.params[1].params, 1)).withTags(nt.getTags()) ]],
+        apply := (nt, c, cnt) -> c[1]
+    ),
+));
