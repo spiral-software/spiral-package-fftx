@@ -1,37 +1,24 @@
-# 1d and multidimensional complex DFTs
+# 1d and multidimensional real iDFTs
 
 Load(fftx);
 ImportAll(fftx);
-Import(realdft);
 
-conf := FFTXGlobals.confWarpXCUDADevice();
+conf := FFTXGlobals.confFFTCUDADevice();
 opts := FFTXGlobals.getOpts(conf);
-opts.printRuleTree := true;
 
-nbatch := 2;
-szn      := 80;
-sznz     := 2;
-szny     := 2;
+d := 3;
+szcube := 4;
+name := "imdprdft"::StringInt(d)::"d";
 
-PrintLine("imdprdft-batch-cuda: batch = ", nbatch, " n = ", szn, " nz = ", sznz, " ny = ", szny, ";\t\t##PICKME##");
+PrintLine("imdprdft-cuda: d = ", d, " cube = ", szcube, "^3;\t\t##PICKME##");
 
-t := let(batch := nbatch,
-    apat := APar,
-    n := szn,
-    nz := sznz,
-    ny := szny,
-    name := "test", 
-    TFCall(TTensorI(TTensorI(TTensorI(IPRDFT(n, 1), ny, apat, apat), nz, apat, apat), batch, apat, apat),
+t := let(ns := Replicate(3, szcube),
+    TFCall(IMDPRDFT(ns, 1), 
         rec(fname := name, params := [])).withTags(opts.tags)
 );
 
-tt := opts.preProcess(t);
-rt := opts.search(t);
-s := opts.sumsRuleTree(rt);
-c := opts.codeSums(s);
-
-
 c := opts.fftxGen(t);
 opts.prettyPrint(c);
-##  PrintTo("test.c", opts.prettyPrint(c));
+PrintTo(name::".c", opts.prettyPrint(c));
+
 

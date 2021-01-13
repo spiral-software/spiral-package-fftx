@@ -30,10 +30,10 @@ fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.breakdownRules.TL := [L_SIMT];
     opts.breakdownRules.TIterHStack := [TIterHStack_SIMT];
     opts.breakdownRules.TIterVStack := [TIterVStack_SIMT];
-    opts.breakdownRules.MDPRDFT := [MDPRDFT_3D_SIMT];
-    opts.breakdownRules.IMDPRDFT := [IMDPRDFT_3D_SIMT];
+    opts.breakdownRules.MDPRDFT := [MDPRDFT_tSPL_RowCol_SIMT];
+    opts.breakdownRules.IMDPRDFT := [IMDPRDFT_tSPL_RowCol_SIMT];
     opts.breakdownRules.TRC := [TRC_SIMT];
-    opts.breakdownRules.MDDFT := [ MDDFT_Base, CopyFields(MDDFT_tSPL_RowCol, rec(switch := true)), MDDFT_RowCol, MDDFT_tSPL_RowCol_3D_SIMT];
+    opts.breakdownRules.MDDFT := [ MDDFT_Base, CopyFields(MDDFT_tSPL_RowCol, rec(switch := true)), MDDFT_RowCol, MDDFT_tSPL_RowCol_SIMT];
     opts.breakdownRules.TTensor := [ AxI_IxB, IxB_AxI ];
     opts.breakdownRules.TTensorI := [ IxA_SIMT,  AxI_SIMT ];
     opts.breakdownRules.TSparseMat := [CopyFields(TSparseMat_base, rec(max_rows := 1)), TSparseMat_VStack];
