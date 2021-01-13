@@ -8,13 +8,13 @@ Class(BatchFFTCUDADeviceOpts, FFTXCUDADeviceOpts, rec(
 #    tags := [ASIMTBlockDimZ, ASIMTKernelFlag(ASIMTBlockDimX), ASIMTKernelFlag(ASIMTBlockDimY) ],
     tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTGridDimX, ASIMTBlockDimZ],
 
-    operations := rec(Print := s -> Print("<FFTX FFT CUDA Device options record>"))    
+    operations := rec(Print := s -> Print("<FFTX Batch FFT CUDA Device options record>"))    
 ));
 
 batchFftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     local opts;
     
-    opts := Copy(FFTCUDADeviceOpts);
+    opts := Copy(BatchFFTCUDADeviceOpts);
     opts.breakdownRules.Circulant := [Circulant_PRDFT_FDataNT];
     opts.breakdownRules.PRDFT := List([PRDFT1_Base1, PRDFT1_Base2, CopyFields(PRDFT1_CT, 
             rec(allChildren := P ->Filtered(PRDFT1_CT.allChildren(P), i->When(P[1] = 100, Cols(i[1]) = 4, true)))), 

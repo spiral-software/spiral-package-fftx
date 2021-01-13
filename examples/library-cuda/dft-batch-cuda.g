@@ -3,7 +3,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confFFTCUDADevice();
+conf := FFTXGlobals.confBatchFFTCUDADevice();
 opts := FFTXGlobals.getOpts(conf);
 
 n := 2;
