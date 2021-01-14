@@ -30,6 +30,7 @@ fftx.FFTXGlobals.registerConf(cudaConf);
 Class(FFTXCUDADeviceOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     devFunc := true,
+    target := rec ( name := "win-x64-cuda" ),
     operations := rec(Print := s -> Print("<FFTX CUDA Device options record>"))    
 ));
 
