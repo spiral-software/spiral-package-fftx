@@ -18,8 +18,11 @@ set ( CPU_EXAMPLES_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set ( _cpu_examples
       mddft-batch.g
+      mddft-colmajor-dag.g
+      mddft-colmajor.g
       mddft.g
       mddft-pruned.g
+      mddft-rowmajor.g
       mdprdft-batch.g
       mdprdft.g
       mdprdft-pruned.g
@@ -29,6 +32,7 @@ set ( _cpu_nocheck
       mdrconv-batch.g
       mdrconv.g
       mdrconv-pruned.g
+      warpx.g
     )
 
 ##  _pre_fils are files to preceed that example script; _post_fils are files to
