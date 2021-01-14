@@ -2,19 +2,19 @@ Import(fftx.platforms.cuda);
 Import(fftx.codegen);
 Import(simt);
 
-Class(FFTCUDADeviceOpts, FFTXCUDADeviceOpts, rec(
+Class(BatchFFTCUDADeviceOpts, FFTXCUDADeviceOpts, rec(
 #    tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTBlockDimX, ASIMTLoopDim() ],
 #    tags := [ASIMTGridDimX, ASIMTBlockDimX, ASIMTKernelFlag(ASIMTLoopDim()) ],
 #    tags := [ASIMTBlockDimZ, ASIMTKernelFlag(ASIMTBlockDimX), ASIMTKernelFlag(ASIMTBlockDimY) ],
-    tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTGridDimX],
+    tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTGridDimX, ASIMTBlockDimZ],
 
-    operations := rec(Print := s -> Print("<FFTX FFT CUDA Device options record>"))    
+    operations := rec(Print := s -> Print("<FFTX Batch FFT CUDA Device options record>"))    
 ));
 
-fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
+batchFftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     local opts;
     
-    opts := Copy(FFTCUDADeviceOpts);
+    opts := Copy(BatchFFTCUDADeviceOpts);
     opts.breakdownRules.Circulant := [Circulant_PRDFT_FDataNT];
     opts.breakdownRules.PRDFT := List([PRDFT1_Base1, PRDFT1_Base2, CopyFields(PRDFT1_CT, 
             rec(allChildren := P ->Filtered(PRDFT1_CT.allChildren(P), i->When(P[1] = 100, Cols(i[1]) = 4, true)))), 
@@ -30,10 +30,10 @@ fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.breakdownRules.TL := [L_SIMT];
     opts.breakdownRules.TIterHStack := [TIterHStack_SIMT];
     opts.breakdownRules.TIterVStack := [TIterVStack_SIMT];
-    opts.breakdownRules.MDPRDFT := [MDPRDFT_tSPL_RowCol_SIMT];
-    opts.breakdownRules.IMDPRDFT := [IMDPRDFT_tSPL_RowCol_SIMT];
+    opts.breakdownRules.MDPRDFT := [MDPRDFT_3D_SIMT];
+    opts.breakdownRules.IMDPRDFT := [IMDPRDFT_3D_SIMT];
     opts.breakdownRules.TRC := [TRC_SIMT];
-    opts.breakdownRules.MDDFT := [ MDDFT_Base, CopyFields(MDDFT_tSPL_RowCol, rec(switch := true)), MDDFT_RowCol, MDDFT_tSPL_RowCol_SIMT];
+    opts.breakdownRules.MDDFT := [ MDDFT_Base, CopyFields(MDDFT_tSPL_RowCol, rec(switch := true)), MDDFT_RowCol, MDDFT_RowCol_3D_SIMT];
     opts.breakdownRules.TTensor := [ AxI_IxB, IxB_AxI ];
     opts.breakdownRules.TTensorI := [ IxA_SIMT,  AxI_SIMT ];
     opts.breakdownRules.TSparseMat := [CopyFields(TSparseMat_base, rec(max_rows := 1)), TSparseMat_VStack];
@@ -65,13 +65,13 @@ fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
 end;
 
 
-confFFTCUDADevice := rec(
-    defaultName := "confFFTCUDADevice",
-    defaultOpts := (arg) >> rec(useFFTCUDADevice := true),
-    confHandler := fftCUDADeviceOpts 
+confBatchFFTCUDADevice := rec(
+    defaultName := "confBatchFFTCUDADevice",
+    defaultOpts := (arg) >> rec(useBatchFFTCUDADevice := true),
+    confHandler := batchFftCUDADeviceOpts 
 );
 
-fftx.FFTXGlobals.registerConf(confFFTCUDADevice);
+fftx.FFTXGlobals.registerConf(confBatchFFTCUDADevice);
 
 
 

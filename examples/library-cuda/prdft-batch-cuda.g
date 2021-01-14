@@ -4,7 +4,7 @@ Load(fftx);
 ImportAll(fftx);
 Import(realdft);
 
-conf := FFTXGlobals.confFFTCUDADevice();
+conf := FFTXGlobals.confBatchFFTCUDADevice();
 opts := FFTXGlobals.getOpts(conf);
 
 
