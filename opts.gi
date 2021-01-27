@@ -2,11 +2,20 @@
 
 _noT := r -> CopyFields(r, rec(forTransposition := false));
 
+Declare(ParseOpts);
+
+Class(FFTXDefaultConf, LocalConfig, rec(
+    getOpts := (self, t) >> ParseOpts(self, t),
+    operations := rec(Print := s -> Print("<FFTX Default Configuration>")),
+));
+
+
 Class(FFTXOpts, SpiralDefaults, FFTXGenMixin, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX options record>")),
     breakdownRules := Copy(SpiralDefaults.breakdownRules),
-    codegen := Copy(SpiralDefaults.codegen)
+    codegen := Copy(SpiralDefaults.codegen),
+    tagIt := (self, t) >> t.withTags(self.tags)
 ));
 
 FFTXOpts.codegen.GathPtr := fftx.codegen.MultiPtrCodegenMixin.GathPtr;
@@ -52,7 +61,7 @@ Class(FFTXGlobals, rec(
                 return opts;
             end,
     ),
-    defaultConf := (arg) >> rec(),
+    defaultConf := (arg) >> FFTXDefaultConf,
     mdRConv := (arg) >> rec(mdRConv := true),
     getOpts := 
         meth(arg) 
@@ -76,6 +85,12 @@ Class(FFTXGlobals, rec(
             return opts;  
         end
 ));
+
+
+ParseOpts := function(conf, t)
+    return FFTXGlobals.getOpts(conf);
+end; 
+
 
 
 

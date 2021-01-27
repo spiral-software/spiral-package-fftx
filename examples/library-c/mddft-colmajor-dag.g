@@ -9,8 +9,8 @@ opts := FFTXGlobals.getOpts(conf);
 #szns := [2, 3];
 szns := [2, 3, 4];
 
-Xcmj := tcast(TPtr(TColMaj(BoxND(szns, TComplex))), X);
-Ycmj := tcast(TPtr(TColMaj(BoxND(szns, TComplex))), Y);
+Xcmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), X);
+Ycmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), Y);
 
 PrintLine("mddft_cmj: ns = ", szns, ";\t\t##PICKME##");
 
