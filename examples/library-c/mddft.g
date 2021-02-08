@@ -3,7 +3,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultConf();
+conf := LocalConfig.fftx.defaultConf();
 
 szns := [5, 4, 8];
 

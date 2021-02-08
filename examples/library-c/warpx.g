@@ -1,8 +1,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultWarpXConf();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 t := let(name := "warpx",
     n := 80,
@@ -108,10 +107,12 @@ t := let(name := "warpx",
             [boxBig0, boxBig1, boxBig2, boxBig3]        
         ), 
         rec(XType := TPtr(TPtr(TReal)), YType := TPtr(TPtr(TReal)), fname := name, params := [symvar ])
-    ).withTags(opts.tags)
+    )
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo("warpx80.c", opts.prettyPrint(c));
 

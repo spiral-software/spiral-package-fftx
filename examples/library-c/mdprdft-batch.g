@@ -3,8 +3,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultConf();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 nbatch := 16;
 szns := [5, 4, 8];
@@ -18,10 +17,13 @@ t := let(batch := nbatch,
     k := -1,
     name := dft.name::StringInt(Length(ns))::"d_batch",  
     TFCall(TTensorI(dft(ns, k), batch, apat, apat), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+        rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 

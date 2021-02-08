@@ -1,0 +1,1 @@
+spiral.LocalConfig.fftx := FFTXGlobals;
