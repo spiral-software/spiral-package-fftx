@@ -196,7 +196,7 @@ NewRulesFor(TTensorI, rec(
     IxA_SIMT := rec(
         info := "IxA base",
         forTransposition := false,
-        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and  IsParPar(nt.params),
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and  IsParPar(nt.params) and nt.params[2] > 1,
         children := nt -> [[ nt.params[1].withTags(Drop(nt.getTags(), 1)) ]],
         apply := (nt, c, cnt) -> #When(nt.params[2] > 1,
             SIMTTensor(_toSIMTDim(nt.getTags(), nt.params[2]), I(nt.params[2]), c[1])#,
@@ -206,12 +206,21 @@ NewRulesFor(TTensorI, rec(
     AxI_SIMT := rec(
         info := "AxI base",
         forTransposition := false,
-        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecVec(nt.params),
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecVec(nt.params) and nt.params[2] > 1,
         children := nt -> [[ nt.params[1].withTags(Drop(nt.getTags(), 1)) ]],
         apply := (nt, c, cnt) -> #When(nt.params[2] > 1,
             SIMTTensor(_toSIMTDim(nt.getTags(), nt.params[2]), c[1], I(nt.params[2]))#,
             #c[1])
+    ),
+#   A x I
+    trivialLoop := rec(
+        info := "AxI base",
+        forTransposition := false,
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.params[2] = 1,
+        children := nt -> [[ nt.params[1].withTags(DropLast(nt.getTags(), 1)) ]],
+        apply := (nt, c, cnt) -> c[1]
     )
+  
 ));
 
 
