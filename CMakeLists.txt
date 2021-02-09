@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2018-2020, Carnegie Mellon University
+## Copyright (c) 2018-2021, Carnegie Mellon University
 ## All rights reserved.
 ## 
 ## See LICENSE file for full information
@@ -7,38 +7,6 @@
 
 # specify this only here, lower levels use CMAKE_MINIMUM_REQUIRED_VERSION that this sets
 cmake_minimum_required(VERSION 3.14)
-
-# set(CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel")
-
-# project(SPIRAL_EXAMPLES
-#         VERSION 8.2.1
-#                 DESCRIPTION "SPIRAL Examples Project"
-#                 LANGUAGES C CXX)
-                
-# ##  Prevent building directly into the source tree
-# string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" SPIRAL_COMPILE_INPLACE)
-# if (SPIRAL_COMPILE_INPLACE)
-#     if (WIN32)
-#         message ( FATAL_ERROR, "Building ${PROJECT_NAME} with CMake requires an out-of-source tree.  To proceed:
-#                  rm -rf CMakeCache.txt CMakeFiles/   # delete files in ${CMAKE_SOURCE_DIR}
-#                  mkdir <build>
-#                  cd <build>
-#                  cmake ..
-#                  then build the solution with VS")
-# ##                 cmake --build . --config <config> --target <target> 
-#     else()
-#         message ( FATAL_ERROR, "Building ${PROJECT_NAME} with CMake requires an out-of-source tree.  To proceed:
-#                  rm -rf CMakeCache.txt CMakeFiles/   # delete files in ${CMAKE_SOURCE_DIR}
-#                  mkdir <build>
-#                  cd <build>
-#                  cmake ..
-#                  make | make install")
-#     endif()
-# endif()
-  
-# if ((NOT DEFINED CMAKE_BUILD_TYPE) OR (NOT CMAKE_BUILD_TYPE))
-#     set(CMAKE_BUILD_TYPE Release)
-# endif()
 
 ##  Get SPIRAL home...
 

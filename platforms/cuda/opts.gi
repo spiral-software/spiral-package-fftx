@@ -40,10 +40,24 @@ cudaConf := rec(
 
 fftx.FFTXGlobals.registerConf(cudaConf);
 
+getTargetOS := function()
+    local tgt;
+    
+    if LocalConfig.osinfo.isWindows() then
+        tgt := "win-x64-cuda";
+    elif LocalConfig.osinfo.isLinux() then
+        tgt := "linux-cuda";
+    elif LocalConfig.osinfo.isDarwin() then
+        tgt := "linux-cuda";    ## may work
+    fi;
+    return tgt;
+end;
+
 #--
 Class(FFTXCUDADeviceOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     devFunc := true,
+    target := rec ( name := getTargetOS() ),
     operations := rec(Print := s -> Print("<FFTX CUDA Device options record>"))    
 ));
 

@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2018-2020, Carnegie Mellon University
+## Copyright (c) 2018-2021, Carnegie Mellon University
 ## All rights reserved.
 ##
 ## See LICENSE file for full information
@@ -28,16 +28,13 @@ set ( _gpu_examples
 set ( _gpu_nocheck
       hockney-mlc-cuda.g
       mdrconv-batch-cuda.g
+      warpx-cuda.g
     )
 
 ##  _pre_fils are files to preceed that example script; _post_fils are files to
 ##  follow the script.
 
-if (WIN32)
-    set ( _pre_fils "cuda_rqd_win.g" )
-else ()
-    set ( _pre_fils "cuda_rqd_linux.g" )
-endif ()
+set ( _pre_fils "" )
 
 set ( _gpu_required_flag True )
 set ( _post_fils "measures.g" "vector-add.g" )
