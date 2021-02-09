@@ -126,7 +126,7 @@ ParseOpts := function(conf, t)
             fi;
         fi;
         # we are doing nothing special
-        return FFTXGlobals.getOpts(conf); 
+        return FFTXGlobals.getOpts(); 
     fi;
     
     # Here we have to handle GPU configs

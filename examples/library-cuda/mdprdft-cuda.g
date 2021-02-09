@@ -26,5 +26,3 @@ opts.prettyPrint(c);
 PrintTo(name::".c", opts.prettyPrint(c));
 
 
-
-
