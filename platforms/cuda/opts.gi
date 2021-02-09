@@ -16,11 +16,25 @@ cudaOpts := function(arg)
     return opts;
 end;
 
+Declare(ParseOptsCUDA);
+
+Class(FFTXCUDADefaultConf, rec(
+    getOpts := (self, t) >> ParseOptsCUDA(self, t),
+    operations := rec(Print := s -> Print("<FFTX CUDA Default Configuration>")),
+    useCUDA := true
+));
+
+Class(FFTXCUDADeviceDefaultConf, rec(
+    getOpts := (self, t) >> ParseOptsCUDA(self, t),
+    operations := rec(Print := s -> Print("<FFTX CUDA Device Default Configuration>")),
+    useCUDADevice := true
+));
+
 
 cudaConf := rec(
     defaultName := "defaultCUDAConf",
-    defaultOpts := (arg) >> rec(useCUDA := true),
-    devFunc := false,
+    defaultOpts := (arg) >> FFTXCUDADefaultConf,
+    devFunc := true,
     confHandler := cudaOpts 
 );
 
@@ -66,10 +80,80 @@ end;
 
 cudaDeviceConf := rec(
     defaultName := "defaultCUDADeviceConf",
-    defaultOpts := (arg) >> rec(useCUDADevice := true),
+    defaultOpts := (arg) >> FFTXCUDADeviceDefaultConf,
     confHandler := cudaDeviceOpts 
 );
 
 fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 
+# this is a first experimental opts-deriving logic. This needs to be done extensible and properly
+ParseOptsCUDA := function(conf, t)
+    local tt, _tt, _conf, _opts;
+    
+    if IsBound(conf.useCUDADevice) then 
+        # detect real MD convolution
+        _tt := Collect(t, RCDiag)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, TTensorI);
+        if Length(_tt) = 4 then
+            _conf := FFTXGlobals.confWarpXCUDADevice();
+            _opts := FFTXGlobals.getOpts(_conf);        
+            return _opts;
+        fi;        
+
+        # detect batch of DFT/PRDFT/MDDFT/MDPRDFT
+        if ((Length(Collect(t, TTensorInd)) >= 1) or (Length(Collect(t, TTensorI)) >= 1)) and 
+            ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1) or
+              (Length(Collect(t, MDDFT)) = 1) or (Length(Collect(t, MDPRDFT)) = 1) or (Length(Collect(t, IMDPRDFT)) = 1)) then
+            _conf := FFTXGlobals.confBatchFFTCUDADevice();
+            _opts := FFTXGlobals.getOpts(_conf);
+            return _opts;
+        fi;
+       
+        # detect 3D DFT
+        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
+        if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
+            _conf := FFTXGlobals.confFFTCUDADevice();
+            _opts := FFTXGlobals.getOpts(_conf);
+            return _opts;
+        fi;
+    
+        # promote with default conf rules
+        tt := _promote1(t);
+
+        if ObjId(tt) = TFCall then
+            _tt := tt.params[1];
+#            # check for convolution
+#            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
+#                _conf := FFTXGlobals.mdRConv();
+#                _opts := FFTXGlobals.getOpts(_conf);
+#                return _opts;
+#            fi;
+            # check for Hockney. This is for N=130
+            if ObjId(_tt) = IOPrunedMDRConv  and _tt.params[1] = [130,130,130] then
+                _conf := FFTXGlobals.confHockneyMlcCUDADevice();
+                _opts := FFTXGlobals.getOpts(_conf);
+                return _opts;
+            fi;
+        fi;
+
+        # check for WarpX
+        _conf := FFTXGlobals.confWarpXCUDADevice();
+        _opts := FFTXGlobals.getOpts(_conf);
+        tt := _opts.preProcess(t);
+        if ObjId(tt) = TFCall and ObjId(tt.params[1]) = TCompose then
+            _tt := tt.params[1].params[1];
+            # detect promoted WarpX
+            if IsList(_tt) and Length(_tt) = 3 and List(_tt, ObjId) = [ TNoDiagPullinRight, TRC, TNoDiagPullinLeft ] then
+                return _opts;
+            fi;
+        fi;
+        # we are doing nothing special
+        return FFTXGlobals.getOpts(conf); 
+    fi;
+    if IsBound(conf.useCUDA) then 
+        return FFTXGlobals.getOpts(conf); 
+    fi;
+    
+    # Here we have to handle GPU configs
+    Error("Don't know how to derive opts!\n");
+end; 

@@ -87,8 +87,50 @@ Class(FFTXGlobals, rec(
 ));
 
 
+_promote1 := t >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(t1));
+
+
+# this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOpts := function(conf, t)
-    return FFTXGlobals.getOpts(conf);
+    local tt, _tt, _conf, _opts;
+    
+    if conf = FFTXDefaultConf then 
+        # promote with default conf rules
+        tt := _promote1(t);
+
+        if ObjId(tt) = TFCall then
+            _tt := tt.params[1];
+            # check for convolution
+            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
+                _conf := FFTXGlobals.mdRConv();
+                _opts := FFTXGlobals.getOpts(_conf);
+                return _opts;
+            fi;
+            # check for Hockney. This is for N=128
+            if ObjId(_tt) = IOPrunedMDRConv then
+                _conf := FFTXGlobals.defaultHockneyConf(rec(globalUnrolling := 16, prunedBasemaxSize := 7));
+                _opts := FFTXGlobals.getOpts(_conf);
+                return _opts;
+            fi;
+        fi;
+
+        # check for WarpX
+        _conf := FFTXGlobals.defaultWarpXConf();
+        _opts := FFTXGlobals.getOpts(_conf);
+        tt := _opts.preProcess(t);
+        if ObjId(tt) = TFCall and ObjId(tt.params[1]) = TCompose then
+            _tt := tt.params[1].params[1];
+            # detect promoted WarpX
+            if IsList(_tt) and Length(_tt) = 3 and List(_tt, ObjId) = [ TNoDiagPullinRight, TRC, TNoDiagPullinLeft ] then
+                return _opts;
+            fi;
+        fi;
+        # we are doing nothing special
+        return FFTXGlobals.getOpts(); 
+    fi;
+    
+    # Here we have to handle GPU configs
+    Error("Don't know how to derive opts!\n");
 end; 
 
 

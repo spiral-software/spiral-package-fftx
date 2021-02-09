@@ -35,6 +35,18 @@ RewriteRules(RulesFFTXPromoteNT, rec(
             ipat := List(@(9).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
         [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, true) ])),
         
+# This is one mega promotion rule for Hockney that needs to be broken apart after MDRConv and/or PrunedMDRDFT is introduced
+    Hockney_hack2 := ARule(Compose, [[@(6, Gath), @(8,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))],
+                                     @(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,RCDiag), @(4, FData), @(5,I)], 
+                                     @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1),
+                                     [@(7, Scat), @(9,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))]],
+        e-> let(ii := Ind(Rows(@(2).val)),
+            sym := @(2).val.element.var,
+            symf := Lambda(ii, nth(sym,ii)),
+            opat := List(@(8).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
+            ipat := List(@(9).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
+        [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, true) ])),
+        
 # DAG to Compose rules
     DAG_collapse1 := Rule([@(1, TDAG), ..., @(2, TDAGNode, e->ForAny(Drop(@(1).val.params[1], 1), k->k.params[3] = e.params[2])), ...], 
         e->  let(nbr := Filtered(@(1).val.params[1], k->k.params[3] = @(2).val.params[2])[1], 

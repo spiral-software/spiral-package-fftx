@@ -1,9 +1,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confWarpXCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
-opts.printRuleTree := true;
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 t := let(name := "warpx",
     n := 80,
@@ -109,9 +109,13 @@ t := let(name := "warpx",
             [boxBig0, boxBig1, boxBig2, boxBig3]        
         ), 
         rec(XType := TPtr(TPtr(TReal)), YType := TPtr(TPtr(TReal)), fname := name, params := [symvar ])
-    ).withTags(opts.tags)
+    )
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
 PrintTo("warpx80.cu", opts.prettyPrint(c));

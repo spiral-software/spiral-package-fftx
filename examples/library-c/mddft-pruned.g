@@ -3,8 +3,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultConf();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 szns := [6, 4, 8];
 sznzs := 2;
@@ -20,10 +19,13 @@ t := let(ns := szns,
     TFCall(TRC(When(fwd,
         Compose(MDDFT(ns, k), ZeroEmbedBox(ns, ppat)),
         Compose(ExtractBox(ns, ppat), MDDFT(ns, k))
-    )), rec(fname := name, params := [])).withTags(opts.tags)
+    )), rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 

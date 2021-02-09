@@ -3,8 +3,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confBatchFFTCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 n := 2;
 N := 2;
@@ -21,10 +22,12 @@ iz := Ind(zdim);
 t := let(
     name := "grid_dft",
     TFCall(TRC(TMap(DFT(N, -1), [iz, iy, ix], AVec, AVec)), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+        rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
-opts.prettyPrint(c);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
 
+c := opts.fftxGen(tt);
+opts.prettyPrint(c);
 

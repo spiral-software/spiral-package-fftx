@@ -3,12 +3,12 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultConf();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 #szns := [2, 3];
 szns := [2, 3, 4];
 
+# FIXME: THIS IS NOT YET WORKING
 Xcmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), X);
 Ycmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), Y);
 
@@ -21,10 +21,14 @@ t := let(ns := szns,
         TDAG([
             TDAGNode(TRC(MDDFT(ns, k)), Ycmj, Xcmj)
         ]), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+        rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
 
 

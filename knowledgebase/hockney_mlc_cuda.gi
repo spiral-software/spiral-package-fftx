@@ -256,7 +256,8 @@ end;
 
 
 Class(HockneyMlcCUDADeviceOpts, TitanVDefaults, rec(
-    operations := rec(Print := s -> Print("<Hockney MLC CUDA Device options record>"))    
+    operations := rec(Print := s -> Print("<Hockney MLC CUDA Device options record>")),
+    tagIt := (self, t) >> t.withTags(self.tags)
 ));
 
 

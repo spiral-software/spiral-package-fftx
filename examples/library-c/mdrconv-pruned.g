@@ -7,8 +7,7 @@ ImportAll(fftx);
 # use the configuration for small mutidimensional real convolutions
 # later we will have to auto-derive the correct options class
 
-conf := FFTXGlobals.defaultHockneyConf(rec(globalUnrolling := 16, prunedBasemaxSize := 7));
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 d := 3;
 n := 128;
@@ -28,15 +27,13 @@ t := let(name := name,
             MDPRDFT(Replicate(d, n), -1), 
             ZeroEmbedBox(Replicate(d, n), Replicate(d, [0..ns-1]))]),
         rec(fname := name, params := [symvar])
-    ).withTags(opts.tags)
+    )
 );
 
-#tt := opts.preProcess(t);
-#rt := opts.search(tt);
-#s := opts.sumsRuleTree(rt);
-#c:= opts.codeSums(s);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
 
-c := opts.fftxGen(t);
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo("name"::".c", opts.prettyPrint(c));
 

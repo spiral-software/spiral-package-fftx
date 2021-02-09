@@ -3,8 +3,7 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.defaultConf();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.defaultConf();
 
 szns := [5, 4, 8];
 
@@ -14,10 +13,13 @@ t := let(ns := szns,
     k := -1,
     dft := When(true, MDPRDFT, IMDPRDFT),
     name := dft.name::StringInt(Length(ns))::"d",  
-    TFCall(dft(ns, k), rec(fname := name, params := [])).withTags(opts.tags)
+    TFCall(dft(ns, k), rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 

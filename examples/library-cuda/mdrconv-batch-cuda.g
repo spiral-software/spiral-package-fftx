@@ -3,8 +3,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confWarpXCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 nbatch := 16;
 szcube := 80;
@@ -16,15 +17,13 @@ t := let(batch := nbatch,
     ns := [szcube, szcube, szcube],
     name := "rconv"::StringInt(Length(ns))::"d", symvar := var("sym", TPtr(TReal)), 
     TFCall(TTensorI(IMDPRDFT(ns, 1) * RCDiag(FDataOfs(symvar, 2*Product(DropLast(ns, 1))* (Last(ns)/2+1), 0)) * MDPRDFT(ns, -1), batch, apat, apat), 
-        rec(fname := name, params := [symvar])).withTags(opts.tags)
+        rec(fname := name, params := [symvar]))
 );
 
-tt := opts.preProcess(t);
-rt := opts.search(tt);
-s := opts.sumsRuleTree(rt);
-##  PrintTo("s-bmdrconv-cuda.g", s);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
 
-c := opts.codeSums(s);
-##  PrintTo("bmdrconv80.cu", opts.prettyPrint(c));
+c := opts.fftxGen(tt);
+opts.prettyPrint(c);
 
 PrintLine("mdrconv-batch-cuda: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");

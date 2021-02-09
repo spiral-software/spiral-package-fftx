@@ -1,8 +1,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confHockneyMlcCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 n := 130;
 ns := 33;
@@ -20,10 +21,13 @@ t := let(name := "hockney"::StringInt(n)::"_"::StringInt(nd)::"_"::StringInt(ns)
             MDPRDFT([n,n,n], -1), 
             ZeroEmbedBox([n,n,n], [[0..ns-1],[0..ns-1],[0..ns-1]])]),
         rec(fname := name, params := [symvar])
-    ).withTags(opts.tags)
+    )
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 PrintLine("hockney-mlc-cuda: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");
