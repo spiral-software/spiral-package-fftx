@@ -96,7 +96,7 @@ ParseOpts := function(conf, t)
     
     if conf = FFTXDefaultConf then 
         # promote with default conf rules
-        tt := _promote1(t);
+        tt := _promote1(Copy(t));
 
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
@@ -117,7 +117,7 @@ ParseOpts := function(conf, t)
         # check for WarpX
         _conf := FFTXGlobals.defaultWarpXConf();
         _opts := FFTXGlobals.getOpts(_conf);
-        tt := _opts.preProcess(t);
+        tt := _opts.preProcess(Copy(t));
         if ObjId(tt) = TFCall and ObjId(tt.params[1]) = TCompose then
             _tt := tt.params[1].params[1];
             # detect promoted WarpX
