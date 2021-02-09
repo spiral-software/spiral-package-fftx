@@ -3,8 +3,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confBatchFFTCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 nbatch := 2;
 szcube := 80;
@@ -18,11 +19,12 @@ t := let(batch := nbatch,
     k := -1,
     name := dft.name::StringInt(Length(ns))::"d_batch",  
     TFCall(TTensorI(dft(ns, k), batch, apat, apat), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+        rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
-
-
 

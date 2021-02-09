@@ -3,8 +3,9 @@
 Load(fftx);
 ImportAll(fftx);
 
-conf := FFTXGlobals.confFFTCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 d := 3;
 szcube := 4;
@@ -14,10 +15,13 @@ PrintLine("mddft-cuda: d = ", d, " cube = ", szcube, "^3;\t\t##PICKME##");
 
 t := let(ns := Replicate(3, szcube),
     TFCall(MDDFT(ns, 1), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+        rec(fname := name, params := []))
 );
 
-c := opts.fftxGen(t);
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo(name::".c", opts.prettyPrint(c));
 

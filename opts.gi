@@ -89,6 +89,7 @@ Class(FFTXGlobals, rec(
 
 _promote1 := t >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(t1));
 
+
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOpts := function(conf, t)
     local tt, _tt, _conf, _opts;
