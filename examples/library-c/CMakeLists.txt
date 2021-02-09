@@ -22,7 +22,7 @@ set ( _cpu_examples
       mddft-colmajor.g
       mddft.g
       mddft-pruned.g
-      mddft-rowmajor.g
+##      mddft-rowmajor.g
       mdprdft-batch.g
       mdprdft.g
       mdprdft-pruned.g
