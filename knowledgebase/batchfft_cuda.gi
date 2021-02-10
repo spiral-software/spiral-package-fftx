@@ -35,7 +35,7 @@ batchFftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.breakdownRules.TRC := [TRC_SIMT];
     opts.breakdownRules.MDDFT := [ MDDFT_Base, CopyFields(MDDFT_tSPL_RowCol, rec(switch := true)), MDDFT_RowCol, MDDFT_RowCol_3D_SIMT];
     opts.breakdownRules.TTensor := [ AxI_IxB, IxB_AxI ];
-    opts.breakdownRules.TTensorI := [ IxA_SIMT,  AxI_SIMT ];
+    opts.breakdownRules.TTensorI := [ IxA_SIMT,  AxI_SIMT, trivialLoop ];
     opts.breakdownRules.TSparseMat := [CopyFields(TSparseMat_base, rec(max_rows := 1)), TSparseMat_VStack];
     
     opts.globalUnrolling := 23;
