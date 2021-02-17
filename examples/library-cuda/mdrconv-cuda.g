@@ -16,7 +16,6 @@ sizes := [
      [ 96, 96, 320],
 ];
 
-szcube := sizes[1];
 for szcube in sizes do
     var.flush();
     d := Length(szcube);
