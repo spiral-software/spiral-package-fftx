@@ -7,22 +7,47 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-d := 3;
-szcube := 4;
-name := "mdprdft"::StringInt(d)::"d";
+sizes := [
+     [ 4, 4, 4],
+     [ 80, 80, 80 ],
+     [ 100, 100, 100],
+     [ 224, 224, 100],
+     [ 96, 96, 320],
+];
 
-PrintLine("mdprdft-cuda: d = ", d, " cube = ", szcube, "^3;\t\t##PICKME##");
+#fwd := true;
+fwd := false;
 
-t := let(ns := Replicate(3, szcube),
-    TFCall(MDPRDFT(ns, 1), 
-        rec(fname := name, params := []))
-);
+if fwd then
+    prdft := MDPRDFT;
+    k := 1;
+else
+    prdft := IMDPRDFT;
+    k := -1;
+fi;
 
-opts := conf.getOpts(t);
-tt := opts.tagIt(t);
 
-c := opts.fftxGen(tt);
-opts.prettyPrint(c);
-PrintTo(name::".c", opts.prettyPrint(c));
+for szcube in sizes do
+    var.flush();
+    d := Length(szcube);
+    
+    name := "mdprdft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
+    
+    PrintLine("mdprdft-cuda: d = ", d, " cube = ", szcube, ";\t\t##PICKME##");
+
+    t := TFCall(ApplyFunc(prdft, [szcube, k]), 
+            rec(fname := name, params := []));
+    
+    opts := conf.getOpts(t);
+    tt := opts.tagIt(t);
+    
+    c := opts.fftxGen(tt);
+    opts.prettyPrint(c);
+    PrintTo(name::".c", opts.prettyPrint(c));
+od;
+
+
+
+
 
 
