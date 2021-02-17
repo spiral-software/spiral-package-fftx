@@ -124,7 +124,7 @@ ParseOptsCUDA := function(conf, t)
             _tt := tt.params[1];
             # check for convolution
             if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
-                _conf := FFTXGlobals.confFFTCUDADevice();
+                _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
                 return _opts;
             fi;
