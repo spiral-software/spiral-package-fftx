@@ -43,11 +43,5 @@ for szcube in sizes do
     
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
-    PrintTo(name::".c", opts.prettyPrint(c));
+    PrintTo(name::".cu", opts.prettyPrint(c));
 od;
-
-
-
-
-
-

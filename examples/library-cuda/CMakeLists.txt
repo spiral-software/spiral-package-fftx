@@ -19,6 +19,7 @@ set ( GPU_EXAMPLES_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 set ( _gpu_examples
       dft-batch-cuda.g
       imdprdft-cuda.g
+      mddft-cuda.g
       mddft-batch-cuda.g
       mdprdft-batch-cuda.g
       mdprdft-cuda.g
