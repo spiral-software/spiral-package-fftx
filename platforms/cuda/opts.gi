@@ -122,12 +122,12 @@ ParseOptsCUDA := function(conf, t)
 
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
-#            # check for convolution
-#            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
-#                _conf := FFTXGlobals.mdRConv();
-#                _opts := FFTXGlobals.getOpts(_conf);
-#                return _opts;
-#            fi;
+            # check for convolution
+            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
+                _conf := FFTXGlobals.confFFTCUDADevice();
+                _opts := FFTXGlobals.getOpts(_conf);
+                return _opts;
+            fi;
             # check for Hockney. This is for N=130
             if ObjId(_tt) = IOPrunedMDRConv  and _tt.params[1] = [130,130,130] then
                 _conf := FFTXGlobals.confHockneyMlcCUDADevice();

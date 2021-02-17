@@ -48,7 +48,7 @@ Class(TDAG, TCompose, rec(
         fi;
         # self.canonizeParams(); ??
         self.dimensions := self.dims();
-    end
+    end,
     
 ));
 
