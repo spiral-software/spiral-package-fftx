@@ -138,7 +138,11 @@ HockneyMLC_fftxGen := function(t, opts)
     n2 := tt.params[1].params[1][1];
     ns3 := Length(tt.params[1].params[6][1]);
     ns2 := Length(tt.params[1].params[6][1]);
-    opts.symbol := [symbl];    
+    opts.symbol := [symbl];
+
+	if IsBound(tt.params[2].fname) then
+	   opts.cudasubName := tt.params[2].fname;
+	fi;
     
     # code gen script
     rtb := RuleTreeMid(tb, opts);

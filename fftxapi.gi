@@ -86,7 +86,13 @@ Class(FFTXGenMixin, rec(
                    end,
                    
     fftxGen := meth(self, t) 
-                   local tt, rt, c, s;    
+                   local tt, rt, c, s, r;
+				   if Length(t.params) > 1 then
+				       r := t.params[2];
+					   if IsRec(r) and IsBound(r.fname) then
+					      self.cudasubName := r.fname;
+					   fi;
+				   fi;
                    tt := self.preProcess(t);
                    rt := self.search(tt);
                    s := self.sumsRuleTree(rt);
