@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Load(fftx);
 ImportAll(fftx);
 
@@ -5,14 +9,16 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-t := let(name := "warpx",
-    n := 80,
-    np := n+1,
-    inFields := 11,
-    outFields := 6,
+prefix := "warpx_cuda";     ##  PICKME #define CUDAFUNCNAME warpx_cuda
+
+t := let(name := prefix,
+    n := 80,                ##  PICKME #define cubeN 80
+    np := n+1,              ##  PICKME #define cubeNP (cubeN + 1)
+    inFields := 11,         ##  PICKME #define INFIELDS 11
+    outFields := 6,         ##  PICKME #define OUTFIELDS 6
 
     nf := n + 2,
-    xdim := nf/2,
+    xdim := nf/2,           ##  PICKME #define cubeNF ((cubeN + 2)/2)     // C code wants xdim
     ydim := n,
     zdim := n,
 
@@ -115,7 +121,12 @@ t := let(name := "warpx",
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
+if IsBound(opts) then
+    opts.includes := [ "\"CudaWarpXConst.h\"" ];
+fi;
+
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
-PrintTo("warpx80.cu", opts.prettyPrint(c));
+codefile := prefix::"_80.cu";            ##  PICKME #define CODEFILE "warpx_cuda_80.cu"
+PrintTo(codefile, opts.prettyPrint(c));
