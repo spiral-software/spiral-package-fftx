@@ -125,7 +125,7 @@ M_PI := d_acos(-1);
 _cplx := (r,i) -> cxpack(r,i);
 _imag := i -> cxpack(0, i);
 
-TMapPar := (krn, dims) -> When(Length(dims) = 0, krn, TTensorInd(TMapPar(krn, Drop(dims, 1)), dims[1], APar, APar));
+TMapPar := (krn, dims) -> When(Length(dims) = 0, krn, let(tti := When(IsVar(dims[1]), TTensorInd, TTensorI), ApplyFunc(tti, [TMapPar(krn, Drop(dims, 1)), dims[1], APar, APar])));
 TMap := (krn, dims, al, ar) -> TCompose(
     When(al = AVec, [TL(Product(List(dims, i->i.range)) * Rows(krn), Rows(krn), 1, 1)], []) ::
     [ TMapPar(krn, dims)] ::
