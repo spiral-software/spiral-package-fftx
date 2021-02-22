@@ -96,8 +96,13 @@ add_custom_target ( Name.${PROJECT_NAME}.build_srcs ALL
 
 add_executable		   ( ${PROJECT} ${SOURCES} )   ##  ${_gpuFileName} ${_cpuFileName} 
 add_dependencies           ( ${PROJECT} Name.${PROJECT_NAME}.build_srcs )
+
 target_compile_definitions ( ${PROJECT} PRIVATE ${ADDL_COMPILE_FLAGS} )
 target_compile_options     ( ${PROJECT} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )
+if ( NOT WIN32 )
+    target_compile_options ( ${PROJECT} PRIVATE -ccbin=${CMAKE_CXX_COMPILER} )
+endif ()
+
 set_property        ( TARGET ${PROJECT} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
 target_link_libraries	   ( ${PROJECT} ${LIBS_FOR_CUDA} )
 
