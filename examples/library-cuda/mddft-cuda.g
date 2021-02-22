@@ -9,10 +9,10 @@ conf := LocalConfig.fftx.confGPU();
 
 sizes := [
      [ 4, 4, 4],
-     [ 80, 80, 80 ],
+     [ 96, 96, 320],
      [ 100, 100, 100],
      [ 224, 224, 100],
-     [ 96, 96, 320],
+     [ 80, 80, 80 ],
 ];
 
 for szcube in sizes do
