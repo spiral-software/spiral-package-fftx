@@ -65,6 +65,12 @@ The harness program optionally includes the CPU version of the same script
 the CPU version as well as the GPU version.  If the CPU script name is omitted
 then only the GPU version is built and timed.
 
+As a specific example, to build and run both GPU & CPU WarpX codes use the
+following command line:
+```
+python runtest.py ../../library-cuda/warpx-cuda.g ../../library-c/warpx.g
+```
+
 ### Create a New Harness Program
 
 To create a new test harness program for a different transform or problem do the
