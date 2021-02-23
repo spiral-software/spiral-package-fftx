@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Import(fftx.platforms.cuda);
 Import(fftx.codegen);
 Import(simt);

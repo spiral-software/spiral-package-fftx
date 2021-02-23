@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # nD IO Pruned Real Convolution (aka Hockney)
 # only 3D case works, for other situations the necessary breakdown rule is missing
 

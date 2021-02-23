@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # the rule set to promote nonterminals
 Class(RulesFFTXPromoteNT, RuleSet);
 

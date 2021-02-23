@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 NewRulesFor(MDPRDFT, rec(
     #F Rule MDPRDFT_Base:  MDPRDFT -> PRDFT1
     #F

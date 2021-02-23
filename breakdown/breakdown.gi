@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 NewRulesFor(Circulant, rec(
     Circulant_PRDFT_FDataNT := rec(
     	forTransposition := false,

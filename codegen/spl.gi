@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Class(MultiPtrCodegenMixin, rec(
     GathPtr := meth(self, o, y, x, opts)
         local i, func, rfunc, ix;

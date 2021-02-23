@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 NewRulesFor(DFT, rec(
 
     DFT_PD_loop := rec(

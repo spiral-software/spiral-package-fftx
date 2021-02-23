@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 RewriteRules(RulesStrengthReduce, rec(
     mul_rv_cxpack:= Rule([@(2, mul), @(1, Value, e->(e.t = TComplex and let(vv:= im(e.v).eval(), IsValue(vv) and vv.v = 0.0)) or e.t in [TReal, TInt] ), @(3, cxpack)],
         e->let(vv := Value(TReal, re(@(1).val).eval()), cxpack(vv * @(3).val.args[1], vv * @(3).val.args[2]))),

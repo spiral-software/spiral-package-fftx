@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # 1D batch of 3D PRDFT
 
 Load(fftx);

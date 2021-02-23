@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # opts.target := rec ( name := "<cuda-target>" );
       
 meas := CMeasure(c, opts);

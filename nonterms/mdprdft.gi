@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # We are interested to see if
 # IMDPRDFT(l)*MDPRDFT(l) = Product(l)*MatSPL(Product(l));
 # because we want to see if we can recover the original REAL data.

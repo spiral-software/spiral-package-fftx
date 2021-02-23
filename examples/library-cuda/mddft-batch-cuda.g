@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # 1d batch of 1d and multidimensional of complex DFTs
 
 Load(fftx);

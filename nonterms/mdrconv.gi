@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Declare(MDRConv);
 # From IOPrunedMDRConv, signature (n,h,oblk,opat,iblk,ipat,isFreqData)
 # but this one has oblk=1, iblk=1, opat=ipat=[[0..n(1)-1], ...]

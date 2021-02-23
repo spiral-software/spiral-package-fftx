@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # FFTX Baseline options
 
 _noT := r -> CopyFields(r, rec(forTransposition := false));

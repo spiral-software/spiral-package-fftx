@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # 1d real pruned DFTs
 # we do not have the MD nonterminal implemented yet
 

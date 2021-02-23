@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Import(simt);
 
 _isSIMTTag := tag -> IsBound(tag.isSIMTTag) and tag.isSIMTTag;

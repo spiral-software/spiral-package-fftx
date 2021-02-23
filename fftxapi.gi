@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 _orderedUniquify := l-> Flat([l[1]]::List([2..Length(l)], i->When(l[i] in l{[1..i-1]}, [], [l[i]])));
 
 Class(FFTXGenMixin, rec(

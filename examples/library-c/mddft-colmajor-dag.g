@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # 2D/3D and multidimensional complex DFTs in column major (Fortran) data layout
 
 Load(fftx);

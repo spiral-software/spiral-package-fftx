@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # from FFTX C++ unparser
 Class(TFCall, Tagged_tSPL_Container, rec(
     abbrevs :=  [ (nt, cconf) -> Checked(IsSPL(nt), [nt, cconf]) ],

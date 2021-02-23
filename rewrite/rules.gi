@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 RewriteRules(RulesRC, rec(
     RC_ISumAcc := Rule([RC, @(1, ISumAcc)], e -> ISumAcc(@(1).val.var, @(1).val.domain, RC(@(1).val.child(1)))),
     RC_COND := Rule([RC, @(1, COND)], e -> ApplyFunc(COND, [ @(1).val.cond ]::List(@(1).val._children, i->RC(i)))),

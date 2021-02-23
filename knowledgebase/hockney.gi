@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 Class(HockneyOpts, FFTXConvOpts, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX Hockney options record>"))    

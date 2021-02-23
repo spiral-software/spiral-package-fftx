@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 ##
 ##  Test to run random vectors for large transforms
 ##  Show for random inputs vectors that:

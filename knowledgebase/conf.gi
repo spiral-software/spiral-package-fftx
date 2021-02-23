@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 # get “system default” as defined by SPIRAL startup scripts
 LocalConfig.defaultConf();
 

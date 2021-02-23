@@ -1,5 +1,8 @@
 #! python
 
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 ##  This script will compile and run a test program acting as a harness to test
 ##  and time spiral generated code.  It takes as arguments the spiral script
 ##  file, from which problem size and other relevant information is extracted

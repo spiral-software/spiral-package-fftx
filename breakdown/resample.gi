@@ -1,3 +1,7 @@
+
+##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  See LICENSE for details
+
 _computeNumDen := (value) -> let(
     list := Filtered([1..10000], e -> IntDouble(value * e) = value * e),
 
