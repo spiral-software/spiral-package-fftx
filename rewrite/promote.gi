@@ -58,8 +58,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
                  dn := TDAGNode(nbr.params[1] * @(2).val.params[1], nbr.params[2], @(2).val.params[3]),
                  TDAG([dn]::ch))),
     DAG_remove := Rule([@(1,TDAG), [@(2, TDAGNode), @(3), 
-            @(4).cond(e->IsList(e) and Length(e) = 1 and ObjId(e[1]) = var and e[1].id in ["Y", "Yptr"]), 
-            @(5).cond(e->IsList(e) and Length(e) = 1 and ObjId(e[1]) = var and e[1].id in ["X", "Xptr"]),
+            @(4).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["Y", "Yptr"])), 
+            @(5).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["X", "Xptr"])),
             ...],...],
         e-> @(2).val.params[1]),
         
@@ -100,7 +100,10 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
         
 # Gath * PRDFT -> PrunedIPRDFT
     Gath_PRDFT__PrunedIPRDFT := ARule(Compose, [[@(1, Gath), @(2,fAdd)], @(3, IPRDFT)],
-        e -> [PrunedIPRDFT(@(3).val.params[1], @(3).val.params[2], 1,  _toSymList(List(@(2).val.tolist(), _unwrap)))])
+        e -> [PrunedIPRDFT(@(3).val.params[1], @(3).val.params[2], 1,  _toSymList(List(@(2).val.tolist(), _unwrap)))]),
+        
+    Compose_TCompose := Rule(@@(1, Compose, (e,cx) -> IsBound(cx.TFCall) and Length(cx.TFCall) = 1 and cx.TFCall[1].hasTags()), 
+        e -> TCompose(e.children()))
 ));
 
         
