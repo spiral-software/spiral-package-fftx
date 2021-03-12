@@ -12,11 +12,11 @@ Load(fftx);
 ImportAll(fftx);
 LoadImport(fftx.platforms.power);
 
-conf := FFTXGlobals.defaultPOWER9Conf();
+conf := FFTXGlobals.defaultPOWER9OMPConf();
 
 nbatch := 4;
 szns := [16, 16, 16];
-name := "dft"::StringInt(Length(szns))::"d_batch";
+name := "dft"::StringInt(Length(szns))::"d_batch_omp";
 
 PrintLine("mddft-batch: batch = ", nbatch, " ns = ", szns, ";\t\t##PICKME##");
 
