@@ -14,7 +14,7 @@ power9Opts := function(arg)
     local opts, optrec, vsxopts;
     
     optrec := rec(dataType := T_Real(64), globalUnrolling := 32);
-    vsxopts := rec(svct := true, splitL := false, oddSizes := false, stdTTensor := true, tsplPFA := false);
+    vsxopts := rec(svct := true, splitL := false, oddSizes := false, stdTTensor := true, tsplPFA := false, realVect := false, cplxVect := true);
     
     opts := CopyFields(FFTXOpts, SIMDGlobals.getOpts(POWER9_2xf, vsxopts));
     opts.breakdownRules.TFCall := FFTXOpts.breakdownRules.TFCall;
