@@ -104,7 +104,6 @@ power9OMPOpts := function(arg)
     opts.tags := Concat([ AParSMP(smpopts.numproc, tid)  ], opts.tags);
     #----------
     opts.globalUnrolling := optrec.globalUnrolling;
-    Add(opts.includes, "\"mm_malloc.h\"");
     
     # FFTX specific breakdown rules
     opts.breakdownRules.Circulant := [Circulant_PRDFT_FDataNT];
