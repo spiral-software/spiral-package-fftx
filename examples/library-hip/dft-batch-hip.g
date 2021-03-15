@@ -8,8 +8,7 @@ Load(fftx);
 ImportAll(fftx);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
-# conf := LocalConfig.fftx.defaultConf();  
-conf := LocalConfig.fftx.confHIP();
+conf := FFTXGlobals.defaultHIPConf();
 
 n := 2;
 N := 2;

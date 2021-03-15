@@ -9,7 +9,7 @@ ImportAll(fftx);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
-conf := LocalConfig.fftx.confHIP();
+conf := FFTXGlobals.defaultHIPConf();
 
 sizes := [
      [ 4, 4, 4],
