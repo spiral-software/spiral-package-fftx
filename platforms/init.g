@@ -3,3 +3,6 @@
 ##  See LICENSE for details
 
 LoadImport(fftx.platforms.cuda);
+LoadImport(fftx.platforms.hip);
+LoadImport(fftx.platforms.ia);
+
