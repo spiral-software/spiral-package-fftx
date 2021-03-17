@@ -13,22 +13,22 @@ cmake_minimum_required (VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 ##  (e.g., configuration or sizing parameters or specific instructions for a
 ##  test like CVector).
 
-set ( _avx_examples
-      mddft-batch.g
-      mddft.g
+set ( _hip_examples
     )
 
-set ( _avx_nocheck
+set ( _hip_nocheck
+      dft-batch-hip.g
+      mddft-hip.g
     )
 
 ##  _pre_fils are files to preceed that example script; _post_fils are files to
 ##  follow the script.
 
-set ( _gpu_required_flag False )
+set ( _gpu_required_flag True )
 set ( _pre_fils "" )
 set ( _post_fils "../library-cuda/measures.g" "../library-cuda/vector-add.g" )
 
-foreach ( _example ${_avx_examples} )
+foreach ( _example ${_hip_examples} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
     RunTestTarget( ${_gpu_required_flag} ${_example} ${CMAKE_CURRENT_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
@@ -36,13 +36,13 @@ endforeach ()
 ##  Currently can't automatically check example expecting an input symbol, do codegen only
 
 set ( _post_fils "" )
-foreach ( _example ${_avx_nocheck} )
+foreach ( _example ${_hip_nocheck} )
     set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
     RunTestTarget( ${_gpu_required_flag} ${_example} ${CMAKE_CURRENT_SOURCE_DIR} ${_inp_fils} )
 endforeach ()
 
-set_tests_properties (${_avx_examples} PROPERTIES LABELS "AVX examples")
-set_tests_properties (${_avx_nocheck}  PROPERTIES LABELS "AVX examples")
+set_tests_properties (${_hip_examples} PROPERTIES LABELS "HIP examples")
+set_tests_properties (${_hip_nocheck}  PROPERTIES LABELS "HIP examples")
 
 list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 

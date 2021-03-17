@@ -45,5 +45,7 @@ endif ()
 
 add_subdirectory ( examples/library-c )
 add_subdirectory ( examples/library-cuda )
+add_subdirectory ( examples/library-avx-omp )
+add_subdirectory ( examples/library-hip )
 
 enable_testing ()
