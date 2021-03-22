@@ -138,6 +138,13 @@ ParseOptsCUDA := function(conf, t)
                 _opts := FFTXGlobals.getOpts(_conf);
                 return _opts;
             fi;
+            # check for general Hockney. 
+            if ObjId(_tt) = IOPrunedMDRConv then
+                _conf := FFTXGlobals.confMDRConvCUDADevice();
+                _opts := FFTXGlobals.getOpts(_conf);
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTGridDimX, ASIMTBlockDimZ];
+                return _opts;
+            fi;
         fi;
 
         # check for WarpX

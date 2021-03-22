@@ -60,6 +60,14 @@ NewRulesFor(MDDFT, rec(
                                [[ TTensorI(MDDFT(DropLast(a_lengths, 1), a_exp), Last(a_lengths), AVec, AVec).withTags(tags),
                                   FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), DFT(Last(a_lengths), a_exp)).withTags(tags) ]]),
         apply := (nt, C, cnt) -> C[1] * C[2]
+    ),
+    MDDFT_tSPL_Pease_SIMT := rec(
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[2],
+                               tags := nt.getTags(),
+                               [ [TCompose(List(nt.params[1], i->TTensorI(DFT(i, a_exp), Product(nt.params[1])/i, AVec, APar))).withTags(tags) ]]),
+        apply := (nt, C, cnt) -> C[1]
     )
 ));
 
@@ -223,7 +231,14 @@ NewRulesFor(TTensorI, rec(
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.params[2] = 1,
         children := nt -> [[ nt.params[1].withTags(DropLast(nt.getTags(), 1)) ]],
         apply := (nt, c, cnt) -> c[1]
-    )
+    ),
+#   L (I x A)
+    L_IxA_SIMT := rec(
+        forTransposition := false,
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecPar(nt.params) and nt.params[2] > 1,
+        children := nt -> [[ TCompose([TL(Rows(nt), nt.params[2]), TTensorI(nt.params[1], nt.params[2], APar, APar)]).withTags(nt.getTags()) ]],
+        apply := (nt, c, cnt) -> c[1]
+    ),
   
 ));
 
