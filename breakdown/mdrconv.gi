@@ -110,3 +110,20 @@ NewRulesFor(MDRConv, rec(
                             )
     )
 ));
+
+
+NewRulesFor(MDRConvR, rec(
+    MDPRConvR_Base := rec(
+        info := "MDRConv -> IMDPRDFT * Diag(sym) * MDPRDFT",
+        applicable     := nt -> nt.params[3], # need symbol to be in frequency domain
+
+        children       := nt -> [[ MDPRDFT(nt.params[1], -1).withTags(nt.getTags()),
+                                   IMDPRDFT(nt.params[1], 1).withTags(nt.getTags())
+                                 ]],
+
+        # nonterminal, children, children non-terminals
+        apply          := (nt, C, Nonterms) -> C[2] * 
+                            Diag(diagTensor(FDataOfs(nt.params[2], Product(DropLast(nt.params[1], 1))* (Last(nt.params[1])/2+1), 0), fConst(TReal, 2, 1))) *
+                            C[1]
+    )
+));

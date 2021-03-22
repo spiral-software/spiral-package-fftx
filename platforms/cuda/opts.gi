@@ -127,7 +127,7 @@ ParseOptsCUDA := function(conf, t)
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
             # check for convolution
-            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
+            if (ObjId(_tt) in [MDRConv, MDRConvR]) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
                 return _opts;
