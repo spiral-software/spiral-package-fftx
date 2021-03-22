@@ -19,7 +19,8 @@ sizes := [
      [ 80, 80, 80 ],
 ];
 
-szcube := sizes[4];
+i := 1;
+szcube := sizes[i];
 var.flush();
 d := Length(szcube);
 
@@ -31,7 +32,33 @@ t := TFCall(MDDFT(szcube, 1),
     rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
+
+Import(fftx.platforms.cuda);
+Import(simt);
+
+opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+#opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimZ, ASIMTBlockDimY, ASIMTBlockDimX];
+
+opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
+opts.tags := [ASIMTKernelFlag(ASIMTGridDimX)];
+
+
+opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
+opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true))]::opts.breakdownRules.DFT;
+
 tt := opts.tagIt(t);
+
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
+xx := FindUnexpandableNonterminal(_tt, opts);
+
+spl := SPLRuleTree(rt);
+
+tm := MatSPL(_tt);
+sm := MatSPL(spl);
+InfinityNormMat(tm-sm);
+
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
