@@ -127,7 +127,7 @@ ParseOptsCUDA := function(conf, t)
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
             # check for convolution
-            if (ObjId(_tt) = MDRConv) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) = MDRConv)) then 
+            if (ObjId(_tt) in [MDRConv, MDRConvR]) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
                 return _opts;
@@ -136,6 +136,13 @@ ParseOptsCUDA := function(conf, t)
             if ObjId(_tt) = IOPrunedMDRConv  and _tt.params[1] = [130,130,130] then
                 _conf := FFTXGlobals.confHockneyMlcCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
+                return _opts;
+            fi;
+            # check for general Hockney. 
+            if ObjId(_tt) = IOPrunedMDRConv then
+                _conf := FFTXGlobals.confMDRConvCUDADevice();
+                _opts := FFTXGlobals.getOpts(_conf);
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimY), ASIMTGridDimX, ASIMTBlockDimZ];
                 return _opts;
             fi;
         fi;

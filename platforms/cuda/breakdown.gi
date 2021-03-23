@@ -60,6 +60,14 @@ NewRulesFor(MDDFT, rec(
                                [[ TTensorI(MDDFT(DropLast(a_lengths, 1), a_exp), Last(a_lengths), AVec, AVec).withTags(tags),
                                   FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), DFT(Last(a_lengths), a_exp)).withTags(tags) ]]),
         apply := (nt, C, cnt) -> C[1] * C[2]
+    ),
+    MDDFT_tSPL_Pease_SIMT := rec(
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[2],
+                               tags := nt.getTags(),
+                               [ [TCompose(List(nt.params[1], i->TTensorI(DFT(i, a_exp), Product(nt.params[1])/i, AVec, APar))).withTags(tags) ]]),
+        apply := (nt, C, cnt) -> C[1]
     )
 ));
 
@@ -222,6 +230,21 @@ NewRulesFor(TTensorI, rec(
         forTransposition := false,
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.params[2] = 1,
         children := nt -> [[ nt.params[1].withTags(DropLast(nt.getTags(), 1)) ]],
+        apply := (nt, c, cnt) -> c[1]
+    ),
+#   L (I x A)
+    L_IxA_SIMT := rec(
+        forTransposition := false,
+        
+        # these config parameters need to be moved into the opts...
+        mem := 1024*96,
+        mem_per_pt := 2*8*2*2,
+        max_threads := 2048,
+        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), f -> f < self.mem))/(self.mem_per_pt*n),
+        
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecPar(nt.params) and nt.params[2] > 1,
+        children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
+            [[ TCompose([TL(Rows(nt), nt.params[2]), TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar)]).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     )
   

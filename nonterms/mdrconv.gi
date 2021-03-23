@@ -58,3 +58,8 @@ Class(MDRConv, TaggedNonTerminal, rec(
                                  fUnk(self.a_h().range(),
                                  self.a_h().domain())]::Drop(self.params, 2))
 ));
+
+
+# used to represent convolution with real valued conjugate even symbol
+Class(MDRConvR, MDRConv);
+
