@@ -37,6 +37,7 @@ Import(fftx.platforms.cuda);
 Import(simt);
 
 opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
 #opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimZ, ASIMTBlockDimY, ASIMTBlockDimX];
 #opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
 opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
@@ -48,14 +49,14 @@ opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter :
 
 tt := opts.tagIt(t);
 
-#_tt := opts.preProcess(tt);
-#rt := opts.search(_tt);
-#
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
 ##xx := FindUnexpandableNonterminal(_tt, opts);
 #
 #spl := SPLRuleTree(rt);
-#s := opts.sumsRuleTree(rt);
-#c:= opts.codeSums(s);
+#ss := opts.sumsRuleTree(rt);
+#c:= opts.codeSums(ss);
 #opts.prettyPrint(c);
 #
 #
@@ -68,6 +69,11 @@ tt := opts.tagIt(t);
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));
+
+PrintTo(name::".rt.g", c.ruletree);
+
+ss := opts.sumsRuleTree(c.ruletree);
+PrintTo(name::".ss.g", ss);
 
 
 ##-------------------
