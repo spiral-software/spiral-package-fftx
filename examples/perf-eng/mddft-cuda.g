@@ -19,7 +19,7 @@ sizes := [
      [ 80, 80, 80 ],
 ];
 
-i := 4;
+i := 2;
 szcube := sizes[i];
 var.flush();
 d := Length(szcube);
@@ -47,6 +47,8 @@ opts.globalUnrolling := 33;
 opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
 opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [10, 14, 16])))]::opts.breakdownRules.DFT;
 
+opts.unparser.simt_synccluster := opts.unparser.simt_syncblock;
+
 tt := opts.tagIt(t);
 
 _tt := opts.preProcess(tt);
@@ -54,8 +56,8 @@ rt := opts.search(_tt);
 
 ##xx := FindUnexpandableNonterminal(_tt, opts);
 #
-#spl := SPLRuleTree(rt);
-#ss := opts.sumsRuleTree(rt);
+spl := SPLRuleTree(rt);
+ss := opts.sumsRuleTree(rt);
 #c:= opts.codeSums(ss);
 #opts.prettyPrint(c);
 #
@@ -74,6 +76,8 @@ PrintTo(name::".rt.g", c.ruletree);
 
 ss := opts.sumsRuleTree(c.ruletree);
 PrintTo(name::".ss.g", ss);
+
+PrintTo(name::".spl.g", spl);
 
 
 ##-------------------

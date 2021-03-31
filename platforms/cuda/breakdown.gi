@@ -238,13 +238,16 @@ NewRulesFor(TTensorI, rec(
         
         # these config parameters need to be moved into the opts...
         mem := 1024*96,
-        mem_per_pt := 2*8*2*2,
+        mem_per_pt := 2*8*2,
         max_threads := 2048,
         _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), f -> f < self.mem))/(self.mem_per_pt*n),
         
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecPar(nt.params) and nt.params[2] > 1,
         children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
-            [[ TCompose([TL(Rows(nt), nt.params[2]), TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar)]).withTags(nt.getTags()) ]]),
+            [[ TCompose([TL(Rows(nt)/peelof, n, 1, peelof), 
+                TTensorI(
+                    TCompose([TL(Rows(nt.params[1]) * peelof, Rows(nt.params[1])), TTensorI(nt.params[1], peelof, APar, APar)]),
+                    remainder, APar, APar)]).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     )
   
