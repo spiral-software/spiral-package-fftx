@@ -2,6 +2,11 @@
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
 
+Import(simt);
+
+_HPCSupportedSizesCUDA := [100, 224];
+
+
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX CUDA options record>")),    
@@ -118,6 +123,23 @@ ParseOptsCUDA := function(conf, t)
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
+
+            # opts for high performance CUDA cuFFT
+            if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+                _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                
+                _opts.globalUnrolling := 33;
+                
+                _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [10, 14, 16])))]::_opts.breakdownRules.DFT;
+                
+                _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+
+            fi;
+            
             return _opts;
         fi;
     
