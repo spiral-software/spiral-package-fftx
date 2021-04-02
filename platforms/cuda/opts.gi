@@ -4,9 +4,6 @@
 
 Import(simt);
 
-_HPCSupportedSizesCUDA := [100, 224];
-
-
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX CUDA options record>")),    
@@ -98,7 +95,12 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _conf, _opts;
+    local tt, _tt, _conf, _opts, _HPCSupportedSizesCUDA;
+    
+    # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
+    # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
+
+    _HPCSupportedSizesCUDA := [80, 96, 100, 224]; #, 320];
     
     if IsBound(conf.useCUDADevice) then 
         # detect real MD convolution
@@ -133,7 +135,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.globalUnrolling := 33;
                 
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
-                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [10, 14, 16])))]::_opts.breakdownRules.DFT;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [8..16])))]::_opts.breakdownRules.DFT;
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");

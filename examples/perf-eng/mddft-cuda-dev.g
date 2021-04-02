@@ -12,14 +12,13 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 sizes := [
-     [ 4, 4, 4],
      [ 96, 96, 320],
      [ 100, 100, 100],
      [ 224, 224, 100],
      [ 80, 80, 80 ],
 ];
 
-i := 3;
+i := 2;
 szcube := sizes[i];
 var.flush();
 d := Length(szcube);
@@ -45,7 +44,7 @@ opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
 opts.globalUnrolling := 33;
 
 opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
-opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [10, 14, 16])))]::opts.breakdownRules.DFT;
+opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [8..20])))]::opts.breakdownRules.DFT;
 
 opts.unparser.simt_synccluster := opts.unparser.simt_syncblock;
 
