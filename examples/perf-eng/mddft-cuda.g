@@ -12,7 +12,7 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 sizes := [
-#     [ 96, 96, 320],
+     [ 96, 96, 320],
      [ 100, 100, 100],
      [ 224, 224, 100],
      [ 80, 80, 80 ],
@@ -30,10 +30,10 @@ for szcube in sizes do
         rec(fname := name, params := []));
     
     opts := conf.getOpts(t);
-    PrintLine("DEBUG: opts = ", opts);
+#    PrintLine("DEBUG: opts = ", opts);
 
     tt := opts.tagIt(t);
     c := opts.fftxGen(tt);
-    #opts.prettyPrint(c);
+    opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
 od;
