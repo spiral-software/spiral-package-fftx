@@ -44,14 +44,20 @@ endif ()
 ##  Subdirectories holding examples
 
 add_subdirectory ( examples/library-c )
-add_subdirectory ( examples/library-cuda )
 
-find_package (OpenMP)
-if (${OpenMP_FOUND})
+string (COMPARE EQUAL "${CMAKE_HOST_SYSTEM_PROCESSOR}" "ppc64le" PPC_LINUX)
+if ( NOT ${PPC_LINUX} )
+    ##  ppc64le (summit) - don't run GPU examples from login node
+    add_subdirectory ( examples/library-cuda )
+endif ()
+
+find_package ( OpenMP )
+if ( ${OpenMP_FOUND} )
     ##  OpenMP support found
-    string (COMPARE EQUAL "${CMAKE_HOST_SYSTEM_PROCESSOR}" "armv7l" ARM_LINUX)
-    if (NOT ${ARM_LINUX})
-	##  Don't generate for ARM, no SIMD support
+    string ( COMPARE EQUAL "${CMAKE_HOST_SYSTEM_PROCESSOR}" "AMD64" INTEL_WIN )
+    string ( COMPARE EQUAL "${CMAKE_HOST_SYSTEM_PROCESSOR}" "x86_64" INTEL_LINUX )
+    if ( ${INTEL_LINUX} OR ${INTEL_WIN} )
+	##  Intel architecture, include the AVX/OMP tests
 	add_subdirectory ( examples/library-avx-omp )
     endif ()
 endif ()
