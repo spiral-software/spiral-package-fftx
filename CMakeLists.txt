@@ -45,7 +45,17 @@ endif ()
 
 add_subdirectory ( examples/library-c )
 add_subdirectory ( examples/library-cuda )
-add_subdirectory ( examples/library-avx-omp )
+
+find_package (OpenMP)
+if (${OpenMP_FOUND})
+    ##  OpenMP support found
+    string (COMPARE EQUAL "${CMAKE_HOST_SYSTEM_PROCESSOR}" "armv7l" ARM_LINUX)
+    if (NOT ${ARM_LINUX})
+	##  Don't generate for ARM, no SIMD support
+	add_subdirectory ( examples/library-avx-omp )
+    endif ()
+endif ()
+
 add_subdirectory ( examples/library-hip )
 
 enable_testing ()
