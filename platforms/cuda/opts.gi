@@ -128,7 +128,7 @@ ParseOptsCUDA := function(conf, t)
             _opts := FFTXGlobals.getOpts(_conf);
 
             # opts for high performance CUDA cuFFT
-            if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
