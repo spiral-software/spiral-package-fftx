@@ -2,6 +2,8 @@
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
 
+Import(simt);
+
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX CUDA options record>")),    
@@ -93,7 +95,13 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _conf, _opts;
+    local tt, _tt, _conf, _opts, _HPCSupportedSizesCUDA, _thold;
+    
+    # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
+    # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
+
+    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
+    _thold := 16;
     
     if IsBound(conf.useCUDADevice) then 
         # detect real MD convolution
@@ -118,6 +126,27 @@ ParseOptsCUDA := function(conf, t)
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
+
+            # opts for high performance CUDA cuFFT
+            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+                _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                
+                _opts.globalUnrolling := 2*_thold + 1;
+
+                _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                
+                _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+
+            fi;
+            
             return _opts;
         fi;
     
