@@ -28,8 +28,23 @@ sizes := [
      [ 80, 80, 80 ],
 ];
 
+MAX_KERNEL := 16;
+MAX_PRIME := 7;
+MIN_SIZE := 32;
+MAX_SIZE := 320;
+
+size1 := Filtered([MIN_SIZE..MAX_SIZE], n -> let(fcts := Factors(n), 
+    Maximum(fcts) <= MAX_KERNEL and 
+    ForAll(fcts, i -> IsPrime(i) and i <= MAX_PRIME)));
+
+sizes := Cartesian(Replicate(3, size1));
+
 i := 1;
-szcube := sizes[i];
+#szcube := sizes[i];
+
+szcube := Random(sizes);
+
+
 var.flush();
 d := Length(szcube);
 
