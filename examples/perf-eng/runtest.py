@@ -30,10 +30,11 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         _dimy = dims[1]
         _dimz = dims[2]
 
-        ##  Generate the SPIRAL script: cat testscript.g, mddft-cuda-frame.g, and mddft-meas.g
+        ##  Generate the SPIRAL script: cat testscript.g, mddft-cuda-frame.g,
+        ##  and mddft-meas.g (if want to call CMeasure())
         _spiralhome = os.environ.get('SPIRAL_HOME')
         _catfils = _spiralhome + '/gap/bin/catfiles.py'
-        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-cuda-frame.g mddft-meas.g'
+        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-cuda-frame.g' ## mddft-meas.g'
         result = subprocess.run ( cmdstr, shell=True, check=True )
         res = result.returncode
 

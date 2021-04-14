@@ -50,9 +50,9 @@ int main() {
 		checkCudaErrors ( cudaGetLastError () );
 	}
 	checkCudaErrors( cudaEventRecord(stop) );
+	cudaEventSynchronize(stop);
 	cudaDeviceSynchronize();
 
-//	cudaEventSynchronize(stop);
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, start, stop);
 
@@ -114,7 +114,7 @@ int main() {
 				if (!elem_correct) 
 				{
 					correct = false;
-					printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
+					// printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
 				}
 			}
 		}
