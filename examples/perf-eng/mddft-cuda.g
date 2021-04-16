@@ -12,14 +12,18 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 _stressTest := true;
+#_stressTest := false;
 _sample := 10;
 _cubic := true;
 
 if _stressTest then
     MAX_KERNEL := 16;
     MAX_PRIME := 7;
-    MIN_SIZE := 32;
+#    MIN_SIZE := 32;
+    MIN_SIZE := 256;
+#    MAX_SIZE := 256;
     MAX_SIZE := 320;
+#    MAX_SIZE := 1024;
 
     _thold := MAX_KERNEL;
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
@@ -29,15 +33,15 @@ if _stressTest then
     sizes := When(_sample = 0, sizes3, List([1.._sample], i->Random(sizes3)));
 else
     sizes := [
-     [ 96, 96, 320],
-     [ 100, 100, 100],
-     [ 224, 224, 100],
-     [ 80, 80, 80 ]
+     [128, 128, 128] 
+#     [ 96, 96, 320],
+#     [ 100, 100, 100],
+#     [ 224, 224, 100],
+#     [ 80, 80, 80 ]
     ];
 fi;
 
-
-
+sizes := [[270, 270, 270]];
 
 for szcube in sizes do
     var.flush();
