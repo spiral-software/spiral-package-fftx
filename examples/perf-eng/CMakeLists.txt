@@ -55,16 +55,17 @@ endif ()
 ##  set ( CMAKE_CUDA_ARCHITECTURES 60 61 62 70 72 75 )
 set ( CMAKE_CUDA_ARCHITECTURES 70 )
 
-add_executable		   ( ${PROJECT} ${PROJECT}.cu )
-target_compile_definitions ( ${PROJECT} PRIVATE ${ADDL_COMPILE_FLAGS} )
-target_compile_options     ( ${PROJECT} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )
+set                        (   EXE_TARGET  ${PROJECT}-${DIM_M}x${DIM_N}x${DIM_K} )
+add_executable		   ( ${EXE_TARGET} ${PROJECT}.cu )
+target_compile_definitions ( ${EXE_TARGET} PRIVATE ${ADDL_COMPILE_FLAGS} )
+target_compile_options     ( ${EXE_TARGET} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )
 ##  if ( NOT WIN32 )
 ##      target_compile_options ( ${PROJECT} PRIVATE -ccbin=${CMAKE_CXX_COMPILER} )
 ##  endif ()
 
-set_property        ( TARGET ${PROJECT} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
-target_link_libraries	   ( ${PROJECT} ${LIBS_FOR_CUDA} )
+set_property        ( TARGET ${EXE_TARGET} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
+target_link_libraries	   ( ${EXE_TARGET} ${LIBS_FOR_CUDA} )
 
 install ( TARGETS
-    ${PROJECT}
-    DESTINATION ${CMAKE_SOURCE_DIR} )
+    ${EXE_TARGET}
+    DESTINATION ${CMAKE_SOURCE_DIR}/exes )

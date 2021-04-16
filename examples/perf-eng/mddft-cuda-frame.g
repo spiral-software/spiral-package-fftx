@@ -70,5 +70,11 @@ if 1 = 1 then
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
+    PrintTo(name::".rt.g", c.ruletree);
+
+    ss := opts.sumsRuleTree(c.ruletree);
+    PrintTo(name::".ss.g", ss);
+
+    PrintTo(name::".spl.g", spl);
 fi;
 

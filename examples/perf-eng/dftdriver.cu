@@ -85,6 +85,7 @@ int main() {
 	cudaDeviceSynchronize();
 
 
+	printf("cube = [ %d, %d, %d ]\t\t ##PICKME## \n", M, N, K);
 	printf("%f\tms (SPIRAL) vs\t%f\tms (cufft), averaged over %d iterations ##PICKME## \n",
 		   milliseconds / iters, cumilliseconds / iters, iters);
  

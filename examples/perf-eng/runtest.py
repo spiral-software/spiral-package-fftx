@@ -4,16 +4,31 @@
 ##  See LICENSE for details
 
 ##  This script reads a file, cube-sizes.txt, that contains several cube size
-##  specifications for the 3D DFT.  The script will generate the CUDA code for the DFT and
-##  then compile it and run it using the spiral profiler and the DFT harness driver.
+##  specifications for the 3D DFT.  This script will:
+##      Generate a SPIRAL script using the DFT size spec
+##      Run SPIRAL to generate the CUDA code
+##      Save the generated code (to sub-directory srcs)
+##      Compile the CUDA code for the DFT (install in sub-directory exes)
+##      Build a script to run all the generated code (timescript.sh)
+##  
 
 import sys
 import subprocess
-import os
+import os, stat
 import re
+import shutil
 
 _inclfile = 'mddft3d.cu'
 _funcname = 'mddft3d'
+_timescript = 'timescript.sh'
+
+##  Setup 'empty' tiing script
+timefd = open ( _timescript, 'w' )
+timefd.write ( '#! /bin/bash \n\n' )
+timefd.write ( '##  Timing script to run Cuda code for various transform sizes \n\n' )
+timefd.close()
+_mode = stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
+os.chmod ( _timescript, _mode )
 
 with open ( 'cube-sizes.txt', 'r' ) as fil:
     for line in fil.readlines():
@@ -47,6 +62,36 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         result = subprocess.run ( cmdstr, shell=True, check=True )
         res = result.returncode
 
+        ##  Create the srcs directory (if it doesn't exist)
+        srcs_dir = 'srcs'
+        isdir = os.path.isdir ( srcs_dir )
+        if not isdir:
+            os.mkdir ( srcs_dir )
+
+        ##  Copy the generated CUDA source file to srcs
+        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz
+        _destfile = 'srcs/' + _funcname + _filenamestem + '.cu'
+        shutil.copy ( _inclfile, _destfile )
+
+        ##  Check if auxilliary files were generated and copy to srcs if so
+        _artifact = _funcname + '.rt.g'
+        isfile = os.path.isfile ( _artifact )         ## was ruletree generated
+        if isfile:
+            _destfile = 'srcs/' + _funcname + _filenamestem + '.rt.g'
+            shutil.copy ( _artifact, _destfile )
+
+        _artifact = _funcname + '.ss.g'
+        isfile = os.path.isfile ( _artifact )         ## was sumsruletree generated
+        if isfile:
+            _destfile = 'srcs/' + _funcname + _filenamestem + '.ss.g'
+            shutil.copy ( _artifact, _destfile )
+
+        _artifact = _funcname + '.spl.g'
+        isfile = os.path.isfile ( _artifact )         ## was SPL generated
+        if isfile:
+            _destfile = 'srcs/' + _funcname + _filenamestem + '.spl.g'
+            shutil.copy ( _artifact, _destfile )
+
         ##  Create the build directory (if it doesn't exist)
         build_dir = 'build'
         isdir = os.path.isdir ( build_dir )
@@ -77,17 +122,22 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         os.chdir ( '..' )
 
+        timefd = open ( _timescript, 'a' )
+        timefd.write ( '##  Cube = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
         if sys.platform == 'win32':
-            cmdstr = './dftdriver.exe'
+            _exename = './exes/dftdriver' + _filenamestem + '.exe'
         else:
-            cmdstr = './dftdriver'
-    
-        result = subprocess.run ( cmdstr )
-        res = result.returncode
+            _exename = './exes/dftdriver' + _filenamestem
 
-        if (res != 0):
-            print ( result )
-            sys.exit ( res )
+        timefd.write ( _exename +  '\n\n' )
+        timefd.close()
+
+        ##  Uncomment this section if you want to run (time) each DFT as it is generated
+        # result = subprocess.run ( _exename )
+        # res = result.returncode
+        # if (res != 0):
+        #     print ( result )
+        #     sys.exit ( res )
 
 sys.exit (0)
 
