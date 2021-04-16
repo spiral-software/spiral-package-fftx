@@ -179,7 +179,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
                 ApplyFunc(Compose, newc)
             ))
     );
-    
+
     #ll := Collect(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]]);
     #
     #s1 := ll[1];
@@ -197,9 +197,13 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     #
     #ss2 := SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr));
     
+    # loop distribution Y(X*X)
+    ss := SubstTopDown(Copy(ss), [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
+        e->Compose(List(@(1).val.child(1).children(), c->CopyFields(Copy(@(1).val), rec(_children := [c])))));
+    
     # normalize loop
     ss := SubstTopDown(ss, 
-        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) in [ASIMTBlockDimY, ASIMTBlockDimX]), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
         e->let(s1 := @(1).val,
             i1 := s1.var,
             i2 := s1.child(1).var,
