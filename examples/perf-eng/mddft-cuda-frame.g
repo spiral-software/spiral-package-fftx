@@ -67,14 +67,18 @@ if 1 = 1 then
     c:= opts.codeSums(ss);
     c.ruletree := rt;
 
+    opts.printRuleTree := true;
+    RandomSeed ( seedme );
+    
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
+
     PrintTo(name::".cu", opts.prettyPrint(c));
-    PrintTo(name::".rt.g", c.ruletree);
+    ##  PrintTo(name::".rt.g", c.ruletree);
 
-    ss := opts.sumsRuleTree(c.ruletree);
-    PrintTo(name::".ss.g", ss);
+    ##  ss := opts.sumsRuleTree(c.ruletree);
+    ##  PrintTo(name::".ss.g", ss);
 
-    PrintTo(name::".spl.g", spl);
+    ##  PrintTo(name::".spl.g", spl);
 fi;
 

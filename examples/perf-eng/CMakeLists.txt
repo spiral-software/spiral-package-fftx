@@ -55,7 +55,7 @@ endif ()
 ##  set ( CMAKE_CUDA_ARCHITECTURES 60 61 62 70 72 75 )
 set ( CMAKE_CUDA_ARCHITECTURES 70 )
 
-set                        (   EXE_TARGET  ${PROJECT}-${DIM_M}x${DIM_N}x${DIM_K} )
+set                        (   EXE_TARGET  ${PROJECT}-${DIM_M}x${DIM_N}x${DIM_K}-s-${RSEED} )
 add_executable		   ( ${EXE_TARGET} ${PROJECT}.cu )
 target_compile_definitions ( ${EXE_TARGET} PRIVATE ${ADDL_COMPILE_FLAGS} )
 target_compile_options     ( ${EXE_TARGET} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )

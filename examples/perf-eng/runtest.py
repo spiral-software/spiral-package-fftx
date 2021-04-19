@@ -22,7 +22,7 @@ _inclfile = 'mddft3d.cu'
 _funcname = 'mddft3d'
 _timescript = 'timescript.sh'
 
-##  Setup 'empty' tiing script
+##  Setup 'empty' timing script
 timefd = open ( _timescript, 'w' )
 timefd.write ( '#! /bin/bash \n\n' )
 timefd.write ( '##  Timing script to run Cuda code for various transform sizes \n\n' )
@@ -36,6 +36,11 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         testscript = open ( 'testscript.g', 'w' )
         testscript.write ( line )
         testscript.close()
+        _seed = re.sub ( '.*seedme :=', '', line )
+        _seed = re.sub ( ';.*', '', _seed )
+        _seed = re.sub ( ' *', '', _seed )
+        _seed = _seed.rstrip()
+        
         line = re.sub ( '.*\[', '', line )               ## drop "szcube := ["
         line = re.sub ( '\].*', '', line )               ## drop "];"
         line = re.sub ( ' *', '', line )                 ## compress out white space
@@ -69,7 +74,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
             os.mkdir ( srcs_dir )
 
         ##  Copy the generated CUDA source file to srcs
-        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz
+        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz + '-s-' + _seed
         _destfile = 'srcs/' + _funcname + _filenamestem + '.cu'
         shutil.copy ( _inclfile, _destfile )
 
@@ -102,6 +107,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
         cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
+        cmdstr = cmdstr + ' -DRSEED=' + _seed
 
         os.chdir ( build_dir )
 
