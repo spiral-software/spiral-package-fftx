@@ -25,7 +25,7 @@ c := data(sizes, Value(TArray(TInt, 3), [M, N, K]),
         assign(cu_result, fcall("cufftPlanMany", plans, 1, sizes, sizes, 1, M,
     	    sizes, (N * K) / (p1 * p2), 1, "CUFFT_Z2Z", (N * K) / (p1 * p2))),
         assign(cu_result, fcall("cufftPlanMany", plans + 1, 1, sizes + 1, sizes + 1, 1, N,
-    	    sizes + 1, (M * K) / (p1 * p2), 1, "CUFFT_Z2Z", (N * K) / (p1 * p2))),
+    	    sizes + 1, (M * K) / (p1 * p2), 1, "CUFFT_Z2Z", (M * K) / (p1 * p2))),
         assign(cu_result, fcall("cufftPlanMany", plans + 2, 1, sizes + 2, sizes + 2, 1, K,
     	    sizes + 2, (M * N) / (p1 * p2), 1, "CUFFT_Z2Z", (M * N) / (p1 * p2))),
         skip(),
@@ -41,3 +41,16 @@ PrintCode("", c, opts);
 
 PrintTo("mpi_cuFFT_MDDFT_1024x1024x1024.cu", PrintCode("", c, opts));
 
+#-------
+Load(fftx);
+ImportAll(fftx);
+ImportAll(fftx.library.cufft);
+
+M := 1024;
+N := 1024;
+K := 1024;
+p1 := 32;
+p2 := 32;
+
+
+CUFFTCall(DFT(4), False, False, False);
