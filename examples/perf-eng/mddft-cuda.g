@@ -13,16 +13,19 @@ conf := LocalConfig.fftx.confGPU();
 
 _stressTest := true;
 #_stressTest := false;
-_sample := 10;
+#_sample := 10;
+_sample := 0;
 _cubic := true;
+#_cubic := false;
 
 if _stressTest then
     MAX_KERNEL := 16;
     MAX_PRIME := 7;
-#    MIN_SIZE := 32;
-    MIN_SIZE := 256;
+    MIN_SIZE := 32;
+#    MIN_SIZE := 256;
 #    MAX_SIZE := 256;
-    MAX_SIZE := 320;
+    MAX_SIZE := 224;
+#    MAX_SIZE := 320;
 #    MAX_SIZE := 1024;
 
     _thold := MAX_KERNEL;
@@ -41,7 +44,7 @@ else
     ];
 fi;
 
-sizes := [[270, 270, 270]];
+#sizes := [[270, 270, 270]];
 
 for szcube in sizes do
     var.flush();
