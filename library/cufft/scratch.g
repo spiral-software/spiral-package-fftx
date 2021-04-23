@@ -68,6 +68,7 @@ p2 := 32;
 
 
 CUFFTCall(Tensor(L(K*M/p1, M/p1), I(N/p2)) * Tensor(I(K), L(M*N/(p1*p2), M/p1)) * Tensor(I(p1*p2), DFT(M)), 
-    False, 
-    False, 
     rec());
+
+
+TPrm(fCubeTranspose(Product([M, N, K]), 3, nt.params[1]));

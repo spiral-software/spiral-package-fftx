@@ -7,11 +7,9 @@ Class(CUFFTCall, BaseMat, SumsBase, rec(
     rChildren := self >> [self.L, self.genInitCode, self.genCallCode, self.genGlobals],
     rSetChild := rSetChildFields("L", "genInitCode", "genCallCode", "genGlobals"),
     #-----------------------------------------------------------------------
-    new := (self, L, genInitCode, genCallCode, genGlobals) >> SPL(WithBases(self,
+    new := (self, L, codegen) >> SPL(WithBases(self,
         rec(L   := L,
-            genInitCode   := genInitCode,
-            genCallCode   := genCallCode,
-            genGlobals    := genGlobals,
+            codegen   := codegen,
             dimensions     := L.dims())
     )),
 
