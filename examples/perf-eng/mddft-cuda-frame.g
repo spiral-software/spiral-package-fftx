@@ -16,69 +16,65 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-Import(fftx.platforms.cuda);
-Import(simt);
+_stressTest := true;
+#_stressTest := false;
+_sample := 10;
+_cubic := true;
 
-var.flush();
-##  szcube is specified outside this module    szcube := sizes[i];
-d := Length(szcube);
+if _stressTest then
+    MAX_KERNEL := 16;
+    MAX_PRIME := 7;
+#    MIN_SIZE := 32;
+    MIN_SIZE := 256;
+#    MAX_SIZE := 256;
+    MAX_SIZE := 320;
+#    MAX_SIZE := 1024;
 
-name := "mddft"::StringInt(d)::"d";
-PrintLine("mddft-cuda-frame: name = ", name, ", cube = ", szcube, ", size = ",
-          StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1),
-                                                                    s->" x "::StringInt(s))),
-          ";\t\t##PICKME##");
+    _thold := MAX_KERNEL;
+    filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
+    size1 := Filtered([MIN_SIZE..MAX_SIZE], i -> ForAny(DivisorPairs(i), filter) and ForAll(Factors(i), j -> not IsPrime(j) or j <= MAX_PRIME));
+   
+    sizes3 := When(_cubic, List(size1, k -> Replicate(3, k)), Cartesian(Replicate(3, size1)));
+    sizes := When(_sample = 0, sizes3, List([1.._sample], i->Random(sizes3)));
+else
+    sizes := [
+     [128, 128, 128] 
+#     [ 96, 96, 320],
+#     [ 100, 100, 100],
+#     [ 224, 224, 100],
+#     [ 80, 80, 80 ]
+    ];
+fi;
 
+##  sizes := [[270, 270, 270]];
+
+##  for szcube in sizes do
 if 1 = 1 then
+    var.flush();
+    d := Length(szcube);
+    
+    ##  name := "mddft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
+
+    name := "mddft"::StringInt(d)::"d";
+    PrintLine("mddft-cuda-frame: name = ", name, ", cube = ", szcube, ", size = ",
+              StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1),
+                                                                    s->" x "::StringInt(s))),
+              ";\t\t##PICKME##");
+    
+    ##  PrintLine("mddft-cuda: d = ", d, " cube = ", szcube, ";\t\t##PICKME##");
+    
     t := TFCall(TRC(MDDFT(szcube, 1)), 
-            rec(fname := name, params := []));
-
+                rec(fname := name, params := []));
+    
     opts := conf.getOpts(t);
-
-    opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
-    opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
-    #opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimZ, ASIMTBlockDimY, ASIMTBlockDimX];
-    #opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
-    opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
-
-
-    _thold := 16;
-    opts.globalUnrolling := 2*_thold + 1;
-
-    opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
-    #opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [8..20])))]::opts.breakdownRules.DFT;
-    opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                                                        filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::opts.breakdownRules.DFT;
-
-    opts.unparser.simt_synccluster := opts.unparser.simt_syncblock;
-
-    opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
-                                         FixUpCUDASigmaSPL_3Stage(s1, opts)); 
-
-
-    tt := opts.tagIt(t);
-
-    _tt := opts.preProcess(tt);
-    rt := opts.search(_tt);
-
-    ss := opts.sumsRuleTree(rt);
-
-
-    c:= opts.codeSums(ss);
-    c.ruletree := rt;
+    PrintLine("DEBUG: opts = ", opts);
 
     opts.printRuleTree := true;
     RandomSeed ( seedme );
-    
+
+    tt := opts.tagIt(t);
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
-
     PrintTo(name::".cu", opts.prettyPrint(c));
-    ##  PrintTo(name::".rt.g", c.ruletree);
-
-    ##  ss := opts.sumsRuleTree(c.ruletree);
-    ##  PrintTo(name::".ss.g", ss);
-
-    ##  PrintTo(name::".spl.g", spl);
 fi;
-
+##  od;
