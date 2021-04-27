@@ -163,7 +163,7 @@ end;
 
 FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     local kernels, _s, newv;
-PrintTo("ss1.g", ss);
+
     # drop grp
     ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
     
