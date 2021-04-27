@@ -179,7 +179,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
                 ApplyFunc(Compose, newc)
             ))
     );
-    
+
     #ll := Collect(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]]);
     #
     #s1 := ll[1];
@@ -197,9 +197,35 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     #
     #ss2 := SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr));
     
+    # loop distribution Y(X*X)
+    ss := SubstBottomUp(Copy(ss), [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
+        e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            Compose(List(nch, c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.var.range, c)))
+            ));
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
+
     # normalize loop
     ss := SubstTopDown(ss, 
         [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
+        e->let(s1 := @(1).val,
+            i1 := s1.var,
+            i2 := s1.child(1).var,
+            rng := i1.range * i2.range,
+            ii := Ind(rng),
+            sr := rec(
+                (i1.id) := idiv(ii, i2.range),
+                (i2.id) := imod(ii, i2.range)
+            ),
+            sdim := ASIMTBlockDimX(rng),
+            SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
+        )
+    );
+
+    ss := SubstTopDown(ss, 
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
         e->let(s1 := @(1).val,
             i1 := s1.var,
             i2 := s1.child(1).var,
