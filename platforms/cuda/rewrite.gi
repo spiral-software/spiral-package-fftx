@@ -159,9 +159,7 @@ end;
 
 
 
-
-
-FixUpCUDASigmaSPL_3Stage := function(ss, opts)
+_FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     local kernels, _s, newv;
 
     # drop grp
@@ -263,3 +261,5 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
      
     return ss;
 end;
+
+FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
