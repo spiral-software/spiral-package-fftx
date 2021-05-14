@@ -158,13 +158,24 @@ end;
 
 
 
-
 _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
+#FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     local kernels, _s, newv;
 
     # drop grp
     ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
     
+   
+    # privatize temporaries
+    ss := SubstTopDown(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))],
+        e-> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, Compose(List(nch, c->ApplyStrategy(c, opts.formulaStrategies.sigmaSpl, BUA, opts))))
+        )
+    );
+
     # parallelize and flatten loop
     ss:= let(simtidx := ASIMTBlockDimX, 
         SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
@@ -258,7 +269,6 @@ _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
         od;
         ss := Compose(kernels);
     fi;
-     
     return ss;
 end;
 
