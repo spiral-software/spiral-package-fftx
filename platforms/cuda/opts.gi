@@ -152,6 +152,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                _opts.postProcessCode := PingPong_3Stages;    
 
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
 

@@ -43,6 +43,10 @@ Class(FFTXGenMixin, rec(
                             e->Value(TReal, IntDouble(@(1).val.v))
                         );
 
+                        if IsBound(self.postProcessCode) then
+                            cc := self.postProcessCode(cc, self);
+                        fi;
+
                         cc := CopyFields(tags, cc);
                         return cc;
                     end,

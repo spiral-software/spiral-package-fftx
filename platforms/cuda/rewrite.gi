@@ -272,4 +272,47 @@ _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     return ss;
 end;
 
+
+PingPong_3Stages := function(c, opts)
+    local cands, candvars, outvars, invars, in_loops, substvars, link_loops, linkvars, link_func, subst_list, substrec;
+    
+    cands := Collect(c, @(1, specifiers_func, e -> Collect(e, @(2, decl, f -> Length(f.vars) = 2 and ForAll(f.vars, k -> ObjId(k.t) = TArray))) <> []));
+    candvars := chain(cands).free()::[X, Y];
+
+    if Length(cands) > 0 then
+        outvars := Filtered([Y]::Flat(List(Collect(c, @@(1, decl,
+            (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
+                       (not IsBound(cx.func) or cx.func = []))), x->x.vars)), p -> p in candvars);
+
+        invars := Filtered([X]::Flat(List(Collect(c, @@(1, decl,
+            (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
+                       (not IsBound(cx.func) or cx.func = []))), x->x.vars)), p -> p in candvars);
+
+
+        in_loops := Collect(cands, @(1, simt_loop, e -> Collect(e.cmd, @(2,simt_loop)) = [] and
+            Collect(e.cmd, [assign, @(3), @(4, nth, f->f.loc in invars), ...]) <> []));
+
+        substvars := Set(List(Collect(in_loops, [assign, @(1, nth, e -> ObjId(e.loc.t) = TArray), ...]), f -> f.loc.loc));
+
+        link_loops := Collect(cands, @(1, simt_loop, e -> Collect(e.cmd, @(2,simt_loop)) = [] and
+            Collect(e.cmd, [assign, @(3), @(4, nth, f->f.loc in substvars), ...]) <> []));
+
+        linkvars := Set(List(Collect(link_loops, [assign, @(1, nth, e -> ObjId(e.loc.t) = TArray), ...]), f -> f.loc.loc));
+
+        link_func := v -> Set(Collect(Filtered(Collect(c, @(1, specifiers_func)),
+            e -> Collect(e.cmd, [assign, @(3), @(4, nth, f->f.loc = v), ...]) <> []), @(1, var, e-> e in outvars)))[1];
+
+        subst_list := List(substvars, vv -> [vv, link_func(vv)]);
+
+        substrec := FoldR(subst_list, (a,b) -> CopyFields(a, rec((b[1].id) := b[2])), rec());
+
+        c := SubstBottomUp(c, @(1, decl), e-> decl(Filtered(@(1).val.vars, v -> not v in substvars), @(1).val.cmd));
+        c := SubstVars(c, substrec);
+    fi;
+
+    return c;
+end;
+
+
 FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
+
