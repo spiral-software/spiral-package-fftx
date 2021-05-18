@@ -152,7 +152,8 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     FixUpCUDASigmaSPL_3Stage(s1, opts)); 
-                _opts.postProcessCode := PingPong_3Stages;    
+                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                _opts.fixUpTeslaV_Code := true;
 
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
 

@@ -44,8 +44,8 @@ else
     ];
 fi;
 
-sizes := [[270, 270, 270]];
-#sizes := [[32,32,32]];
+#sizes := [[270, 270, 270]];
+sizes := [[32,32,32]];
 
 for szcube in sizes do
     var.flush();

@@ -316,3 +316,36 @@ end;
 
 FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
 
+FixUpTeslaV_Code := function (c, opts)
+    local kernels, kernel_inits, globals, var_decls, var_dels, cx, v; 
+
+    if IsBound(opts.fixUpTeslaV_Code) and opts.fixUpTeslaV_Code then
+        kernels := List(Collect(c, specifiers_func), k->k.id);
+        kernel_inits := List(kernels, k-> call(rec(id := "INIT_KERNEL"), k));
+
+        globals := Flat(List(Collect(c, @@(1, decl, (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
+                               (not IsBound(cx.func) or cx.func = []))), x->x.vars));
+
+        var_decls := List(globals, v -> call(rec(id := "DECLARE_DEVICE_ARRAY"), v.id, sizeof(v.t.t) * v.t.size));
+        var_dels := List(globals, v -> call(rec(id := "DELETE_DEVICE_ARRAY"), v.id));
+
+        cx := chain(kernel_inits :: var_decls);
+        for v in globals do
+            v.t := TPtr(v.t.t);
+        od;
+
+        c := SubstBottomUp(c, @(1, func, f -> f.id = "init"),
+            e -> CopyFields(@(1).val, rec(cmd := chain(cx, @(1).val.cmd)))
+        );
+        c := SubstBottomUp(c, @(1, func, f -> f.id = "destroy"),
+            e -> CopyFields(@(1).val, rec(cmd := chain(chain(var_dels), @(1).val.cmd)))
+        );
+        c := SubstBottomUp(c, @(1, chain, e -> ForAny(e.cmds, e -> ObjId(e) = func and e.id = "init")),
+            e -> chain(Filtered(@(1).val.cmds, e-> ObjId(e) <> func or e.id <> "init") :: Filtered(@(1).val.cmds, e -> ObjId(e) = func and e.id = "init"))
+        );
+
+        
+    fi;
+
+    return c;
+end;
