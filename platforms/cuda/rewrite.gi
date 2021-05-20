@@ -334,7 +334,7 @@ FixUpTeslaV_Code := function (c, opts)
 
         cx := chain(kernel_inits :: var_decls);
         for v in globals do
-            v.t := TPtr(v.t.t);
+            v.t := TPtr(v.t.t, ["__device__"]);
         od;
 
         c := SubstBottomUp(c, @(1, func, f -> f.id = "init"),
