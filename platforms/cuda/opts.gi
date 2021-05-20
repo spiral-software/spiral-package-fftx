@@ -7,7 +7,9 @@ Import(simt);
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
     operations := rec(Print := s -> Print("<FFTX CUDA options record>")),    
-    max_threads := 1024
+    max_threads := 2048,
+    max_blocks := 1024,
+    max_heap := 1024 * 1024 * 1024
 ));
 
 cudaOpts := function(arg)
@@ -60,7 +62,7 @@ getTargetOS := function()
 end;
 
 #--
-Class(FFTXCUDADeviceOpts, FFTXOpts, simt.TitanVDefaults, rec(
+Class(FFTXCUDADeviceOpts, FFTXCUDAOpts, simt.TitanVDefaults, rec(
     tags := [],
     devFunc := true,
     target := rec ( name := getTargetOS() ),

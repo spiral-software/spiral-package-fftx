@@ -319,29 +319,55 @@ end;
 
 #FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
 
+
 FixUpTeslaV_Code := function (c, opts)
-    local kernels, kernel_inits, globals, var_decls, var_dels, cx, v; 
+    local kernels, kernel_inits, globals, var_decls, var_dels, cx, v, heap_init, dptr; 
 
     if IsBound(opts.fixUpTeslaV_Code) and opts.fixUpTeslaV_Code then
         kernels := List(Collect(c, specifiers_func), k->k.id);
-        kernel_inits := List(kernels, k-> call(rec(id := "INIT_KERNEL"), k));
+
+        dptr := var.fresh_t("hp", TPtr(TReal));
+
+#        kernel_inits := List(kernels, k-> call(rec(id := "INIT_KERNEL"), k));
+#        #define INIT_KERNEL(k) cudaFuncSetCacheConfig(k, cudaFuncCachePreferEqual)
+        kernel_inits := List(kernels, k-> call(rec(id := "cudaFuncSetCacheConfig"), k, "cudaFuncCachePreferEqual"));
+
+#       cudaDeviceSetLimit(cudaLimitMallocHeapSize, (DEV_MIN_HEAP_SIZE));        
+        heap_init := call(rec(id := "cudaDeviceSetLimit"), "cudaLimitMallocHeapSize", opts.max_heap);
 
         globals := Flat(List(Collect(c, @@(1, decl, (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
                                (not IsBound(cx.func) or cx.func = []))), x->x.vars));
 
-        var_decls := List(globals, v -> call(rec(id := "DECLARE_DEVICE_ARRAY"), v.id, sizeof(v.t.t) * v.t.size));
-        var_dels := List(globals, v -> call(rec(id := "DELETE_DEVICE_ARRAY"), v.id));
+#        var_decls := List(globals, v -> call(rec(id := "DECLARE_DEVICE_ARRAY"), v.id, sizeof(v.t.t) * v.t.size));
+#        double *hp;\
+#        cudaMalloc((void**)&hp,(sz));\
+#        cudaMemcpyToSymbol(p,&hp,sizeof(double*));\
 
-        cx := chain(kernel_inits :: var_decls);
+        var_decls := chain(Flat(List(globals, v -> [ 
+                call(rec(id := "cudaMalloc"), tcast(TPtr(TPtr(TVoid)), addrof(dptr)), sizeof(v.t.t) * v.t.size), 
+                call(rec(id := "cudaMemcpyToSymbol"), v, addrof(dptr), sizeof(dptr.t)) 
+            ])));
+        
+#        var_dels := List(globals, v -> call(rec(id := "DELETE_DEVICE_ARRAY"), v.id));
+#        double *hp;\
+#        cudaMemcpyFromSymbol(&hp,p,sizeof(double*));\
+#        cudaFree((void**)&hp);\
+
+        var_dels := decl(dptr, chain(Flat(List(globals, v -> [ 
+                call(rec(id := "cudaMemcpyFromSymbol"), addrof(dptr), v, sizeof(dptr.t)), 
+                call(rec(id := "cudaFree"), dptr)
+            ]))));
+
+        cx := chain([heap_init] :: kernel_inits :: [var_decls]);
         for v in globals do
             v.t := TPtr(v.t.t, ["__device__"]);
         od;
 
         c := SubstBottomUp(c, @(1, func, f -> f.id = "init"),
-            e -> CopyFields(@(1).val, rec(cmd := chain(cx, @(1).val.cmd)))
+            e -> CopyFields(@(1).val, rec(cmd := decl(dptr, chain(cx, @(1).val.cmd))))
         );
         c := SubstBottomUp(c, @(1, func, f -> f.id = "destroy"),
-            e -> CopyFields(@(1).val, rec(cmd := chain(chain(var_dels), @(1).val.cmd)))
+            e -> CopyFields(@(1).val, rec(cmd := chain(var_dels, @(1).val.cmd)))
         );
         c := SubstBottomUp(c, @(1, chain, e -> ForAny(e.cmds, e -> ObjId(e) = func and e.id = "init")),
             e -> chain(Filtered(@(1).val.cmds, e-> ObjId(e) <> func or e.id <> "init") :: Filtered(@(1).val.cmds, e -> ObjId(e) = func and e.id = "init"))

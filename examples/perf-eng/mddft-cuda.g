@@ -46,11 +46,12 @@ else
     ];
 fi;
 
-#sizes := [[270, 270, 270]];
-sizes := [[32,32,32]];
-szcube := sizes[1];
+sizes := [[270, 270, 270]];
+#sizes := [[32,32,32]];
 
-#for szcube in sizes do
+#szcube := sizes[1];
+
+for szcube in sizes do
     var.flush();
     d := Length(szcube);
     
@@ -65,13 +66,7 @@ szcube := sizes[1];
     PrintLine("DEBUG: opts = ", opts);
 
     tt := opts.tagIt(t);
-#    ss := opts.sumsRuleTree(opts.search(opts.preProcess(tt)));
-#    
-#    
-#PrintTo("ss.g", ss);
- 
- 
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
-#od;
+od;
