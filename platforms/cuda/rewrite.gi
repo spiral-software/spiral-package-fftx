@@ -155,59 +155,49 @@ FixUpCUDASigmaSPL := function(s, opts)
 end;
 
 
-
-
-
-_FixUpCUDASigmaSPL_3Stage := function(ss, opts)
-#FixUpCUDASigmaSPL_3Stage := function(ss, opts)
+#FixUpCUDASigmaSPL_3Stage := (ss, opts) -> SubstTopDown(ss, @(1, Grp), e->e.child(1));
+FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     local kernels, _s, newv;
 
     # drop grp
     ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
-    
    
-    # privatize temporaries
-    ss := SubstTopDown(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))],
-        e-> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
-            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
-                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
-                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
-            SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, Compose(List(nch, c->ApplyStrategy(c, opts.formulaStrategies.sigmaSpl, BUA, opts))))
-        )
-    );
-
     # parallelize and flatten loop
     ss:= let(simtidx := ASIMTBlockDimX, 
         SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
-            e->let(sx1c := @(2).val.children(),
+            e->let( #Error(), 
+                    simtloop := @(1).val,
+                    sx1c := @(2).val.children(),
                     doms := List(sx1c, c->c.domain),
+                    i := @(1).val.var,
                     mdom := Maximum(doms),
                     ranges := List(List(sx1c, c->[0, c.domain-1])),
-                    newc := List([1..Length(sx1c)], 
-                        i-> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, SIMTISum(simtidx(mdom, ranges[i]), sx1c[i].var, sx1c[i].domain, sx1c[i].child(1)))),
+                    nch := [sx1c[1] * Gath(fTensor(fBase(i), fId(Cols(sx1c[1]))))] :: 
+                        List(sx1c{[2..Length(sx1c)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                        [ Scat(fTensor(fBase(i), fId(Rows(Last(sx1c))))) * Last(sx1c)],
+                    newc := List([1..Length(nch)], 
+                        j-> SIMTISum(simtloop.simt_dim, simtloop.var, simtloop.domain, 
+                                SIMTISum(simtidx(mdom, ranges[j]), sx1c[j].var, sx1c[j].domain, ApplyStrategy(nch[j], opts.formulaStrategies.sigmaSpl, BUA, opts).child(1)))),
                 ApplyFunc(Compose, newc)
             ))
     );
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
 
-    #ll := Collect(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]]);
-    #
-    #s1 := ll[1];
-    #i1 := s1.var;
-    #i2 := s1.child(1).var;
-    #
-    #rng := i1.range * i2.range;
-    #ii := Ind(rng);
-    #sr := rec(
-    #    (i1.id) := idiv(ii, i2.range),
-    #    (i2.id) := imod(ii, i2.range)
-    #);
-    #
-    #sdim := ASIMTBlockDimX(rng);
-    #
-    #ss2 := SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr));
-    
+#    ss:= let(simtidx := ASIMTBlockDimX, 
+#        SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
+#            e->let(sx1c := @(2).val.children(),
+#                    doms := List(sx1c, c->c.domain),
+#                    i := @(1).val.var,
+#                    mdom := Maximum(doms),
+#                    ranges := List(List(sx1c, c->[0, c.domain-1])),
+#                    newc := List([1..Length(sx1c)], 
+#                        j-> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, SIMTISum(simtidx(mdom, ranges[j]), sx1c[j].var, sx1c[j].domain, sx1c[j].child(1)))),
+#                ApplyFunc(Compose, newc)
+#            ))
+#    );
+
     # loop distribution Y(X*X)
-    ss := SubstBottomUp(Copy(ss), [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
+    ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
         e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
             nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
                 List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
@@ -216,7 +206,18 @@ _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
             ));
     ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
 
-    # normalize loop
+    # privatize temporaries -- that should be a no-op now
+    ss := SubstTopDown(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))],
+        e-> let(ch := @(1).val.child(1).children(), 
+            i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, Compose(List(nch, c->ApplyStrategy(c, opts.formulaStrategies.sigmaSpl, BUA, opts))))
+        )
+    );
+
+    # flatten X/X -> X loops
     ss := SubstTopDown(ss, 
         [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
         e->let(s1 := @(1).val,
@@ -233,6 +234,7 @@ _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
         )
     );
 
+    # flatten Y/X -> X loops
     ss := SubstTopDown(ss, 
         [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), BB]],
         e->let(s1 := @(1).val,
@@ -269,6 +271,7 @@ _FixUpCUDASigmaSPL_3Stage := function(ss, opts)
         od;
         ss := Compose(kernels);
     fi;
+    
     return ss;
 end;
 
@@ -314,7 +317,7 @@ PingPong_3Stages := function(c, opts)
 end;
 
 
-FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
+#FixUpCUDASigmaSPL_3Stage := (ss, opts) -> _FixUpCUDASigmaSPL_3Stage(_FixUpCUDASigmaSPL_3Stage(ss, opts), opts);
 
 FixUpTeslaV_Code := function (c, opts)
     local kernels, kernel_inits, globals, var_decls, var_dels, cx, v; 

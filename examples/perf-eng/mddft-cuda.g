@@ -6,6 +6,8 @@
 
 Load(fftx);
 ImportAll(fftx);
+ImportAll(fftx.platforms.cuda);
+ImportAll(simt);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
@@ -44,10 +46,11 @@ else
     ];
 fi;
 
-#sizes := [[270, 270, 270]];
-sizes := [[32,32,32]];
+sizes := [[270, 270, 270]];
+#sizes := [[32,32,32]];
+szcube := sizes[1];
 
-for szcube in sizes do
+#for szcube in sizes do
     var.flush();
     d := Length(szcube);
     
@@ -62,7 +65,13 @@ for szcube in sizes do
     PrintLine("DEBUG: opts = ", opts);
 
     tt := opts.tagIt(t);
+    ss := opts.sumsRuleTree(opts.search(opts.preProcess(tt)));
+    
+    
+PrintTo("ss.g", ss);
+ 
+ 
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
-od;
+#od;
