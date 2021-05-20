@@ -330,7 +330,7 @@ FixUpTeslaV_Code := function (c, opts)
 
 #        kernel_inits := List(kernels, k-> call(rec(id := "INIT_KERNEL"), k));
 #        #define INIT_KERNEL(k) cudaFuncSetCacheConfig(k, cudaFuncCachePreferEqual)
-        kernel_inits := List(kernels, k-> call(rec(id := "cudaFuncSetCacheConfig"), k, "cudaFuncCachePreferEqual"));
+        kernel_inits := List(kernels, k-> call(rec(id := "cudaFuncSetCacheConfig"), k, "cudaFuncCachePreferL1"));
 
 #       cudaDeviceSetLimit(cudaLimitMallocHeapSize, (DEV_MIN_HEAP_SIZE));        
         heap_init := call(rec(id := "cudaDeviceSetLimit"), "cudaLimitMallocHeapSize", opts.max_heap);
