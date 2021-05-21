@@ -9,7 +9,7 @@
 cmake_minimum_required ( VERSION 3.14 )
 
 set ( CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel" )
-set ( PROJECT dftdriver )
+set ( PROJECT dftdriver )    ##  dft-cufft-1st dft-cufft-only dft-nocufft dftdriver )
 project ( ${PROJECT}
          VERSION 1.0.1
                 DESCRIPTION "Driver for mdprdft transforms of different sizes"
@@ -48,7 +48,7 @@ if (WIN32)
 else ()
     set ( CUDA_COMPILE_FLAGS -m64 -rdc=true --pre-include ${INCLUDE_DFT} )
     set ( GPU_COMPILE_DEFNS -dc -Xptxas -v -maxrregcount=64 )		## -Xptxas -v
-    set ( LIBS_FOR_CUDA cufft_static culibos )
+    set ( LIBS_FOR_CUDA cufft culibos )
     list ( APPEND ADDL_COMPILE_FLAGS -DFUNCNAME=${FUNCNAME} -DM=${DIM_M} -DN=${DIM_N} -DK=${DIM_K} )
 endif ()
 

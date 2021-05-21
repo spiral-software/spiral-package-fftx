@@ -70,7 +70,9 @@ if 1 = 1 then
     PrintLine("DEBUG: opts = ", opts);
 
     opts.printRuleTree := true;
-    RandomSeed ( seedme );
+    if IsBound ( seedme ) then 
+        RandomSeed ( seedme );
+    fi;
 
     tt := opts.tagIt(t);
     c := opts.fftxGen(tt);

@@ -60,8 +60,11 @@ int main() {
 	if (cufftPlan3d(&plan, M, N, K,  CUFFT_Z2Z) != CUFFT_SUCCESS) {
 		exit(-1);
 	}
- 
+
 	for ( int ii = 0; ii < iters; ii++ ) {
+		init_mddft3d();
+		checkCudaErrors ( cudaGetLastError () );
+ 
 		// set up data in input buffer
 		buildInputBuffer(host_X, X);
 
@@ -72,6 +75,8 @@ int main() {
 		cudaEventSynchronize(stop);
 
 		cudaEventElapsedTime(&milliseconds[ii], start, stop);
+		destroy_mddft3d();
+		checkCudaErrors ( cudaGetLastError () );
 
 		cudaEventRecord(custart);
 		if (cufftExecZ2Z(
@@ -89,13 +94,7 @@ int main() {
 		cudaEventElapsedTime(&cumilliseconds[ii], custart, custop);
 
 	}
-	cudaDeviceSynchronize();
 
-
-//	cudaEventRecord(custart);
-	for ( int ii = 0; ii < iters; ii++ ) {
-	}
- 
 	cudaDeviceSynchronize();
 
 	if (cudaGetLastError() != cudaSuccess) {
@@ -116,6 +115,7 @@ int main() {
 	cudaMemcpy(host_cufft_Y, cufft_Y, M*N*K*sizeof(cufftDoubleComplex), cudaMemcpyDeviceToHost);
 
 	bool correct = true;
+	int errCount = 0;
 
 	for (int m = 0; m < 1; m++) {
 		for (int n = 0; n < N; n++) {
@@ -127,10 +127,11 @@ int main() {
 					(abs(s.x - c.x) < 1e-7) &&
 					(abs(s.y - c.y) < 1e-7);
 				correct &= elem_correct;
-				if (!elem_correct) 
+				if (!elem_correct && errCount < 100) 
 				{
 					correct = false;
-					// printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
+					errCount++;
+					printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
 				}
 			}
 		}

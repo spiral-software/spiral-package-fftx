@@ -34,14 +34,12 @@ os.chmod ( _timescript, _mode )
 with open ( 'cube-sizes2.txt', 'r' ) as fil:
     for line in fil.readlines():
         print ( 'Line read = ' + line )
-        testscript = open ( 'testscript.g', 'w' )
-        testscript.write ( line )
-        testscript.close()
-        ##  _seed = re.sub ( '.*seedme :=', '', line )
-        ##  _seed = re.sub ( ';.*', '', _seed )
-        ##  _seed = re.sub ( ' *', '', _seed )
-        ##  _seed = _seed.rstrip()
-        
+        if re.match ( '[ \t]*#', line ):                ## ignore comment lines
+            continue
+
+        if re.match ( '[ \t]*$', line ):                ## skip lines consisting of whitespace
+            continue
+
         line = re.sub ( '.*\[', '', line )               ## drop "szcube := ["
         line = re.sub ( '\].*', '', line )               ## drop "];"
         line = re.sub ( ' *', '', line )                 ## compress out white space
@@ -51,23 +49,6 @@ with open ( 'cube-sizes2.txt', 'r' ) as fil:
         _dimy = dims[1]
         _dimz = dims[2]
 
-        ##  Generate the SPIRAL script: cat testscript.g, mddft-cuda-frame.g,
-        ##  and mddft-meas.g (if want to call CMeasure())
-        # _spiralhome = os.environ.get('SPIRAL_HOME')
-        # _catfils = _spiralhome + '/gap/bin/catfiles.py'
-        # cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-cuda-frame.g' ## mddft-meas.g'
-        # result = subprocess.run ( cmdstr, shell=True, check=True )
-        # res = result.returncode
-
-        # ##  Generate the code by running SPIRAL
-        # if sys.platform == 'win32':
-        #     cmdstr = _spiralhome + '/spiral.bat < myscript.g'
-        # else:
-        #     cmdstr = _spiralhome + '/spiral < myscript.g'
-            
-        # result = subprocess.run ( cmdstr, shell=True, check=True )
-        # res = result.returncode
-
         ##  Create the srcs directory (if it doesn't exist)
         srcs_dir = 'srcs'
         isdir = os.path.isdir ( srcs_dir )
@@ -75,28 +56,9 @@ with open ( 'cube-sizes2.txt', 'r' ) as fil:
             os.mkdir ( srcs_dir )
 
         ##  Copy the files from srcs to local mddft3d.cu
-        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz ##   + '-s-' + _seed
+        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz
         _srcfile = 'srcs/' + _funcname + _filenamestem + '.cu'
         shutil.copy ( _srcfile, _inclfile )
-
-        # ##  Check if auxilliary files were generated and copy to srcs if so
-        # _artifact = _funcname + '.rt.g'
-        # isfile = os.path.isfile ( _artifact )         ## was ruletree generated
-        # if isfile:
-        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.rt.g'
-        #     shutil.copy ( _artifact, _destfile )
-
-        # _artifact = _funcname + '.ss.g'
-        # isfile = os.path.isfile ( _artifact )         ## was sumsruletree generated
-        # if isfile:
-        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.ss.g'
-        #     shutil.copy ( _artifact, _destfile )
-
-        # _artifact = _funcname + '.spl.g'
-        # isfile = os.path.isfile ( _artifact )         ## was SPL generated
-        # if isfile:
-        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.spl.g'
-        #     shutil.copy ( _artifact, _destfile )
 
         ##  Create the build directory (if it doesn't exist)
         build_dir = 'build'
@@ -108,7 +70,6 @@ with open ( 'cube-sizes2.txt', 'r' ) as fil:
 
         cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
         cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
-        ##  cmdstr = cmdstr + ' -DRSEED=' + _seed
 
         os.chdir ( build_dir )
 
@@ -130,7 +91,8 @@ with open ( 'cube-sizes2.txt', 'r' ) as fil:
         os.chdir ( '..' )
 
         timefd = open ( _timescript, 'a' )
-        timefd.write ( '##  Cube = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
+        timefd.write ( '##  Cube = [ ' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
+        timefd.write ( 'echo "Run size = [ ' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]"\n' )
         if sys.platform == 'win32':
             _exename = './exes/dftdriver' + _filenamestem + '.exe'
         else:
