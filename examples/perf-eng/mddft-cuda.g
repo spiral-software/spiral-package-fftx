@@ -66,6 +66,16 @@ szcube := sizes[1];
     PrintLine("DEBUG: opts = ", opts);
 
     tt := opts.tagIt(t);
+    
+    c := opts.fftxGenCPU(tt);
+    
+    c := program(c.cmds[1].cmd);
+    
+    opts.prettyPrintCPU(c);
+    PrintTo(name::".c", opts.prettyPrintCPU(c));
+    
+    opts.cmeasureCPU(c);    
+    
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));

@@ -13,13 +13,15 @@ Class(FFTXGenMixin, rec(
                         
                         opts2 := Copy(SpiralDefaults);
                         opts2.useDeref := false;
-                        opts2.codegen := VecRecCodegen;
+#                        opts2.codegen := VecRecCodegen;
 #                        opts2.unparser := SSEUnparser;
                         
                         ss2 := Copy(ss);
                         
                         ss2 := SubstBottomUp(ss2, @(1, SIMTISum),
                             e -> ISum(@(1).val.var, @(1).val.domain, @(1).val.child(1)));
+                            
+                        self.debug.ss_cpu := ss2;    
                             
                         c := CodeSums(ss2, opts2);
                         c := fixReplicatedData(c, opts2);
@@ -58,6 +60,8 @@ Class(FFTXGenMixin, rec(
                    self.debug.c := c;
                    return c;
                end,    
+               
+    cmeasureCPU := (self, c) >> CMeasure(c, self.cpu_opts),           
     
     codeSums := meth(self, ss) 
                         local c, cc, Xptr, Yptr, plist, plist1, tags;
