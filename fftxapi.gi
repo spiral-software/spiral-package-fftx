@@ -8,6 +8,57 @@ Class(FFTXGenMixin, rec(
     search := (self, t) >> When(IsBound(self.useDP) and self.useDP, DP(t, When(IsBound(self.dpopts), self.dpopts, rec()), self)[1], RuleTreeMid(t, self)),
     preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(t1)),
     
+    codeSumsCPU := meth(self, ss) 
+                        local opts2, ss2, c;
+                        
+                        opts2 := Copy(SpiralDefaults);
+                        opts2.useDeref := false;
+                        opts2.codegen := VecRecCodegen;
+#                        opts2.unparser := SSEUnparser;
+                        
+                        ss2 := Copy(ss);
+                        
+                        ss2 := SubstBottomUp(ss2, @(1, SIMTISum),
+                            e -> ISum(@(1).val.var, @(1).val.domain, @(1).val.child(1)));
+                            
+                        c := CodeSums(ss2, opts2);
+                        c := fixReplicatedData(c, opts2);
+
+                        self.cpu_opts := opts2;
+                        
+                        return c;
+                    end,
+
+    prettyPrintCPU := meth(self, c)
+                       local name;
+                       name := "fftx_generated";
+                       if (IsBound(c.ruletree) and IsBound(c.ruletree.node.params[2].fname)) then
+                           name := c.ruletree.node.params[2].fname;
+                       fi;
+                       PrintCode(name, c, self.cpu_opts);
+                   end,
+
+    fftxGenCPU := meth(self, t) 
+                   local tt, rt, c, s, r;
+				   if Length(t.params) > 1 then
+				       r := t.params[2];
+					   if IsRec(r) and IsBound(r.fname) then
+					      self.cudasubName := r.fname;
+					   fi;
+				   fi;
+
+                   self.debug := rec();  
+                   tt := self.preProcess(t);
+                   self.debug.tt := tt;
+                   rt := self.search(tt);
+                   self.debug.rt := rt;
+                   s := self.sumsRuleTree(rt);
+                   self.debug.ss := s;
+                   c := self.codeSumsCPU(s);
+                   self.debug.c := c;
+                   return c;
+               end,    
+    
     codeSums := meth(self, ss) 
                         local c, cc, Xptr, Yptr, plist, plist1, tags;
 

@@ -49,9 +49,9 @@ fi;
 sizes := [[270, 270, 270]];
 #sizes := [[32,32,32]];
 
-#szcube := sizes[1];
+szcube := sizes[1];
 
-for szcube in sizes do
+#for szcube in sizes do
     var.flush();
     d := Length(szcube);
     
@@ -69,4 +69,4 @@ for szcube in sizes do
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
-od;
+#od;
