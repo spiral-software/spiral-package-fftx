@@ -9,6 +9,21 @@
 //  #define K		224
 //  #define FUNCNAME		mddft3d
 
+static void buildInputBuffer(double *host_X, double *X)
+{
+	for (int m = 0; m < M; m++) {
+		for (int n = 0; n < N; n++) {
+			for (int k = 0; k < K; k++) {
+				host_X[(k + n*K + m*N*K)*2 + 0] = 1 - ((double) rand()) / (double) (RAND_MAX/2);
+				host_X[(k + n*K + m*N*K)*2 + 1] = 1 - ((double) rand()) / (double) (RAND_MAX/2);
+			}
+		}
+	}
+
+	cudaMemcpy(X, host_X, M*N*K*2*sizeof(double), cudaMemcpyHostToDevice);
+	return;
+}
+
 int main() {
 
 //	int M, N, K;
@@ -22,16 +37,6 @@ int main() {
 	cudaMalloc(&Y,M*N*K*2*sizeof(double));
 
 	double *host_X = new double[M*N*K*2];
-	for (int m = 0; m < M; m++) {
-		for (int n = 0; n < N; n++) {
-			for (int k = 0; k < K; k++) {
-				host_X[(k + n*K + m*N*K)*2 + 0] = 1 - ((double) rand()) / (double) (RAND_MAX/2);
-				host_X[(k + n*K + m*N*K)*2 + 1] = 1 - ((double) rand()) / (double) (RAND_MAX/2);
-			}
-		}
-	}
-
-	cudaMemcpy(X, host_X, M*N*K*2*sizeof(double), cudaMemcpyHostToDevice);
 
 	cudaEvent_t start, stop, custart, custop;
 	cudaEventCreate(&start);
@@ -43,18 +48,14 @@ int main() {
 //	FUNCNAME(Y, X);
 //	cudaEventRecord(stop);
 
-	checkCudaErrors ( cudaEventRecord(start) );
-	int iters = 100;
-	for ( int ii = 0; ii < iters; ii++ ) {
-		FUNCNAME(Y, X);
-		checkCudaErrors ( cudaGetLastError () );
-	}
-	checkCudaErrors( cudaEventRecord(stop) );
-	cudaEventSynchronize(stop);
-	cudaDeviceSynchronize();
-
-	float milliseconds = 0;
-	cudaEventElapsedTime(&milliseconds, start, stop);
+	#ifndef N_ITERS
+	#define N_ITERS 20
+	#endif
+	
+//	checkCudaErrors ( cudaEventRecord(start) );
+	int iters = N_ITERS;		// = 100;  // use smaller number due to overhead of initializing buffers
+	float milliseconds[N_ITERS];
+	float cumilliseconds[N_ITERS];
 
 	cufftDoubleComplex *cufft_Y; 
 	cudaMalloc(&cufft_Y, M*N*K * sizeof(cufftDoubleComplex));
@@ -63,9 +64,25 @@ int main() {
 	if (cufftPlan3d(&plan, M, N, K,  CUFFT_Z2Z) != CUFFT_SUCCESS) {
 		exit(-1);
 	}
- 
-	cudaEventRecord(custart);
+
 	for ( int ii = 0; ii < iters; ii++ ) {
+		init_mddft3d();
+		checkCudaErrors ( cudaGetLastError () );
+ 
+		// set up data in input buffer
+		buildInputBuffer(host_X, X);
+
+		checkCudaErrors ( cudaEventRecord(start) );
+		FUNCNAME(Y, X);
+		checkCudaErrors ( cudaGetLastError () );
+		checkCudaErrors( cudaEventRecord(stop) );
+		cudaEventSynchronize(stop);
+
+		cudaEventElapsedTime(&milliseconds[ii], start, stop);
+		destroy_mddft3d();
+		checkCudaErrors ( cudaGetLastError () );
+
+		cudaEventRecord(custart);
 		if (cufftExecZ2Z(
 				plan,
 				(cufftDoubleComplex *) X,
@@ -75,24 +92,25 @@ int main() {
 			printf("cufftExecZ2Z launch failed\n");
 			exit(-1);
 		}
-	}
-	cudaEventRecord(custop);
-	cudaEventSynchronize(custop);
+		cudaEventRecord(custop);
+		cudaEventSynchronize(custop);
 
-	float cumilliseconds = 0;
-	cudaEventElapsedTime(&cumilliseconds, custart, custop);
- 
+		cudaEventElapsedTime(&cumilliseconds[ii], custart, custop);
+
+	}
+
 	cudaDeviceSynchronize();
 
-
-	printf("cube = [ %d, %d, %d ]\t\t ##PICKME## \n", M, N, K);
-	printf("%f\tms (SPIRAL) vs\t%f\tms (cufft), averaged over %d iterations ##PICKME## \n",
-		   milliseconds / iters, cumilliseconds / iters, iters);
- 
 	if (cudaGetLastError() != cudaSuccess) {
 		printf("cufftExecZ2Z failed\n");
 		exit(-1);
 	}
+
+	printf("cube = [ %d, %d, %d ]\t\t ##PICKME## \n", M, N, K);
+	for ( int ii = 0; ii < iters; ii++ ) { 
+		printf("%f\tms (SPIRAL) vs\t%f\tms (cufft), iterations [%d] ##PICKME## \n",
+		   milliseconds[ii], cumilliseconds[ii], ii);
+	} 
  
 	cufftDoubleComplex *host_Y       = new cufftDoubleComplex[M*N*K];
 	cufftDoubleComplex *host_cufft_Y = new cufftDoubleComplex[M*N*K];
@@ -101,6 +119,7 @@ int main() {
 	cudaMemcpy(host_cufft_Y, cufft_Y, M*N*K*sizeof(cufftDoubleComplex), cudaMemcpyDeviceToHost);
 
 	bool correct = true;
+	int errCount = 0;
 
 	for (int m = 0; m < 1; m++) {
 		for (int n = 0; n < N; n++) {
@@ -112,14 +131,16 @@ int main() {
 					(abs(s.x - c.x) < 1e-7) &&
 					(abs(s.y - c.y) < 1e-7);
 				correct &= elem_correct;
-				if (!elem_correct) 
+				if (!elem_correct && errCount < 10) 
 				{
 					correct = false;
-					// printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
+					errCount++;
+					//  printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
 				}
 			}
 		}
 	}
+
 end_check:
 	printf("Correct: %s\t\t##PICKME## \n", (correct ? "True" : "False") );
 }
