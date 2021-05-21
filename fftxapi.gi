@@ -27,6 +27,7 @@ Class(FFTXGenMixin, rec(
                         c := fixReplicatedData(c, opts2);
 
                         self.cpu_opts := opts2;
+                        c.dimensions := ss.dims();
                         
                         return c;
                     end,
@@ -56,8 +57,14 @@ Class(FFTXGenMixin, rec(
                    self.debug.rt := rt;
                    s := self.sumsRuleTree(rt);
                    self.debug.ss := s;
+                   
                    c := self.codeSumsCPU(s);
+                   c := SubstBottomUp(c, @(1,decl), e->let(fr := @(1).val.cmd.free(), decl(Filtered(e.vars, v->v in fr), @(1).val.cmd)));
+                   
                    self.debug.c := c;
+                   c.ruletree := rt;
+                   c.dimensions := s.dims();
+                   
                    return c;
                end,    
                

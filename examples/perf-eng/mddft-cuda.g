@@ -67,16 +67,33 @@ szcube := sizes[1];
 
     tt := opts.tagIt(t);
     
-    c := opts.fftxGenCPU(tt);
-    
-    c := program(c.cmds[1].cmd);
-    
-    opts.prettyPrintCPU(c);
-    PrintTo(name::".c", opts.prettyPrintCPU(c));
-    
-    opts.cmeasureCPU(c);    
+#    c := opts.fftxGenCPU(tt);
+#    opts.prettyPrintCPU(c);
+#    PrintTo(name::".c", opts.prettyPrintCPU(c));
+#    opts.cmeasureCPU(c);    
     
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
     PrintTo(name::".cu", opts.prettyPrint(c));
 #od;
+
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+#cyc := CMeasure(c, opts);
+vec := CVector(c, [1], opts);
+
+#==================
+c := opts.fftxGenCPU(tt);
+c := program(c.cmds[1].cmd);
+opts.prettyPrintCPU(c);
+PrintTo(name::".c", opts.prettyPrintCPU(c));
+
+opts2 := opts.cpu_opts;
+opts2.target.forward := "thom";
+opts2.target.name := "linux-x86";
+vec2 := CVector(c, [0, 1], opts2);
+
+#CMeasure(c, opts2);
+    
+    
+
