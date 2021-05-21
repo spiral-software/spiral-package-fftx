@@ -48,10 +48,14 @@ int main() {
 //	FUNCNAME(Y, X);
 //	cudaEventRecord(stop);
 
+	#ifndef N_ITERS
+	#define N_ITERS 20
+	#endif
+	
 //	checkCudaErrors ( cudaEventRecord(start) );
-	int iters = 20;		// = 100;  // use smaller number due to overhead of initializing buffers
-	float milliseconds[iters];
-	float cumilliseconds[iters];
+	int iters = N_ITERS;		// = 100;  // use smaller number due to overhead of initializing buffers
+	float milliseconds[N_ITERS];
+	float cumilliseconds[N_ITERS];
 
 	cufftDoubleComplex *cufft_Y; 
 	cudaMalloc(&cufft_Y, M*N*K * sizeof(cufftDoubleComplex));
@@ -127,11 +131,11 @@ int main() {
 					(abs(s.x - c.x) < 1e-7) &&
 					(abs(s.y - c.y) < 1e-7);
 				correct &= elem_correct;
-				if (!elem_correct && errCount < 100) 
+				if (!elem_correct && errCount < 10) 
 				{
 					correct = false;
 					errCount++;
-					printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
+					//  printf("error at (%d,%d,%d): %f+%fi instead of %f+%fi\n", k, n, m, s.x, s.y, c.x, c.y);
 				}
 			}
 		}

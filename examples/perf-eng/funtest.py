@@ -33,7 +33,7 @@ os.chmod ( _timescript, _mode )
 
 with open ( 'cube-sizes2.txt', 'r' ) as fil:
     for line in fil.readlines():
-        print ( 'Line read = ' + line )
+        ##  print ( 'Line read = ' + line )
         if re.match ( '[ \t]*#', line ):                ## ignore comment lines
             continue
 
@@ -78,7 +78,7 @@ with open ( 'cube-sizes2.txt', 'r' ) as fil:
         else:
             cmdstr = cmdstr + ' .. && make install'
 
-        print ( cmdstr )
+        ##  print ( cmdstr )
         ##  sys.exit (0)                    ## testing script, stop here
 
         result = subprocess.run ( cmdstr, shell=True, check=True )
