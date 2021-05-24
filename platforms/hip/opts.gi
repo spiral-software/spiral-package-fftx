@@ -22,6 +22,8 @@ doHIPify := function(opts)
     opts.operations := rec(Print := s -> Print("<FFTX HIPified CUDA options record>"));
     opts.unparser := HIPUnparser;
     opts.includes := ["\"hip/hip_runtime.h\""];
+    if IsBound(opts.fixUpTeslaV_Code) then Unbind(opts.fixUpTeslaV_Code); fi;
+
     return opts;
 end;
 
