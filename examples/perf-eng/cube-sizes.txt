@@ -1,39 +1,28 @@
-szcube := [ 32, 32, 32 ];
-szcube := [ 35, 35, 35 ];
-szcube := [ 36, 36, 36 ];
-szcube := [ 40, 40, 40 ];
-szcube := [ 42, 42, 42 ];
-szcube := [ 45, 45, 45 ];
-szcube := [ 48, 48, 48 ];
-szcube := [ 49, 49, 49 ];
-szcube := [ 50, 50, 50 ];
-szcube := [ 54, 54, 54 ];
-szcube := [ 56, 56, 56 ];
-szcube := [ 60, 60, 60 ];
-szcube := [ 63, 63, 63 ];
-szcube := [ 64, 64, 64 ];
-szcube := [ 70, 70, 70 ];
-szcube := [ 72, 72, 72 ];
-szcube := [ 75, 75, 75 ];
-szcube := [ 80, 80, 80 ];
-szcube := [ 81, 81, 81 ];
-szcube := [ 84, 84, 84 ];
-szcube := [ 90, 90, 90 ];
-szcube := [ 96, 96, 96 ];
-szcube := [ 98, 98, 98 ];
+##
+##  Sizes of examples to build
+##  Hash (#) as first non-white space indicates a comment
+##  Lines containing white space only are ignored
+##  All other lines must be valid size specs in the form:
+##  szcube := [ x, y, z ]
+##
+
+szcube := [   4,   4,   4 ];
+szcube := [  32,  32,  32 ];
+szcube := [  48,  48,  48 ];
+szcube := [  64,  64,  64 ];
+szcube := [  80,  80,  80 ];
+szcube := [  96,  96,  96 ];
 szcube := [ 100, 100, 100 ];
-szcube := [ 105, 105, 105 ];
-szcube := [ 108, 108, 108 ];
 szcube := [ 112, 112, 112 ];
-szcube := [ 120, 120, 120 ];
-szcube := [ 126, 126, 126 ];
 szcube := [ 128, 128, 128 ];
-szcube := [ 135, 135, 135 ];
 szcube := [ 140, 140, 140 ];
-szcube := [ 144, 144, 144 ];
+szcube := [  96,  96, 320 ];
+szcube := [ 320,  96,  96 ];
 szcube := [ 150, 150, 150 ];
 szcube := [ 160, 160, 160 ];
 szcube := [ 168, 168, 168 ];
+szcube := [ 100, 224, 224 ];
+szcube := [ 224, 224, 100 ];
 szcube := [ 180, 180, 180 ];
 szcube := [ 192, 192, 192 ];
 szcube := [ 196, 196, 196 ];

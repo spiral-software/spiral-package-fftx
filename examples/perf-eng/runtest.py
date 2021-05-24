@@ -33,13 +33,15 @@ os.chmod ( _timescript, _mode )
 with open ( 'cube-sizes.txt', 'r' ) as fil:
     for line in fil.readlines():
         print ( 'Line read = ' + line )
+        if re.match ( '[ \t]*#', line ):                ## ignore comment lines
+            continue
+
+        if re.match ( '[ \t]*$', line ):                ## skip lines consisting of whitespace
+            continue
+
         testscript = open ( 'testscript.g', 'w' )
         testscript.write ( line )
         testscript.close()
-        _seed = re.sub ( '.*seedme :=', '', line )
-        _seed = re.sub ( ';.*', '', _seed )
-        _seed = re.sub ( ' *', '', _seed )
-        _seed = _seed.rstrip()
         
         line = re.sub ( '.*\[', '', line )               ## drop "szcube := ["
         line = re.sub ( '\].*', '', line )               ## drop "];"
@@ -74,7 +76,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
             os.mkdir ( srcs_dir )
 
         ##  Copy the generated CUDA source file to srcs
-        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz + '-s-' + _seed
+        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz
         _destfile = 'srcs/' + _funcname + _filenamestem + '.cu'
         shutil.copy ( _inclfile, _destfile )
 
@@ -107,7 +109,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
         cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
-        cmdstr = cmdstr + ' -DRSEED=' + _seed
+        ##  cmdstr = cmdstr + ' -DRSEED=' + _seed
 
         os.chdir ( build_dir )
 
