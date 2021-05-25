@@ -97,7 +97,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _conf, _opts, _HPCSupportedSizesCUDA, _thold,
+    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold,
     MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
@@ -163,6 +163,39 @@ ParseOptsCUDA := function(conf, t)
             
             return _opts;
         fi;
+
+        # detect 3D DFT/iDFT but non-convolution case
+        _tt := Collect(t, MDDFT);
+        if Length(_tt) = 2 and ForAll(_tt, i->Length(i.params[1]) = 3) and Sum(List(_tt, i->i.params[2])) = Product(_tt[1].params[1]) then
+            _conf := FFTXGlobals.confFFTCUDADevice();
+            _opts := FFTXGlobals.getOpts(_conf);
+
+            # opts for high performance CUDA cuFFT
+            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+                _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                
+                _opts.globalUnrolling := 2*_thold + 1;
+
+                _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                
+                _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                _opts.fixUpTeslaV_Code := true;
+
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+
+            fi;
+            
+            return _opts;
+        fi;
+
+
     
         # promote with default conf rules
         tt := _promote1(Copy(t));
