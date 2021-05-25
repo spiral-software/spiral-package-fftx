@@ -70,6 +70,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
         
     Drop_TDecl := Rule(@(1, TDecl, e->ForAll(e.params[2], i->not i in e.params[1].free())),
         e -> @(1).val.params[1]), 
+        
+    Drop_TTensorI := Rule(@(1, TTensorI, e -> e.params[2] = 1), e -> e.params[1])    
 ));
 
 RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(

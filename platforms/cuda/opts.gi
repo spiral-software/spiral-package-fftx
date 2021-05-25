@@ -125,7 +125,7 @@ ParseOptsCUDA := function(conf, t)
         fi;        
 
         # detect batch of DFT/PRDFT/MDDFT/MDPRDFT
-        if ((Length(Collect(t, TTensorInd)) >= 1) or (Length(Collect(t, TTensorI)) >= 1)) and 
+        if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) and 
             ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1) or
               (Length(Collect(t, MDDFT)) >= 1) or (Length(Collect(t, MDPRDFT)) >= 1) or (Length(Collect(t, IMDPRDFT)) >= 1)) then
             _conf := FFTXGlobals.confBatchFFTCUDADevice();

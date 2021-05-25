@@ -83,6 +83,8 @@ opts.target.name := "linux-cuda";
 vec := CVector(c, [1], opts);
 
 #==================
+var.flush();
+
 c := opts.fftxGenCPU(tt);
 c := program(c.cmds[1].cmd);
 opts.prettyPrintCPU(c);
