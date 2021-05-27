@@ -202,3 +202,5 @@ TMap := (krn, dims, al, ar) -> TCompose(
     When(ar = AVec, [TL(Product(List(dims, i->i.range)) * Cols(krn), Product(List(dims, i->i.range)), 1, 1)], []));
 
 lin_idx := arg -> fTensor(List(arg, fBase)).at(0);
+
+TIterator1D := (A, n, l,  r) -> When(n = 1, A, TTensorI(A, n, l, r));
