@@ -48,6 +48,7 @@ fi;
 
 sizes := [[270, 270, 270]];
 #sizes := [[32,32,32]];
+#sizes := [[32, 32, 32]];
 
 szcube := sizes[1];
 
@@ -86,10 +87,20 @@ vec := CVector(c, [1], opts);
 var.flush();
 
 c := opts.fftxGenCPU(tt);
-c := program(c.cmds[1].cmd);
 opts.prettyPrintCPU(c);
 PrintTo(name::".c", opts.prettyPrintCPU(c));
 
+opts2 := opts.cpu_opts;
+vec2 := CVector(c, [0, 1], opts2);
+
+#CMeasure(c, opts2);
+
+#==============
+var.flush();
+
+c := opts.fftxGenCPU(tt);
+opts.prettyPrintCPU(c);
+PrintTo(name::".c", opts.prettyPrintCPU(c));
 opts2 := opts.cpu_opts;
 opts2.target.forward := "thom";
 opts2.target.name := "linux-x86";
