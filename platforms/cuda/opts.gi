@@ -158,6 +158,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.fixUpTeslaV_Code := true;
 
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+                _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
 
             fi;
             
