@@ -12,11 +12,12 @@ ImportAll(fftx);
 conf := FFTXGlobals.defaultHIPConf();
 
 sizes := [
-     [ 4, 4, 4],
-     [ 96, 96, 320],
-     [ 100, 100, 100],
-     [ 224, 224, 100],
-     [ 80, 80, 80 ],
+#[130,130,130]];
+#     [ 4, 4, 4],
+#     [ 96, 96, 320],
+     [ 100, 100, 100]#,
+#     [ 224, 224, 100],
+#     [ 80, 80, 80 ],
 ];
 
 for szcube in sizes do
@@ -35,5 +36,5 @@ for szcube in sizes do
     
     c := opts.fftxGen(tt);
     opts.prettyPrint(c);
-    PrintTo(name::".cu", opts.prettyPrint(c));
+    PrintTo(name::".hpp", opts.prettyPrint(c));
 od;

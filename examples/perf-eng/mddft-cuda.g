@@ -48,7 +48,8 @@ fi;
 
 sizes := [[270, 270, 270]];
 #sizes := [[32,32,32]];
-#sizes := [[32, 32, 32]];
+#sizes := [[160, 160, 160]];
+#sizes := [[256, 256, 256]];
 
 szcube := sizes[1];
 
@@ -80,7 +81,7 @@ szcube := sizes[1];
 
 opts.target.forward := "thom";
 opts.target.name := "linux-cuda";
-#cyc := CMeasure(c, opts);
+cyc := CMeasure(c, opts);
 vec := CVector(c, [1], opts);
 
 #==================
