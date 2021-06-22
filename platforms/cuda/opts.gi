@@ -102,7 +102,7 @@ ParseOptsCUDA := function(conf, t)
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
-    MAX_KERNEL := 16;
+    MAX_KERNEL := 18;
     MAX_PRIME := 13;
     MIN_SIZE := 32;
     MAX_SIZE := 320;
@@ -154,7 +154,8 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     FixUpCUDASigmaSPL_3Stage(s1, opts)); 
-                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
+#                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
                 _opts.fixUpTeslaV_Code := true;
 
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
