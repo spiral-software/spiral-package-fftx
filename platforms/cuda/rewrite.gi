@@ -272,25 +272,40 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
         ss := Compose(kernels);
     fi;
     
+#    # prepare for PingPong: privatize first ping so it can be mapped to Y without conflict
+#    ss := SubstBottomUp(ss, [@(1, SIMTISum), [@(2, Compose), @(3, SIMTISum), @(4, SIMTISum), @(5, SIMTISum)]],
+#        e->let(
+#            g := Gath(fTensor(fBase(@(1).val.var), fId(Cols(@(4).val)))),
+#            s := Scat(fTensor(fBase(@(1).val.var), fId(Rows(@(5).val)))),
+#            krn := @(3).val * Grp(@(4).val * g) * Grp(s * @(5).val),
+#            CopyFields(@(1).val, rec(_children := [krn])))
+#    );
+#    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
+#    ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
+    
     return ss;
 end;
 
 
 PingPong_3Stages := function(c, opts)
-    local cands, candvars, outvars, invars, in_loops, substvars, link_loops, linkvars, link_func, subst_list, substrec;
-    
-    cands := Collect(c, @(1, specifiers_func, e -> Collect(e, @(2, decl, f -> Length(f.vars) = 2 and ForAll(f.vars, k -> ObjId(k.t) = TArray))) <> []));
+    local cands, candvars, outvars, invars, in_loops, substvars, link_loops, linkvars, link_func, subst_list, substrec, shift, shiftvar, v;
+
+    # need to guard that better...    
+    cands := Collect(c, @(1, specifiers_func, e -> (Collect(e, @(2, decl, f -> Length(f.vars) <= 2 and ForAll(f.vars, k -> ObjId(k.t) = TArray))) <> [])) );
+
     candvars := chain(cands).free()::[X, Y];
 
     if Length(cands) > 0 then
+#    Error();
         outvars := Filtered([Y]::Flat(List(Collect(c, @@(1, decl,
             (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
                        (not IsBound(cx.func) or cx.func = []))), x->x.vars)), p -> p in candvars);
+#        outvars := List(Collect(c, @(1, cu_call)), e->e.args[2]);
 
         invars := Filtered([X]::Flat(List(Collect(c, @@(1, decl,
             (e, cx) -> (not IsBound(cx.specifiers_func) or cx.specifiers_func = []) and
                        (not IsBound(cx.func) or cx.func = []))), x->x.vars)), p -> p in candvars);
-
+#        invars := List(Collect(c, @(1, cu_call)), e->e.args[1]);
 
         in_loops := Collect(cands, @(1, simt_loop, e -> Collect(e.cmd, @(2,simt_loop)) = [] and
             Collect(e.cmd, [assign, @(3), @(4, nth, f->f.loc in invars), ...]) <> []));
@@ -304,6 +319,13 @@ PingPong_3Stages := function(c, opts)
 
         link_func := v -> Set(Collect(Filtered(Collect(c, @(1, specifiers_func)),
             e -> Collect(e.cmd, [assign, @(3), @(4, nth, f->f.loc = v), ...]) <> []), @(1, var, e-> e in outvars)))[1];
+
+        for v in substvars do
+            shiftvar := Collect(Collect(c, @(1, decl, e-> v in e.vars)), @(2, simt_loop, f->ObjId(f.simt_idx) = simtBlockIdxX))[1].var;
+            shift := v.t.size;
+            SubstBottomUp(c, @(1, nth, e->e.loc = v),
+                e-> nth(@(1).val.loc, shiftvar * shift + @(1).val.idx));
+        od;
 
         subst_list := List(substvars, vv -> [vv, link_func(vv)]);
 
