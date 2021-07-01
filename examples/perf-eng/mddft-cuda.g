@@ -46,8 +46,16 @@ else
     ];
 fi;
 
-sizes := [[270, 270, 270]];
+#sizes := [[270, 270, 270]];
 #sizes := [[32,32,32]];
+#sizes := [[160, 160, 160]];
+#sizes := [[256, 256, 256]];
+#sizes :=  [[189, 189, 189]];
+#sizes :=  [[280, 280, 280]];
+#sizes :=  [[294, 294, 294]];
+#sizes :=  [[300, 300, 300]];
+#sizes :=  [[315, 315, 315]];
+sizes :=  [[320, 320, 320]];
 
 szcube := sizes[1];
 
@@ -79,17 +87,28 @@ szcube := sizes[1];
 
 opts.target.forward := "thom";
 opts.target.name := "linux-cuda";
-#cyc := CMeasure(c, opts);
+cyc := CMeasure(c, opts);
+
 vec := CVector(c, [1], opts);
 
 #==================
 var.flush();
 
 c := opts.fftxGenCPU(tt);
-c := program(c.cmds[1].cmd);
 opts.prettyPrintCPU(c);
 PrintTo(name::".c", opts.prettyPrintCPU(c));
 
+opts2 := opts.cpu_opts;
+vec2 := CVector(c, [0, 1], opts2);
+
+#CMeasure(c, opts2);
+
+#==============
+var.flush();
+
+c := opts.fftxGenCPU(tt);
+opts.prettyPrintCPU(c);
+PrintTo(name::".c", opts.prettyPrintCPU(c));
 opts2 := opts.cpu_opts;
 opts2.target.forward := "thom";
 opts2.target.name := "linux-x86";
