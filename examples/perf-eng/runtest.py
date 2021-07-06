@@ -8,6 +8,7 @@
 ##      Generate a SPIRAL script using the DFT size spec
 ##      Run SPIRAL to generate the CUDA code
 ##      Save the generated code (to sub-directory srcs)
+##      Optionally, [if build_code arg is set]
 ##      Compile the CUDA code for the DFT (install in sub-directory exes)
 ##      Build a script to run all the generated code (timescript.sh)
 ##  
@@ -22,6 +23,13 @@ _inclfile = 'mddft3d.cu'
 _funcname = 'mddft3d'
 _timescript = 'timescript.sh'
 
+_build_code = False
+if len ( sys.argv ) < 2:
+    print ( 'Usage: ' + sys.argv[0] + ' [ build_code ]; defaulting to create sources only' )
+    _build_code = False
+else:
+    _build_code = True
+
 ##  Setup 'empty' timing script
 timefd = open ( _timescript, 'w' )
 timefd.write ( '#! /bin/bash \n\n' )
@@ -32,7 +40,7 @@ os.chmod ( _timescript, _mode )
 
 with open ( 'cube-sizes.txt', 'r' ) as fil:
     for line in fil.readlines():
-        print ( 'Line read = ' + line )
+        ##  print ( 'Line read = ' + line )
         if re.match ( '[ \t]*#', line ):                ## ignore comment lines
             continue
 
@@ -42,6 +50,10 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         testscript = open ( 'testscript.g', 'w' )
         testscript.write ( line )
         testscript.close()
+        # _seed = re.sub ( '.*seedme :=', '', line )
+        # _seed = re.sub ( ';.*', '', _seed )
+        # _seed = re.sub ( ' *', '', _seed )
+        # _seed = _seed.rstrip()
         
         line = re.sub ( '.*\[', '', line )               ## drop "szcube := ["
         line = re.sub ( '\].*', '', line )               ## drop "];"
@@ -76,28 +88,28 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
             os.mkdir ( srcs_dir )
 
         ##  Copy the generated CUDA source file to srcs
-        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz
+        _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz    ##      + '-s-' + _seed
         _destfile = 'srcs/' + _funcname + _filenamestem + '.cu'
-        shutil.copy ( _inclfile, _destfile )
+        ##  shutil.copy ( _inclfile, _destfile )        ## spiral script writes file to srcs
 
-        ##  Check if auxilliary files were generated and copy to srcs if so
-        _artifact = _funcname + '.rt.g'
-        isfile = os.path.isfile ( _artifact )         ## was ruletree generated
-        if isfile:
-            _destfile = 'srcs/' + _funcname + _filenamestem + '.rt.g'
-            shutil.copy ( _artifact, _destfile )
+        # ##  Check if auxilliary files were generated and copy to srcs if so
+        # _artifact = _funcname + '.rt.g'
+        # isfile = os.path.isfile ( _artifact )         ## was ruletree generated
+        # if isfile:
+        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.rt.g'
+        #     shutil.copy ( _artifact, _destfile )
 
-        _artifact = _funcname + '.ss.g'
-        isfile = os.path.isfile ( _artifact )         ## was sumsruletree generated
-        if isfile:
-            _destfile = 'srcs/' + _funcname + _filenamestem + '.ss.g'
-            shutil.copy ( _artifact, _destfile )
+        # _artifact = _funcname + '.ss.g'
+        # isfile = os.path.isfile ( _artifact )         ## was sumsruletree generated
+        # if isfile:
+        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.ss.g'
+        #     shutil.copy ( _artifact, _destfile )
 
-        _artifact = _funcname + '.spl.g'
-        isfile = os.path.isfile ( _artifact )         ## was SPL generated
-        if isfile:
-            _destfile = 'srcs/' + _funcname + _filenamestem + '.spl.g'
-            shutil.copy ( _artifact, _destfile )
+        # _artifact = _funcname + '.spl.g'
+        # isfile = os.path.isfile ( _artifact )         ## was SPL generated
+        # if isfile:
+        #     _destfile = 'srcs/' + _funcname + _filenamestem + '.spl.g'
+        #     shutil.copy ( _artifact, _destfile )
 
         ##  Create the build directory (if it doesn't exist)
         build_dir = 'build'
@@ -107,38 +119,39 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         ##  Run cmake and build to build the code
 
-        cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
-        cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
-        ##  cmdstr = cmdstr + ' -DRSEED=' + _seed
+        if _build_code:
+            cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
+            cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
+            ##  cmdstr = cmdstr + ' -DRSEED=' + _seed
 
-        os.chdir ( build_dir )
+            os.chdir ( build_dir )
 
-        if sys.platform == 'win32':
-            cmdstr = cmdstr + ' .. && cmake --build . --config Release --target install'
-        else:
-            cmdstr = cmdstr + ' .. && make install'
+            if sys.platform == 'win32':
+                cmdstr = cmdstr + ' .. && cmake --build . --config Release --target install'
+            else:
+                cmdstr = cmdstr + ' .. && make install'
 
-        print ( cmdstr )
-        ##  sys.exit (0)                    ## testing script, stop here
+            print ( cmdstr )
+            ##  sys.exit (0)                    ## testing script, stop here
 
-        result = subprocess.run ( cmdstr, shell=True, check=True )
-        res = result.returncode
+            result = subprocess.run ( cmdstr, shell=True, check=True )
+            res = result.returncode
 
-        if (res != 0):
-            print ( result )
-            sys.exit ( res )
+            if (res != 0):
+                print ( result )
+                sys.exit ( res )
 
-        os.chdir ( '..' )
+            os.chdir ( '..' )
 
-        timefd = open ( _timescript, 'a' )
-        timefd.write ( '##  Cube = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
-        if sys.platform == 'win32':
-            _exename = './exes/dftdriver' + _filenamestem + '.exe'
-        else:
-            _exename = './exes/dftdriver' + _filenamestem
+            timefd = open ( _timescript, 'a' )
+            timefd.write ( '##  Cube = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
+            if sys.platform == 'win32':
+                _exename = './exes/dftdriver' + _filenamestem + '.exe'
+            else:
+                _exename = './exes/dftdriver' + _filenamestem
 
-        timefd.write ( _exename +  '\n\n' )
-        timefd.close()
+            timefd.write ( _exename +  '\n\n' )
+            timefd.close()
 
         ##  Uncomment this section if you want to run (time) each DFT as it is generated
         # result = subprocess.run ( _exename )
