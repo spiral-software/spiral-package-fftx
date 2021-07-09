@@ -18,8 +18,32 @@ import os, stat
 import re
 import shutil
 
-##  TODO: file stem can be an argument (or maybe arguments) speciying library to build
-_file_stem = 'mddft3d_'
+##  file stem can be an argument speciying library to build
+if len ( sys.argv ) < 2:
+    ##  No library name stem provided, default to mddft3d_
+    _file_stem = 'mddft3d_'
+else:
+    ##  Use given argument as the library stem name
+    _file_stem = sys.argv[1]
+    if not re.match ( '_$', _file_stem ):                ## append an underscore if one is not present
+        _file_stem = _file_stem + '_'
+
+##  Code to build -- Hip or CUDA (default) governs file suffix etc.
+_code_type = 'CUDA'
+_file_suffix = '.cu'
+
+if len ( sys.argv ) >= 3:
+    ##  Code type specified
+    _code_type = sys.argv[2]
+    if re.match ( 'cuda', _code_type, re.IGNORECASE ):
+        ##  CUDA selected
+        _code_type = 'CUDA'
+        _file_suffix = '.cu'
+
+    if re.match ( 'hip', _code_type, re.IGNORECASE ):
+        ##  HIP selected
+        _code_type = 'HIP'
+        _file_suffix = '.cpp'
 
 ##  Create the library sources directory (if it doesn't exist)
 _srcs_dir  = 'lib_' + _file_stem + 'srcs'
@@ -35,7 +59,7 @@ _cmake_srcs.write ( 'set ( _source_files ${_source_files} \n' )
 
 _lib_hdrfname = _srcs_dir + '/' + _file_stem + 'decls.h'
 _lib_pubfname = _srcs_dir + '/' + _file_stem + 'public.h'
-_lib_apifname = _srcs_dir + '/' + _file_stem + 'libentry.cu'
+_lib_apifname = _srcs_dir + '/' + _file_stem + 'libentry' + _file_suffix
 _lib_cmakefil = _srcs_dir + '/CMakeLists.txt'
 
 
@@ -110,6 +134,8 @@ def library_api ( ):
     _str = _str + '//  See LICENSE for details\n\n'
 
     _str = _str + '#include <stdio.h>\n'
+    _str = _str + '#include <stdlib.h>\n'
+    _str = _str + '#include <string.h>\n'
     _str = _str + '#include "' + _file_stem + 'decls.h"\n'
     _str = _str + '#include "' + _file_stem + 'public.h"\n\n'
 
@@ -182,42 +208,29 @@ def library_api ( ):
     return _str;
 
 
-def cmake_library ():
+def cmake_library ( type ):
     _str =        '##\n## Copyright (c) 2018-2021, Carnegie Mellon University\n'
     _str = _str + '## All rights reserved.\n##\n## See LICENSE file for full information\n##\n\n'
 
     _str = _str + 'cmake_minimum_required ( VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION} )\n\n'
 
     _str = _str + 'set ( _lib_root ' + _file_stem + ' )\n'
-    _str = _str + 'set ( PROJECT ${_lib_root}precomp )    ##  precompiled transform library\n'
-    _str = _str + 'set ( _lib_name ${PROJECT} )\n\n'
+    _str = _str + 'set ( _lib_name ${_lib_root}precomp )\n\n'
 
-    _str = _str + 'project ( ${PROJECT}\n'
-    _str = _str + '          VERSION 1.0.1\n'
-    _str = _str + '          DESCRIPTION "Library of pre-compiled mddft transforms"\n'
-    _str = _str + '          LANGUAGES C CXX CUDA )\n\n'
+    if type == 'CUDA':
+        _str = _str + 'set ( CMAKE_CUDA_ARCHITECTURES 70 )\n\n'
 
-    _str = _str + '##  Setup compilation flags\n\n'
-    _str = _str + 'if (WIN32)\n'
-    _str = _str + '    set ( CUDA_COMPILE_FLAGS )\n'
-    _str = _str + '    set ( GPU_COMPILE_DEFNS -Xptxas -v -maxrregcount=64 )\n'
-    _str = _str + '    list ( APPEND ADDL_COMPILE_FLAGS -DWIN64 )\n'
-    _str = _str + 'else ()\n'
-    _str = _str + '    set ( CUDA_COMPILE_FLAGS -m64 -rdc=false )\n'
-    _str = _str + '    set ( GPU_COMPILE_DEFNS -Xptxas -v -maxrregcount=64 )\n'
-    _str = _str + '    list ( APPEND ADDL_COMPILE_FLAGS )\n'
-    _str = _str + 'endif ()\n\n'
-
-    _str = _str + 'set ( CMAKE_CUDA_ARCHITECTURES 70 )\n\n'
     _str = _str + 'include ( SourceList.cmake )\n'
-    _str = _str + 'list    ( APPEND _source_files ${_lib_root}libentry.cu )\n'
-    _str = _str + 'message ( STATUS "Source file: ${_source_files}" )\n\n'
+    _str = _str + 'list    ( APPEND _source_files ${_lib_root}libentry' + _file_suffix + ' )\n\n'
+    ##  _str = _str + 'message ( STATUS "Source file: ${_source_files}" )\n\n'
 
     _str = _str + 'add_library                ( ${_lib_name} SHARED ${_source_files} )\n'
-    _str = _str + 'target_compile_definitions ( ${_lib_name} PRIVATE ${ADDL_COMPILE_FLAGS} )\n'
-    _str = _str + 'target_compile_options     ( ${_lib_name} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )\n\n'
+    if type == 'CUDA':
+        _str = _str + 'target_compile_options     ( ${_lib_name} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )\n'
+        _str = _str + 'set_property        ( TARGET ${_lib_name} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )\n\n'
+    else:
+        _str = _str + 'target_compile_options     ( ${_lib_name} PRIVATE ${HIP_COMPILE_FLAGS} ${ADDL_COMPILE_FLAGS} )\n\n'
 
-    _str = _str + 'set_property        ( TARGET ${_lib_name} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )\n'
     _str = _str + 'install ( TARGETS\n'
     _str = _str + '          ${_lib_name}\n'
     _str = _str + '          DESTINATION ${CMAKE_BINARY_DIR}/bin )\n\n'
@@ -242,6 +255,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         testscript = open ( 'testscript.g', 'w' )
         testscript.write ( line )
         testscript.write ( 'libdir := "' + _srcs_dir + '"; \n' )
+        testscript.write ( 'file_suffix := "' + _file_suffix + '"; \n' )
         testscript.close()
 
         line = re.sub ( '.*\[', '', line )               ## drop "szcube := ["
@@ -255,10 +269,11 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         ##  Add the file name to the list of sources
         _func_stem = _file_stem + _dimx + 'x' + _dimy + 'x' + _dimz
-        _file_name = _func_stem + '.cu'
+        _file_name = _func_stem + _file_suffix
         _cmake_srcs.write ( '    ' + _file_name + '\n' )
 
         ##  Add the extern declarations and tranck func name for header file
+        ##  FUTURE: Need a way to handle functions with different signatures
         _extern_decls = _extern_decls + 'extern "C" { extern void init_' + _func_stem + '();  }\n'
         _extern_decls = _extern_decls + 'extern "C" { extern void destroy_' + _func_stem + '();  }\n'
         _extern_decls = _extern_decls + 'extern "C" { extern void ' + _func_stem + '( double *output, double *input );  }\n\n'
@@ -266,11 +281,13 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         _tuple_funcs = _tuple_funcs + '    { init_' + _func_stem + ', destroy_' + _func_stem + ', '
         _tuple_funcs = _tuple_funcs + _func_stem + ' },\n'
         
-        ## TODO: Allow a way to specify different gap file(s)
-        ##  Generate the SPIRAL script: cat testscript.g, mddft-cuda-frame.g,
+        ##  TODO: Allow a way to specify different gap file(s)
+        ##  Assume gap file is named {_file_stem}-frame-{cuda|hip}.g
+        ##  Generate the SPIRAL script: cat testscript.g & {transform}-frame-hip.g
+        _frame_file = re.sub ( '_$', '', _file_stem ) + '-frame-' + _code_type.lower() + '.g'
         _spiralhome = os.environ.get('SPIRAL_HOME')
         _catfils = _spiralhome + '/gap/bin/catfiles.py'
-        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-cuda-frame.g'
+        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g ' + _frame_file
         result = subprocess.run ( cmdstr, shell=True, check=True )
         res = result.returncode
 
@@ -280,7 +297,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         else:
             cmdstr = _spiralhome + '/spiral < myscript.g'
 
-        if len ( sys.argv ) < 2:
+        if len ( sys.argv ) < 4:
             ##  No optional argument, generate the code
             result = subprocess.run ( cmdstr, shell=True, check=True )
             res = result.returncode
@@ -313,7 +330,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
     _api_file.close ()
 
     _cmake_file = open ( _lib_cmakefil, 'w' )
-    _filebody = cmake_library ()
+    _filebody = cmake_library ( _code_type )
     _cmake_file.write ( _filebody )
     _cmake_file.close ()
 

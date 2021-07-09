@@ -5,7 +5,7 @@
 # 1d and multidimensional complex DFTs
 
 ##  Script to generate code, will be driven by a size specification and will write the
-##  CUDA code to a file.  The code will be compiled along with a test harness to run the
+##  HIP code to a file.  The code will be compiled along with a test harness to run the
 ##  code, timing it against a cufft specification of the same size, and validating that
 ##  the results are the same for both.
 
@@ -14,14 +14,14 @@ ImportAll(fftx);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
-conf := LocalConfig.fftx.confGPU();
+conf := FFTXGlobals.defaultHIPConf();
 
 if 1 = 1 then
     d := Length(szcube);
     
     name := "mddft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
     
-    PrintLine("mddft-cuda-frame: name = ", name, ", cube = ", szcube, ", size = ",
+    PrintLine("mddft-hip-frame: name = ", name, ", cube = ", szcube, ", size = ",
               StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1),
                                                                     s->" x "::StringInt(s))),
               ";\t\t##PICKME##");
@@ -44,5 +44,5 @@ if 1 = 1 then
     tt := opts.tagIt(t);
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
-    PrintTo(libdir::"/"::name::".cu", opts.prettyPrint(c));
+    PrintTo(libdir::"/"::name::file_suffix, opts.prettyPrint(c));
 fi;
