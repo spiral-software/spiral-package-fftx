@@ -62,6 +62,7 @@ if ( ${OpenMP_FOUND} )
     endif ()
 endif ()
 
-add_subdirectory ( examples/library-hip )
+##  Don't add this by default -- generates HIP examples and depends on hip environment
+##  add_subdirectory ( examples/library-hip )
 
 enable_testing ()
