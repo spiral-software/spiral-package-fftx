@@ -100,7 +100,11 @@ add_subdirectory ( lib_mddft3d_srcs )		## lib-srcs
 set                        ( _lib_precomp mddft3d_precomp )
 set                        (   EXE_TARGET  ${PROJECT} )
 add_executable		   ( ${EXE_TARGET} ${PROJECT}${_suffix} )
-target_link_directories    ( ${EXE_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/bin )
+if (WIN32)
+    target_link_directories    ( ${EXE_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/lib_mddft3d_srcs/${CMAKE_BUILD_TYPE} )
+else ()
+    target_link_directories    ( ${EXE_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/lib_mddft3d_srcs )
+endif ()
 add_dependencies           ( ${EXE_TARGET} ${_lib_precomp} )
 
 if ( ${_be_hip} )
