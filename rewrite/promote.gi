@@ -58,8 +58,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
                  dn := TDAGNode(nbr.params[1] * @(2).val.params[1], nbr.params[2], @(2).val.params[3]),
                  TDAG([dn]::ch))),
     DAG_remove := Rule([@(1,TDAG), [@(2, TDAGNode), @(3), 
-            @(4).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["Y", "Yptr"])), 
-            @(5).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["X", "Xptr"])),
+            @(4).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["Y", "Yptr"] and Collect(e[1], TColMaj) = [])), 
+            @(5).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["X", "Xptr"] and Collect(e[1], TColMaj) = [])),
             ...],...],
         e-> @(2).val.params[1]),
         
