@@ -101,11 +101,18 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
     Gath_MDDFT__PrunedIMDDFT := ARule(Compose, [[@(1, Gath), @(2,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))], @(3, MDDFT)],
         e -> [PrunedIMDDFT(@(3).val.params[1], @(3).val.params[2], 1,  List(@(2).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))))]),
 
-# the n-dimensional non-terminal is still missing here
 # PRDFT * Scat -> PrunedPRDFT
     PRDFT_Scat__PrunedPRDFT := ARule(Compose, [@(1,PRDFT), [@(2, Scat), @(3,fAdd)]],
         e -> [ PrunedPRDFT(@(1).val.params[1], @(1).val.params[2], 1,  _toSymList(List(@(3).val.tolist(), _unwrap)))] ),
         
+# MDPRDFT * Scat -> PrunedMDPRDFT
+    MDPRDFT_Scat__PrunedMDPRDFT := ARule(Compose, [@(1,MDPRDFT), [@(2, Scat), @(3,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))]],
+        e -> [ PrunedMDPRDFT(@(1).val.params[1], List(@(3).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))), @(1).val.params[2])] ),
+
+# Gath * IMDPRDFT -> PrunedIMDPRDFT
+    Gath_IMDPRDFT__PrunedIMDPRDFT := ARule(Compose, [[@(1, Gath), @(2,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))], @(3, IMDPRDFT)],
+        e -> [ PrunedIMDPRDFT(@(3).val.params[1], List(@(2).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))), @(3).val.params[2])] ),
+
 # Gath * PRDFT -> PrunedIPRDFT
     Gath_PRDFT__PrunedIPRDFT := ARule(Compose, [[@(1, Gath), @(2,fAdd)], @(3, IPRDFT)],
         e -> [PrunedIPRDFT(@(3).val.params[1], @(3).val.params[2], 1,  _toSymList(List(@(2).val.tolist(), _unwrap)))]),

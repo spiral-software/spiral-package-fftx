@@ -91,6 +91,11 @@ cyc := CMeasure(c, opts);
 
 vec := CVector(c, [1], opts);
 
+mat := CMatrix(c, opts, [[1,1], [2, 20]]);
+smat := tt.matBox([[1,1], [2, 20]]);
+InfinityNormMat(mat - smat);
+
+
 #==================
 var.flush();
 

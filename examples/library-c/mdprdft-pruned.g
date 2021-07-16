@@ -13,8 +13,6 @@ conf := LocalConfig.fftx.defaultConf();
 szns := [6, 4, 8];
 sznzs := 2;
 
-PrintLine("mdprdft-pruned: n = ", szn, " nzs = ", sznzs, ";\t\t##PICKME##");
-
 t := let(ns := szns, 
     nzs := sznzs,
     fwd := true,
