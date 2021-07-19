@@ -11,8 +11,8 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-n := 2;
-N := 2;
+n := 8;
+N := 128;
 
 PrintLine("dft-batch-cuda: X/Y/Z dim = ", n, " N = ", N, ";\t\t##PICKME##");
 
