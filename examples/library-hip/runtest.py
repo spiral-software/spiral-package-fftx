@@ -18,6 +18,7 @@ import subprocess
 import os, stat
 import re
 import shutil
+import time
 
 _inclfile = 'mddft3d.cu'
 _funcname = 'mddft3d'
@@ -64,11 +65,11 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         _dimy = dims[1]
         _dimz = dims[2]
 
-        ##  Generate the SPIRAL script: cat testscript.g, mddft-cuda-frame.g,
+        ##  Generate the SPIRAL script: cat testscript.g, mddft-ptb-hip.g,
         ##  and mddft-meas.g (if want to call CMeasure())
         _spiralhome = os.environ.get('SPIRAL_HOME')
         _catfils = _spiralhome + '/gap/bin/catfiles.py'
-        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-cuda-frame.g' ## mddft-meas.g'
+        cmdstr = 'python ' + _catfils + ' myscript.g testscript.g mddft-ptb-hip.g' ## mddft-meas.g'
         result = subprocess.run ( cmdstr, shell=True, check=True )
         res = result.returncode
 
@@ -90,7 +91,7 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
         ##  Copy the generated CUDA source file to srcs
         _filenamestem = '-' + _dimx + 'x' + _dimy + 'x' + _dimz    ##      + '-s-' + _seed
         _destfile = 'srcs/' + _funcname + _filenamestem + '.cu'
-        ##  shutil.copy ( _inclfile, _destfile )        ## spiral script writes file to srcs
+        ##  shutil.copy ( _inclfile, _destfile )  ## spiral script writes file to srcs
 
         # ##  Check if auxilliary files were generated and copy to srcs if so
         # _artifact = _funcname + '.rt.g'
@@ -121,8 +122,8 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
 
         if _build_code:
             cmdstr = 'rm -rf * && cmake -DINCLUDE_DFT=' + _inclfile + ' -DFUNCNAME=' + _funcname
+            cmdstr = cmdstr + ' -DCMAKE_CXX_COMPILER=hipcc'
             cmdstr = cmdstr + ' -DDIM_M=' + _dimx + ' -DDIM_N=' + _dimy + ' -DDIM_K=' + _dimz
-            ##  cmdstr = cmdstr + ' -DRSEED=' + _seed
 
             os.chdir ( build_dir )
 
@@ -144,14 +145,16 @@ with open ( 'cube-sizes.txt', 'r' ) as fil:
             os.chdir ( '..' )
 
             timefd = open ( _timescript, 'a' )
-            timefd.write ( '##  Cube = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
+            timefd.write ( '##  Size = [' + _dimx + ', ' + _dimy + ', ' + _dimz + ' ]\n' )
+
+            _exename = './executables/hipdriver' + _filenamestem
             if sys.platform == 'win32':
-                _exename = './exes/dftdriver' + _filenamestem + '.exe'
-            else:
-                _exename = './exes/dftdriver' + _filenamestem
+                _exename = _exename + '.exe'
 
             timefd.write ( _exename +  '\n\n' )
             timefd.close()
+            
+            time.sleep(1)
 
         ##  Uncomment this section if you want to run (time) each DFT as it is generated
         # result = subprocess.run ( _exename )
