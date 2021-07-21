@@ -8,7 +8,7 @@ Import(simt);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
-conf := LocalConfig.fftx.confGPU();
+conf := FFTXGlobals.defaultHIPConf();
 
 nbatch := 2;
 szcube := 128;

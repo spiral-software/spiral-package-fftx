@@ -485,6 +485,24 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
             SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
         )
     );
+
+    # flatten GridDim X/X -> X loops
+    ss := SubstTopDown(ss, 
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(3, [BB, SUM]) ]],
+        e->let(s1 := @(1).val,
+            i1 := s1.var,
+            i2 := s1.child(1).var,
+            rng := i1.range * i2.range,
+            ii := Ind(rng),
+            sr := rec(
+                (i1.id) := idiv(ii, i2.range),
+                (i2.id) := imod(ii, i2.range)
+            ),
+            sdim := ASIMTBlockDimX(rng),
+            SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
+        )
+    );
+
    
     
     # fix loop iterations

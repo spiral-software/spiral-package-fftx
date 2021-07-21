@@ -124,16 +124,14 @@ ParseOptsCUDA := function(conf, t)
             return _opts;
         fi;        
 
-        # detect batch of DFT/PRDFT/MDDFT/MDPRDFT
+        # detect batch of DFT/PRDFT
         if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) and 
-            ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1) or
-              (Length(Collect(t, MDDFT)) >= 1) or (Length(Collect(t, MDPRDFT)) >= 1) or (Length(Collect(t, IMDPRDFT)) >= 1)) then
+            ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1)) then
             _conf := FFTXGlobals.confBatchFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
 
             # opts for high performance CUDA cuFFT
-            if ForAll(Collect(t, DFT)::Collect(t, PRDFT)::Collect(t, IPRDFT)::Flat(List(Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IPRDFT)), i -> i.params[1]), 
-                    _t -> _t.params[1] in _HPCSupportedSizesCUDA)  then
+            if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])), i -> i in _HPCSupportedSizesCUDA)  then
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                 
@@ -158,7 +156,7 @@ ParseOptsCUDA := function(conf, t)
             return _opts;
         fi;
        
-        # detect 3D DFT
+        # detect 3D DFT/Batch DFT
         _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
@@ -168,7 +166,6 @@ ParseOptsCUDA := function(conf, t)
             if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
-                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 
@@ -183,7 +180,14 @@ ParseOptsCUDA := function(conf, t)
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
                 _opts.fixUpTeslaV_Code := true;
 
-                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT/MDPRDFT/MDIPRDFT options record>");
+                if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) then
+                    _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDDFT/MDPRDFT/MDIPRDFT options record>");
+                    _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX];
+                else
+                    _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT/MDPRDFT/MDIPRDFT options record>");
+                    _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                fi;
+
                 _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
 
             fi;
@@ -221,8 +225,6 @@ ParseOptsCUDA := function(conf, t)
             
             return _opts;
         fi;
-
-
     
         # promote with default conf rules
         tt := _promote1(Copy(t));

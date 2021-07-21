@@ -2,6 +2,8 @@
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
 
+# 1d batch of 1d and multidimensional of complex DFTs
+
 Load(fftx);
 ImportAll(fftx);
 Import(simt);
@@ -30,3 +32,21 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
+# -- testing on Thom ----------------
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+
+# measurement
+cyc := CMeasure(c, opts);
+gflops := _gflops(Product(ns), nbatch, cyc);
+
+# check first column
+v := BasisVec(t.dims()[2], 0);
+
+cv := CVector(c, v, opts);
+tv := Flat(Replicate(t.dims()[1]/2, [1,0]));
+Maximum(cv-tv);
+
+
+
