@@ -130,10 +130,10 @@ ParseOptsCUDA := function(conf, t)
               (Length(Collect(t, MDDFT)) >= 1) or (Length(Collect(t, MDPRDFT)) >= 1) or (Length(Collect(t, IMDPRDFT)) >= 1)) then
             _conf := FFTXGlobals.confBatchFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
-            _tt := Collect(t, DFT)::Collect(t, PRDFT)::Collect(t, IPRDFT);
 
             # opts for high performance CUDA cuFFT
-            if ForAll(_tt, _t -> _t.params[1] in _HPCSupportedSizesCUDA) then
+            if ForAll(Collect(t, DFT)::Collect(t, PRDFT)::Collect(t, IPRDFT)::Flat(List(Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IPRDFT)), i -> i.params[1]), 
+                    _t -> _t.params[1] in _HPCSupportedSizesCUDA)  then
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                 
@@ -165,7 +165,7 @@ ParseOptsCUDA := function(conf, t)
             _opts := FFTXGlobals.getOpts(_conf);
 
             # opts for high performance CUDA cuFFT
-            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+            if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
@@ -183,7 +183,7 @@ ParseOptsCUDA := function(conf, t)
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
                 _opts.fixUpTeslaV_Code := true;
 
-                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT/MDPRDFT/MDIPRDFT options record>");
                 _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
 
             fi;
