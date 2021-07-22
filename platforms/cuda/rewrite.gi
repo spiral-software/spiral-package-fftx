@@ -471,7 +471,7 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
 
     # flatten Y/X -> X loops
     ss := SubstTopDown(ss, 
-        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(3, [BB, SUM])]],
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), [@(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(3, [BB, SUM, Data, ISum])]],
         e->let(s1 := @(1).val,
             i1 := s1.var,
             i2 := s1.child(1).var,

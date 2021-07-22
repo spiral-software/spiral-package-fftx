@@ -174,8 +174,14 @@ ParseOptsCUDA := function(conf, t)
                     filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+#                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+#                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
-                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                    When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
+                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
+
+
                 _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
                 _opts.fixUpTeslaV_Code := true;
@@ -235,6 +241,44 @@ ParseOptsCUDA := function(conf, t)
             if (ObjId(_tt) in [MDRConv, MDRConvR]) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
+
+           
+                # opts for high performance CUDA cuFFT
+                if ForAll(_tt.params[1], i-> i in _HPCSupportedSizesCUDA) then
+                    _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                    _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                    
+                    _opts.globalUnrolling := 2*_thold + 1;
+    
+                    _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                    _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                        filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                    
+                    _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+    #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+    #                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                        When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
+                            FixUpCUDASigmaSPL_3Stage(s1, opts),
+                            FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
+    
+    
+                    _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
+    #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                    _opts.fixUpTeslaV_Code := true;
+    
+                    if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) then
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDDFT/MDPRDFT/MDIPRDFT options record>");
+                        _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX];
+                    else
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDRConv options record>");
+                        _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                    fi;
+    
+                    _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
+    
+                fi;
+
                 return _opts;
             fi;
             # check for Hockney. This is for N=130
