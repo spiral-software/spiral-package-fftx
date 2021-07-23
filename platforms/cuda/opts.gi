@@ -238,13 +238,13 @@ ParseOptsCUDA := function(conf, t)
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
             # check for convolution
-            if (ObjId(_tt) in [MDRConv, MDRConvR]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
+            if (ObjId(_tt) in [MDRConv, MDRConvR, IOPrunedMDRConv]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
 
            
                 # opts for high performance CUDA cuFFT
-                if (ObjId(_tt) in [MDRConv, MDRConvR] and ForAll(_tt.params[1], i-> i in _HPCSupportedSizesCUDA)) or
+                if (ObjId(_tt) in [MDRConv, MDRConvR, IOPrunedMDRConv] and ForAll(_tt.params[1], i-> i in _HPCSupportedSizesCUDA)) or
                     (ObjId(_tt) in [TTensorI, TTensorInd] and ForAll(_tt.params[1].params[1], i-> i in _HPCSupportedSizesCUDA)) then
                     _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                     _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
@@ -269,10 +269,10 @@ ParseOptsCUDA := function(conf, t)
                     _opts.fixUpTeslaV_Code := true;
     
                     if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) then
-                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDRConv/MDRConvR options record>");
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDRConv/MDRConvR/IOPrunedMDRConv options record>");
                         _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX];
                     else
-                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDRConv/MDRConvR options record>");
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDRConv/MDRConvR/IOPrunedMDRConv options record>");
                         _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                     fi;
     
