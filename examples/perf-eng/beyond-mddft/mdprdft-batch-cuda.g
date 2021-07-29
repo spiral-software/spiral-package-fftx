@@ -42,3 +42,25 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
+# -- testing on Thom ----------------
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+
+# measurement
+cyc := CMeasure(c, opts);
+gflops := _gflops(Product(ns), nbatch, cyc)/2;
+
+# check first column
+v := BasisVec(t.dims()[2], 0);
+
+cv := CVector(c, v, opts);
+if fwd then
+    tv := Flat(Replicate(t.dims()[1]/2, [1,0]));
+else
+    tv := Flat(Replicate(t.dims()[1], 1));
+fi;
+Maximum(cv-tv);
+
+
+

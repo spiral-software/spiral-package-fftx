@@ -12,28 +12,18 @@ Import(simt);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-fwd := true;
-#fwd := false;
-
 nbatch := 2;
+szcube := 128;
 d := 3;
-szcube := 64;
-ns :=  Replicate(d, szcube);
+ns := Replicate(d, szcube);
 
-if fwd then
-    prdft := MDPRDFT;
-    k := 1;
-else
-    prdft := IMDPRDFT;
-    k := -1;
-fi;
-
+PrintLine("mddft-batch-cuda: batch = ", nbatch, " cube = ", szcube, "^3;\t\t##PICKME##");
 
 t := let(batch := nbatch,
-    apat := APar,
+    apat := When(true, APar, AVec),
     k := -1,
     name := "dft"::StringInt(Length(ns))::"d_batch",  
-    TFCall(TTensorI(prdft(ns, k), nbatch, apat, apat), 
+    TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)), 
         rec(fname := name, params := []))
 );
 
@@ -42,3 +32,21 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
+# -- testing on Thom ----------------
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+
+# measurement
+cyc := CMeasure(c, opts);
+gflops := _gflops(Product(ns), nbatch, cyc);
+
+# check first column
+v := BasisVec(t.dims()[2], 0);
+
+cv := CVector(c, v, opts);
+tv := Flat(Replicate(t.dims()[1]/2, [1,0]));
+Maximum(cv-tv);
+
+
+

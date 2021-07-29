@@ -33,4 +33,28 @@ tt := opts.tagIt(t);
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
+# -- testing on Thom ----------------
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+
+# measurement
+cyc := CMeasure(c, opts);
+gflops := _gflops(N, n^2, cyc)/2;
+
+# smaller test case -- CMatrix
+tm := MatSPL(t);
+cm := CMatrix(c, opts);
+InfinityNormMat(cm - tm);
+
+# check first column
+v := BasisVec(t.dims()[2], 2);
+
+cv := CVector(c, v, opts);
+tv := MatSPL(t) * v;
+Maximum(cv-tv);
+
+
+
+
+
 

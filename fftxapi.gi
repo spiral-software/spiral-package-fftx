@@ -204,3 +204,5 @@ TMap := (krn, dims, al, ar) -> TCompose(
 lin_idx := arg -> fTensor(List(arg, fBase)).at(0);
 
 TIterator1D := (A, n, l,  r) -> When(n = 1, A, TTensorI(A, n, l, r));
+
+_gflops := (n, b, t) -> (b*5*n*LogInt(n, 2))/(t*1000000);
