@@ -8,7 +8,7 @@ Load(fftx);
 ImportAll(fftx);
 Import(realdft);
 
-conf := LocalConfig.fftx.confGPU();
+conf := FFTXGlobals.defaultHIPConf();
 
 n := 2;
 d := 2;

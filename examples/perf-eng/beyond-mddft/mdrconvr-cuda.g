@@ -19,7 +19,7 @@ name := "mdrconv"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(Concatena
 
 symvar := var("sym", TPtr(TReal));
 
-t := TFCall(IMDPRDFT(szcube, 1) * RCDiag(FDataOfs(symvar, 2*Product(DropLast(szcube, 1))* (Last(szcube)/2+1), 0)) * MDPRDFT(szcube, -1), 
+t := TFCall(IMDPRDFT(szcube, 1) * Diag(diagTensor(FDataOfs(symvar, Product(DropLast(szcube, 1))* (Last(szcube)/2+1), 0), fConst(TReal, 2, 1))) * MDPRDFT(szcube, -1), 
         rec(fname := name, params := [symvar])
 );
 

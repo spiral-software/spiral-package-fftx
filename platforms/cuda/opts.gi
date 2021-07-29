@@ -116,32 +116,22 @@ ParseOptsCUDA := function(conf, t)
 #    _thold := 16;
     
     if IsBound(conf.useCUDADevice) then 
-        # detect real MD convolution
-        _tt := Collect(t, RCDiag)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, TTensorI);
-        if Length(_tt) = 4 then
-            _conf := FFTXGlobals.confWarpXCUDADevice();
-            _opts := FFTXGlobals.getOpts(_conf);        
-            return _opts;
-        fi;        
+#        # detect real MD convolution
+#        _tt := Collect(t, RCDiag)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, TTensorI);
+#        if Length(_tt) = 4 then
+#            _conf := FFTXGlobals.confWarpXCUDADevice();
+#            _opts := FFTXGlobals.getOpts(_conf);        
+#            return _opts;
+#        fi;        
 
-        # detect batch of DFT/PRDFT/MDDFT/MDPRDFT
+        # detect batch of DFT/PRDFT
         if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) and 
-            ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1) or
-              (Length(Collect(t, MDDFT)) >= 1) or (Length(Collect(t, MDPRDFT)) >= 1) or (Length(Collect(t, IMDPRDFT)) >= 1)) then
+            ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1)) then
             _conf := FFTXGlobals.confBatchFFTCUDADevice();
-            _opts := FFTXGlobals.getOpts(_conf);
-            return _opts;
-        fi;
-       
-        # detect 3D DFT
-        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
-        if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
-            _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
 
             # opts for high performance CUDA cuFFT
-            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
-                _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+            if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])), i -> i in _HPCSupportedSizesCUDA)  then
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                 
@@ -153,12 +143,57 @@ ParseOptsCUDA := function(conf, t)
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
-                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                    When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
+                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
                 _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
                 _opts.fixUpTeslaV_Code := true;
 
-                _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT options record>");
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch DFT options record>");
+
+            fi;
+            return _opts;
+        fi;
+       
+        # detect 3D DFT/Batch DFT
+        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
+        if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
+            _conf := FFTXGlobals.confFFTCUDADevice();
+            _opts := FFTXGlobals.getOpts(_conf);
+
+            # opts for high performance CUDA cuFFT
+            if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+                _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                
+                _opts.globalUnrolling := 2*_thold + 1;
+
+                _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                
+                _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+#                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+#                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
+                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
+
+
+                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
+#                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                _opts.fixUpTeslaV_Code := true;
+
+                if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) then
+                    _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDDFT/MDPRDFT/MDIPRDFT options record>");
+                    _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX];
+                else
+                    _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDDFT/MDPRDFT/MDIPRDFT options record>");
+                    _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                fi;
+
                 _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
 
             fi;
@@ -196,8 +231,6 @@ ParseOptsCUDA := function(conf, t)
             
             return _opts;
         fi;
-
-
     
         # promote with default conf rules
         tt := _promote1(Copy(t));
@@ -205,9 +238,48 @@ ParseOptsCUDA := function(conf, t)
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
             # check for convolution
-            if (ObjId(_tt) in [MDRConv, MDRConvR]) or ((ObjId(_tt) = TTensorI) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
+            if (ObjId(_tt) in [MDRConv, MDRConvR, IOPrunedMDRConv]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
+
+           
+                # opts for high performance CUDA cuFFT
+                if (ObjId(_tt) in [MDRConv, MDRConvR, IOPrunedMDRConv] and ForAll(_tt.params[1], i-> i in _HPCSupportedSizesCUDA)) or
+                    (ObjId(_tt) in [TTensorI, TTensorInd] and ForAll(_tt.params[1].params[1], i-> i in _HPCSupportedSizesCUDA)) then
+                    _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+                    _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                    
+                    _opts.globalUnrolling := 2*_thold + 1;
+    
+                    _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::_opts.breakdownRules.TTensorI;
+                    _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                        filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                    
+                    _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+    #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+    #                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                        When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
+                            FixUpCUDASigmaSPL_3Stage(s1, opts),
+                            FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
+    
+    
+                    _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
+    #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                    _opts.fixUpTeslaV_Code := true;
+    
+                    if ((Length(Collect(t, TTensorInd)) >= 1) or let(lst := Collect(t, TTensorI), (Length(lst) >= 1) and ForAll(lst, l->l.params[2] > 1))) then
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch MDRConv/MDRConvR/IOPrunedMDRConv options record>");
+                        _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX];
+                    else
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC MDRConv/MDRConvR/IOPrunedMDRConv options record>");
+                        _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                    fi;
+    
+                    _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
+    
+                fi;
+
                 return _opts;
             fi;
             # check for Hockney. This is for N=130

@@ -8,7 +8,8 @@ Load(fftx);
 ImportAll(fftx);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
-conf := FFTXGlobals.defaultHIPConf();
+# conf := LocalConfig.fftx.defaultConf();  
+conf := LocalConfig.fftx.confGPU();
 
 n := 2;
 d := 2;
@@ -27,3 +28,26 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
+# -- testing on Thom ----------------
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+
+# measurement
+cyc := CMeasure(c, opts);
+gflops := _gflops(N, n^2, cyc);
+
+# smaller test case -- CMatrix
+tm := MatSPL(t);
+cm := CMatrix(c, opts);
+InfinityNormMat(cm - tm);
+
+# check first column
+v := BasisVec(t.dims()[2], 2);
+
+cv := CVector(c, v, opts);
+tv := MatSPL(t) * v;
+Maximum(cv-tv);
+
+
+
