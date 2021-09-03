@@ -1,3 +1,9 @@
+##  This script shows a case where codegen is requesting far too much shared memory on the device:
+##  Run the script, look in generated code file: fftx_mdprdft_100x100x100.cu
+##  Am seeing statements like:      __shared__ double T53[2512500];
+##  which is far greater than GPU can handle -- code won't compile.
+##  When we fix this we can delve into the issue of correctness that Peter has noted.
+
 szcube := [ 100, 100, 100 ];
 libdir := "lib_fftx_mdprdft_srcs"; 
 file_suffix := ".cu"; 
