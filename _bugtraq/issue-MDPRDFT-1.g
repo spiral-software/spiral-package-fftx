@@ -75,6 +75,7 @@ if 1 = 1 then
     opts.wrapCFuncs := true;
     tt := opts.tagIt(t);
     if(IsBound(fftx_includes)) then opts.includes:=fftx_includes; fi;
+    opts.printRuleTree := true;
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
     PrintTo(libdir::"/"::name::file_suffix, opts.prettyPrint(c));
