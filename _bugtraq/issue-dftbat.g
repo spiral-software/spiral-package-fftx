@@ -13,6 +13,10 @@ codefor := "CPU";
 Load(fftx);
 ImportAll(fftx);
 
+#dft := MDDFT;
+#dft := MDPRDFT;
+dft := IMDPRDFT;
+
 if codefor = "CUDA" then
     conf := LocalConfig.fftx.confGPU();
 elif codefor = "CPU" then
@@ -37,7 +41,7 @@ if 1 = 1 then
         apat := When(true, APar, AVec),
         k := sign,
 	##  name := "dft"::StringInt(Length(ns))::"d_batch",  
-        TFCall(TRC(TTensorI(MDDFT(ns, k), batch, apat, apat)), 
+        TFCall(TRC(TTensorI(dft(ns, k), batch, apat, apat)), 
             rec(fname := name, params := []))
     );
 
