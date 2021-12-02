@@ -5,6 +5,7 @@
 ##  When we fix this we can delve into the issue of correctness that Peter has noted.
 
 szcube := [ 100, 100, 100 ];
+szcube := [ 64, 64, 64 ];
 libdir := "lib_fftx_mdprdft_srcs"; 
 file_suffix := ".cu"; 
 fwd := true; 

@@ -1,3 +1,6 @@
+### Franz says: 32^3 is a weird special case where things break for now. This is due to the fact that 32 x 32 = 1024 
+### tabled for now unless absolutely urgent
+
 ##  This script demonstrates the issue where Spiral will not generate code for the 32^3 size.
 ##  It reports the following:
 ##    [[ while reading *stdin*:75 ]]

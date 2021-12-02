@@ -5,10 +5,12 @@
 ##  Generated code in files: fftx_mdprdft_96x96x96.cpp (HIP) & fftx_mdprdft_96x96x96.cu (CUDA)
 
 szcube := [ 96, 96, 96 ];
+#szcube := [ 80, 80, 80 ];
 libdir := ".";                  ##  libdir := "lib_fftx_mdprdft_srcs"; 
 file_suffix := ".cpp";          ##  file_suffix := ".cu"; 
 fwd := true; 
-codefor := "HIP";               ##  codefor := "CUDA"; 
+#codefor := "HIP";               ##  
+codefor := "CUDA"; 
 
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
@@ -38,7 +40,7 @@ else
     sign   := 1;
 fi;
 
-if 1 = 1 then
+#if 1 = 1 then
     name := prefix::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
     
     PrintLine("fftx_mdprdft-frame: name = ", name, ", cube = ", szcube, ", size = ",
@@ -78,5 +80,12 @@ if 1 = 1 then
     opts.printRuleTree := true;
     c := opts.fftxGen(tt);
     ##  opts.prettyPrint(c);
-    PrintTo(libdir::"/"::name::file_suffix, opts.prettyPrint(c));
-fi;
+    #PrintTo(libdir::"/"::name::file_suffix, opts.prettyPrint(c));
+#fi;
+
+
+opts.target.forward := "thom";
+opts.target.name := "linux-cuda";
+cyc := CMeasure(c, opts);
+
+vec := CVector(c, [1], opts);
