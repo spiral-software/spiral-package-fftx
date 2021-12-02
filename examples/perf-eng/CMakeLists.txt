@@ -9,13 +9,47 @@
 cmake_minimum_required ( VERSION 3.14 )
 
 set ( CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel" )
-set ( PROJECT dftdriver )    ##  dft-cufft-1st dft-cufft-only dft-nocufft dftdriver )
+set ( PROJECT transformlib_test )    ##  driver to test library of pre-compiled mddft's
+
+if ( "${CMAKE_CXX_COMPILER}" STREQUAL "hipcc" )
+    ##  HIP flavour
+    set ( _be_hip ON )
+    set ( _add_lang )
+    set ( _suffix .cpp )
+else ()
+    ##  CUDA flavour
+    set ( _be_hip OFF )
+    set ( _add_lang CUDA )
+    set ( _suffix .cu )
+endif ()
+
 project ( ${PROJECT}
          VERSION 1.0.1
-                DESCRIPTION "Driver for mdprdft transforms of different sizes"
-                LANGUAGES C CXX CUDA )
+                DESCRIPTION "Driver to test library of pre-compiled mddft transforms"
+                LANGUAGES C CXX ${_add_lang} )
 
-set ( SOURCES ${PROJECT}.cu )
+##  Set C standard 11
+set ( CMAKE_C_STANDARD 11 )
+set ( CMAKE_CXX_STANDARD 11 )
+
+if ( ${_be_hip} )
+    ##  Add additional paths for CMake to find HIP
+    list ( APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm )	##  /opt/rocm-4.2.0/hip
+
+    find_package ( hip REQUIRED )
+    if (${hip_FOUND})
+	##  HIP found
+	message ( STATUS "Found HIP: Version = ${hip_VERSION}")
+    else ()
+	message ( SEND_ERROR "HIP NOT FOUND: HIP is required to build/run examples")
+    endif ()
+
+    ##  Need to add $ROCM_PATH for includes and libraries
+    if ( DEFINED ENV{ROCM_PATH} )
+	message ( STATUS "ROCM_PATH is defined: $ENV{ROCM_PATH}" )
+	include_directories ( $ENV{ROCM_PATH}/hipfft/include $ENV{ROCM_PATH}/include )
+    endif ()
+endif ()
 
 ##  Get SPIRAL home...
 
@@ -29,43 +63,60 @@ else ()
     set ( SPIRAL_SOURCE_DIR ${SPIRAL_HOME} )
 endif ()
 
-include_directories ( ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
+include_directories ( ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/lib_mddft3d_srcs
                       ${SPIRAL_SOURCE_DIR}/profiler/targets/include )
 
 ##  Setup compilation flags
-##  Parameters are defined on the cmake command line to specify names & sizes for the driver program
-##  INCLUDE_DFT -- name of the file containing the generated code, included by driver program
-##  FUNCNAME -- name of the kernel to call
-##  DIM_M -- 1st dimension (slowest changing in C world)
-##  DIM_N -- 2nd dimension
-##  DIM_K -- 3rd dimension
 
 if (WIN32)
-    set ( CUDA_COMPILE_FLAGS -rdc=false --pre-include ${INCLUDE_DFT} )
-    set ( GPU_COMPILE_DEFNS -Xptxas -v -maxrregcount=64 )			## -Xptxas -v
-    set ( LIBS_FOR_CUDA cufft )
-    list ( APPEND ADDL_COMPILE_FLAGS -DWIN64 -DFUNCNAME=${FUNCNAME} -DM=${DIM_M} -DN=${DIM_N} -DK=${DIM_K} )
+    if ( ${_be_hip} )
+	set ( HIP_COMPILE_FLAGS )
+	set ( LIBS_FOR_HIP hipfft rocfft )
+    else ()
+	set ( GPU_COMPILE_DEFNS -Xptxas -v -maxrregcount=64 )			## -Xptxas -v
+	set ( LIBS_FOR_CUDA cufft )
+    endif ()
+    list ( APPEND ADDL_COMPILE_FLAGS -DWIN64 )
 else ()
-    set ( CUDA_COMPILE_FLAGS -m64 -rdc=true --pre-include ${INCLUDE_DFT} )
-    set ( GPU_COMPILE_DEFNS -dc -Xptxas -v -maxrregcount=64 )		## -Xptxas -v
-    set ( LIBS_FOR_CUDA cufft culibos )
-    list ( APPEND ADDL_COMPILE_FLAGS -DFUNCNAME=${FUNCNAME} -DM=${DIM_M} -DN=${DIM_N} -DK=${DIM_K} )
+    if ( ${_be_hip} )
+	set ( HIP_COMPILE_FLAGS )
+	set ( LIBS_FOR_HIP hipfft rocfft )
+    else ()
+	set ( GPU_COMPILE_DEFNS -Xptxas -v -maxrregcount=64 )
+	set ( CUDA_COMPILE_FLAGS -m64 -rdc=false )
+	set ( LIBS_FOR_CUDA cufft culibos )
+    endif ()
+    list ( APPEND ADDL_COMPILE_FLAGS )
 endif ()
 
-##  set ( CMAKE_CUDA_ARCHITECTURES 60 61 62 70 72 75 )
-set ( CMAKE_CUDA_ARCHITECTURES 70 )
+if ( NOT ${_be_hip} )
+    ##  set ( CMAKE_CUDA_ARCHITECTURES 60 61 62 70 72 75 )
+    set ( CMAKE_CUDA_ARCHITECTURES 70 )
+endif ()
 
-set                        (   EXE_TARGET  ${PROJECT}-${DIM_M}x${DIM_N}x${DIM_K} )  ##  -s-${RSEED} )
-add_executable		   ( ${EXE_TARGET} ${PROJECT}.cu )
-target_compile_definitions ( ${EXE_TARGET} PRIVATE ${ADDL_COMPILE_FLAGS} )
-target_compile_options     ( ${EXE_TARGET} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )
-##  if ( NOT WIN32 )
-##      target_compile_options ( ${PROJECT} PRIVATE -ccbin=${CMAKE_CXX_COMPILER} )
-##  endif ()
+##  Walk the following subdirectory for the source files to add to the library
+add_subdirectory ( lib_mddft3d_srcs )		## lib-srcs
 
-set_property        ( TARGET ${EXE_TARGET} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
-target_link_libraries	   ( ${EXE_TARGET} ${LIBS_FOR_CUDA} )
+set                        ( _lib_precomp mddft3d_precomp )
+set                        (   EXE_TARGET  ${PROJECT} )
+add_executable		   ( ${EXE_TARGET} ${PROJECT}${_suffix} )
+if (WIN32)
+    target_link_directories    ( ${EXE_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/lib_mddft3d_srcs/${CMAKE_BUILD_TYPE} )
+else ()
+    target_link_directories    ( ${EXE_TARGET} PRIVATE ${CMAKE_BINARY_DIR}/lib_mddft3d_srcs )
+endif ()
+add_dependencies           ( ${EXE_TARGET} ${_lib_precomp} )
+
+if ( ${_be_hip} )
+    target_compile_options     ( ${EXE_TARGET} PRIVATE ${HIP_COMPILE_FLAGS} ${ADDL_COMPILE_FLAGS} )
+    target_link_directories    ( ${EXE_TARGET} PRIVATE $ENV{ROCM_PATH}/lib )
+    target_link_libraries      ( ${EXE_TARGET} hip::host hip::device ${LIBS_FOR_HIP} ${_lib_precomp} )
+else ()
+    target_compile_options     ( ${EXE_TARGET} PRIVATE ${CUDA_COMPILE_FLAGS} ${GPU_COMPILE_DEFNS} )
+    set_property        ( TARGET ${EXE_TARGET} PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON )
+    target_link_libraries      ( ${EXE_TARGET} ${LIBS_FOR_CUDA} ${_lib_precomp} )
+endif ()
 
 install ( TARGETS
     ${EXE_TARGET}
-    DESTINATION ${CMAKE_SOURCE_DIR}/exes )
+    DESTINATION ${CMAKE_BINARY_DIR}/bin )
