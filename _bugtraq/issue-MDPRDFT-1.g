@@ -4,12 +4,13 @@
 ##  Setup for HIP, CUDA values in the comments
 ##  Generated code in files: fftx_mdprdft_96x96x96.cpp (HIP) & fftx_mdprdft_96x96x96.cu (CUDA)
 
-#szcube := [ 32, 32, 32 ];
-szcube := [ 96, 96, 96 ];
+szcube := [ 32, 32, 32 ];
+#szcube := [ 96, 96, 96 ];
 #szcube := [ 80, 80, 80 ];
 libdir := ".";                  ##  libdir := "lib_fftx_mdprdft_srcs"; 
 file_suffix := ".cpp";          ##  file_suffix := ".cu"; 
-fwd := true; 
+#fwd := true; 
+fwd := false; 
 #codefor := "HIP";               ##  
 codefor := "CUDA"; 
 
