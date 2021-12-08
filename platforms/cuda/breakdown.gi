@@ -184,10 +184,10 @@ NewRulesFor(IMDPRDFT, rec(
                                rdim := Rows(iprdft),
                                cdim := Cols(iprdft),
                                [ [ TCompose([ TGrp(TCompose([
-                                             TL(rdim * Product(Drop(nt.params[1], 1)), rdim, 1, 1), 
-                                             TTensorI(IPRDFT1(Last(a_lengths), a_exp), Product(Drop(nt.params[1], 1)), APar, APar)
+                                             TTensorI(IPRDFT1(Last(a_lengths), a_exp), Product(Drop(nt.params[1], 1)), APar, APar),
+                                             TL(cdim * Product(Drop(nt.params[1], 1)) / 2, Product(Drop(nt.params[1], 1)), 1, 2), 
                                        ])) ] ::
-                                       List(Drop(nt.params[1], 1), i->TRC(TTensorI(DFT(i, a_exp), cdim * Product(Drop(nt.params[1], 1))/(2*i), AVec, APar)))
+                                       List(Drop(nt.params[1], 1), i->TRC(TTensorI(DFT(i, a_exp), cdim * Product(Drop(nt.params[1], 1))/(2*i), APar, AVec)))
                                     ).withTags(tags) ]] ),
         apply := (nt, C, cnt) -> C[1]
     )
@@ -282,6 +282,7 @@ NewRulesFor(TTensorI, rec(
                     remainder, APar, APar)]).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     )
+#   (I x A) L MISSING
   
 ));
 
