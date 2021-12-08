@@ -115,7 +115,20 @@ NewRulesFor(MDPRDFT, rec(
                                [[ TTensorI(mddft, prdft.dims()[1]/2, AVec, AVec).withTags(tags),
                                   FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), prdft).withTags(tags) ]]),
         apply := (nt, C, cnt) -> RC(C[1]) * C[2]
+    ),
+    MDPRDFT_tSPL_Pease_SIMT := rec(
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[2],
+                               tags := nt.getTags(),
+                               prdft := PRDFT1(Last(a_lengths), a_exp),
+                               rcdim := Rows(prdft),
+                               [ [ TCompose(List(DropLast(nt.params[1], 1), i->TRC(TTensorI(DFT(i, a_exp), rcdim * Product(DropLast(nt.params[1], 1))/(2*i), AVec, APar)))::
+                                           [ TGrp(TCompose([TL(rcdim * Product(DropLast(nt.params[1], 1)) / 2, rcdim / 2, 1, 2), 
+                                             TTensorI(PRDFT1(Last(a_lengths), a_exp), Product(DropLast(nt.params[1], 1)), APar, APar)])) ]).withTags(tags) ]] ),
+        apply := (nt, C, cnt) -> C[1]
     )
+    
 ));
 
 
