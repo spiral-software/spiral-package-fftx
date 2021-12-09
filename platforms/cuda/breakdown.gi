@@ -281,8 +281,28 @@ NewRulesFor(TTensorI, rec(
                     TCompose([TL(Rows(nt.params[1]) * peelof, Rows(nt.params[1])), TTensorI(nt.params[1], peelof, APar, APar)]),
                     remainder, APar, APar)]).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
+    ),
+#   (I x A) L
+    IxA_L_SIMT := rec(
+        forTransposition := false,
+        
+        # these config parameters need to be moved into the opts...
+        mem := 1024*96,
+        mem_per_pt := 2*8*2,
+        max_threads := 2048,
+        max_kernel := 18 * 18,
+        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
+            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParVec(nt.params) and nt.params[2] > 1,
+        children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
+            [[ TCompose([
+                TTensorI(
+                    TCompose([TTensorI(nt.params[1], peelof, APar, APar), TL(Rows(nt.params[1]) * peelof, peelof)]), remainder, APar, APar),
+                TL(Rows(nt)/peelof, (Rows(nt)/peelof)/n, 1, peelof), 
+                ]).withTags(nt.getTags()) ]]),
+        apply := (nt, c, cnt) -> c[1]
     )
-#   (I x A) L MISSING
   
 ));
 
