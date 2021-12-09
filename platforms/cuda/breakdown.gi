@@ -115,20 +115,7 @@ NewRulesFor(MDPRDFT, rec(
                                [[ TTensorI(mddft, prdft.dims()[1]/2, AVec, AVec).withTags(tags),
                                   FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), prdft).withTags(tags) ]]),
         apply := (nt, C, cnt) -> RC(C[1]) * C[2]
-    ),
-    MDPRDFT_tSPL_Pease_SIMT := rec(
-        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
-        children  := nt -> let(a_lengths := nt.params[1],
-                               a_exp := nt.params[2],
-                               tags := nt.getTags(),
-                               prdft := PRDFT1(Last(a_lengths), a_exp),
-                               rcdim := Rows(prdft),
-                               [ [ TCompose(List(DropLast(nt.params[1], 1), i->TRC(TTensorI(DFT(i, a_exp), rcdim * Product(DropLast(nt.params[1], 1))/(2*i), AVec, APar)))::
-                                           [ TGrp(TCompose([TL(rcdim * Product(DropLast(nt.params[1], 1)) / 2, rcdim / 2, 1, 2), 
-                                             TTensorI(PRDFT1(Last(a_lengths), a_exp), Product(DropLast(nt.params[1], 1)), APar, APar)])) ]).withTags(tags) ]] ),
-        apply := (nt, C, cnt) -> C[1]
     )
-    
 ));
 
 
@@ -174,24 +161,7 @@ NewRulesFor(IMDPRDFT, rec(
                                [[ FoldR(DropLast(a_lengths, 1), (a,b)->TTensorI(a, b, APar, APar), iprdft).withTags(tags),
                                    TTensorI(mddft, iprdft.dims()[2]/2, AVec, AVec).withTags(tags) ]]),
         apply := (nt, C, cnt) -> C[1] * RC(C[2])
-    ),
-    IMDPRDFT_tSPL_Pease_SIMT := rec(
-        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
-        children  := nt -> let(a_lengths := nt.params[1],
-                               a_exp := nt.params[2],
-                               tags := nt.getTags(),
-                               iprdft := IPRDFT1(Last(a_lengths), a_exp),
-                               rdim := Rows(iprdft),
-                               cdim := Cols(iprdft),
-                               [ [ TCompose([ TGrp(TCompose([
-                                             TTensorI(IPRDFT1(Last(a_lengths), a_exp), Product(Drop(nt.params[1], 1)), APar, APar),
-                                             TL(cdim * Product(Drop(nt.params[1], 1)) / 2, Product(Drop(nt.params[1], 1)), 1, 2), 
-                                       ])) ] ::
-                                       List(Drop(nt.params[1], 1), i->TRC(TTensorI(DFT(i, a_exp), cdim * Product(Drop(nt.params[1], 1))/(2*i), APar, AVec)))
-                                    ).withTags(tags) ]] ),
-        apply := (nt, C, cnt) -> C[1]
     )
-    
 ));
 
 
@@ -270,9 +240,7 @@ NewRulesFor(TTensorI, rec(
         mem := 1024*96,
         mem_per_pt := 2*8*2,
         max_threads := 2048,
-        max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), f -> f < self.mem))/(self.mem_per_pt*n),
         
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecPar(nt.params) and nt.params[2] > 1,
         children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
@@ -281,30 +249,8 @@ NewRulesFor(TTensorI, rec(
                     TCompose([TL(Rows(nt.params[1]) * peelof, Rows(nt.params[1])), TTensorI(nt.params[1], peelof, APar, APar)]),
                     remainder, APar, APar)]).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
-    ),
-#   (I x A) L
-    IxA_L_SIMT := rec(
-        forTransposition := false,
-        
-        # these config parameters need to be moved into the opts...
-        mem := 1024*96,
-        mem_per_pt := 2*8*2,
-        max_threads := 2048,
-        max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
-        
-        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParVec(nt.params) and nt.params[2] > 1,
-        children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
-            [[ TCompose([
-                TTensorI(
-                    TCompose([TTensorI(nt.params[1], peelof, APar, APar), TL(Rows(nt.params[1]) * peelof, peelof)]), remainder, APar, APar),
-                TL(Rows(nt)/peelof, (Rows(nt)/peelof)/n, 1, peelof), 
-                ]).withTags(nt.getTags()) ]]),
-        apply := (nt, c, cnt) -> c[1]
     )
   
 ));
-
 
 

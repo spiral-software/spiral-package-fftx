@@ -21,8 +21,6 @@ Include(sumsgen);
 Include(fftxapi);
 Include(opts);
 
-LoadImport(fftx.library);
-
 LoadImport(fftx.platforms);
 LoadImport(fftx.knowledgebase);
 

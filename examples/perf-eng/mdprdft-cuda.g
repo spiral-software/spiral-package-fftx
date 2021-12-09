@@ -11,26 +11,13 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-_stressTest := true;
-_sample := 1;
-
-if _stressTest then
-    MAX_KERNEL := 16;
-    MAX_PRIME := 7;
-    MIN_SIZE := 32;
-    MAX_SIZE := 320;
-    size1 := Filtered([MIN_SIZE..MAX_SIZE], n -> let(fcts := Factors(n), Maximum(fcts) <= MAX_KERNEL and ForAll(fcts, i -> IsPrime(i) and i <= MAX_PRIME)));
-   
-    sizes3 := Cartesian(Replicate(3, size1));
-    sizes := When(_sample = 0, sizes3, List([1.._sample], i->Random(sizes3)));
-else
-    sizes := [
-         [ 100, 100, 100],
-         [ 224, 224, 100],
-         [ 96, 96, 320],
-         [ 80, 80, 80 ]
-    ];
-fi;
+sizes := [
+#     [ 4, 4, 4],
+#     [ 100, 100, 100],
+#     [ 224, 224, 100],
+#     [ 96, 96, 320],
+     [ 80, 80, 80 ]
+];
 
 #fwd := true;
 fwd := false;

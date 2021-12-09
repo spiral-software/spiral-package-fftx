@@ -2,7 +2,8 @@
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
 
-# Md real pruned DFTs
+# 1d real pruned DFTs
+# we do not have the MD nonterminal implemented yet
 
 Load(fftx);
 ImportAll(fftx);
@@ -10,19 +11,21 @@ Import(realdft);
 
 conf := LocalConfig.fftx.defaultConf();
 
-szns := [6, 4, 8];
+szn   := 8;
 sznzs := 2;
 
-t := let(ns := szns, 
+PrintLine("mdprdft-pruned: n = ", szn, " nzs = ", sznzs, ";\t\t##PICKME##");
+
+t := let(n := szn, 
     nzs := sznzs,
-    fwd := true,
-    ppat := List(ns, n->[1..Int(n/nzs)]),
+    fwd := false,
+    ppat := [1..Int(n/nzs)],
     blk := 1,
     k := -1,
-    name := When(fwd, "", "i")::MDPRDFT.name,  
+    name := When(fwd, "", "i")::PRDFT.name,  
     TFCall(When(fwd,
-        Compose(MDPRDFT(ns, k), ZeroEmbedBox(ns, ppat)),
-        Compose(ExtractBox(ns, ppat), IMDPRDFT(ns, k))
+        Compose(PRDFT(n, k), ZeroEmbedBox(n, ppat)),
+        Compose(ExtractBox(n, ppat), IPRDFT(n, k))
     ), rec(fname := name, params := []))
 );
 
@@ -31,4 +34,5 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
 

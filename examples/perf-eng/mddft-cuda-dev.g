@@ -12,8 +12,6 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 sizes := [
-     [270,270,270],
-     [128, 128, 128],
      [ 100, 224, 224],
      [32, 32, 48],
      [32, 48, 32],
@@ -32,22 +30,6 @@ sizes := [
 
 i := 1;
 szcube := sizes[i];
-
-#MAX_KERNEL := 16;
-#MAX_PRIME := 7;
-#MIN_SIZE := 32;
-#MAX_SIZE := 320;
-#
-#size1 := Filtered([MIN_SIZE..MAX_SIZE], n -> let(fcts := Factors(n), 
-#    Maximum(fcts) <= MAX_KERNEL and 
-#    ForAll(fcts, i -> IsPrime(i) and i <= MAX_PRIME)));
-#
-#sizes := Cartesian(Replicate(3, size1));
-#szcube := Random(sizes);
-
-
-
-
 var.flush();
 d := Length(szcube);
 
@@ -60,47 +42,34 @@ t := TFCall(TRC(MDDFT(szcube, 1)),
 
 opts := conf.getOpts(t);
 
-#Import(fftx.platforms.cuda);
-#Import(simt);
-#
-#opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
-#opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
-##opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimZ, ASIMTBlockDimY, ASIMTBlockDimX];
-##opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
-#opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
-#
-#
-#_thold := 16;
-#opts.globalUnrolling := 2*_thold + 1;
-#
-#opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
-##opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [8..20])))]::opts.breakdownRules.DFT;
-#opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-#   filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::opts.breakdownRules.DFT;
-#
-#opts.unparser.simt_synccluster := opts.unparser.simt_syncblock;
-#
-#opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
-#       FixUpCUDASigmaSPL_3Stage(s1, opts)); 
+Import(fftx.platforms.cuda);
+Import(simt);
+
+opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
+opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+#opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimZ, ASIMTBlockDimY, ASIMTBlockDimX];
+#opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
+opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+
+
+_thold := 16;
+opts.globalUnrolling := 2*_thold + 1;
+
+opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), fftx.platforms.cuda.L_IxA_SIMT]::opts.breakdownRules.TTensorI;
+#opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, filter := e-> ForAll(e, i -> i in [8..20])))]::opts.breakdownRules.DFT;
+opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+   filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::opts.breakdownRules.DFT;
+
+opts.unparser.simt_synccluster := opts.unparser.simt_syncblock;
+
+opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+       FixUpCUDASigmaSPL_3Stage(s1, opts)); 
 
 
 tt := opts.tagIt(t);
 
 _tt := opts.preProcess(tt);
 rt := opts.search(_tt);
-
-#rt1 := rt.children[1].children[1].children[1].children[1].children[1].children[2].children[1].children[2].children[1];
-#splx := SPLRuleTree(rt1);
-#
-#sm := MatSPL(splx);
-#
-#tx := rt1.node;
-#tm := MatSPL(tx);
-#
-#diff := tm - sm;
-#
-#rdiff := Maximum(List(Flat(diff), AbsComplex));
-
 
 ##xx := FindUnexpandableNonterminal(_tt, opts);
 #
