@@ -2,27 +2,38 @@
 ##  Copyright (c) 2018-2021, Carnegie Mellon University
 ##  See LICENSE for details
 
-# 1D batch of 3D PRDFT
+# 1d batch of 1d and multidimensional of complex DFTs
 
 Load(fftx);
 ImportAll(fftx);
+Import(simt);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-nbatch := 2;
-szcube := 80;
+fwd := true;
+#fwd := false;
 
-PrintLine("mdprdft-batch-cuda: batch = ", nbatch, " cube = ", szcube, "^3;\t\t##PICKME##");
+nbatch := 2;
+d := 3;
+szcube := 64;
+ns :=  Replicate(d, szcube);
+
+if fwd then
+    prdft := MDPRDFT;
+    k := 1;
+else
+    prdft := IMDPRDFT;
+    k := -1;
+fi;
+
 
 t := let(batch := nbatch,
-    apat := When(true, AVec, APar),
-    dft := When(true, MDPRDFT, IMDPRDFT),
-    ns := [szcube, szcube, szcube],
+    apat := APar,
     k := -1,
-    name := dft.name::StringInt(Length(ns))::"d_batch",  
-    TFCall(TTensorI(dft(ns, k), batch, apat, apat), 
+    name := "dft"::StringInt(Length(ns))::"d_batch",  
+    TFCall(TTensorI(prdft(ns, k), nbatch, apat, apat), 
         rec(fname := name, params := []))
 );
 
@@ -31,4 +42,3 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
-

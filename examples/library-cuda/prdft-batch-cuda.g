@@ -8,28 +8,29 @@ Load(fftx);
 ImportAll(fftx);
 Import(realdft);
 
-conf := FFTXGlobals.confBatchFFTCUDADevice();
-opts := FFTXGlobals.getOpts(conf);
+conf := LocalConfig.fftx.confGPU();
 
+n := 2;
+d := 2;
+N := 128;
 
-n := 4;
-N := 4;
-xdim := n;
-ydim := n;
-zdim := n;
-ix := Ind(xdim);
-iy := Ind(ydim);
-iz := Ind(zdim);
+iter := List([1..d], i->Ind(n));
 
-PrintLine("prdft-batch-cuda: X/Y/Z dim = ", n, " N = ", N, ";\t\t##PICKME##");
-
-t := let(
-    name := "grid_prdft",
-    TFCall(TMap(PRDFT(N, -1), [iz, iy, ix], APar, APar), 
-        rec(fname := name, params := [])).withTags(opts.tags)
+pdft := When(false,
+    PRDFT,
+    IPRDFT
 );
 
-c := opts.fftxGen(t);
+t := let(
+    name :="grid_"::pdft.name::StringInt(d)::"d_cont",
+    TFCall(TMap(pdft(N, -1), iter, APar, APar), 
+        rec(fname := name, params := []))
+);
+
+opts := conf.getOpts(t);
+tt := opts.tagIt(t);
+
+c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 
