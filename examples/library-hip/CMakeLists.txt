@@ -5,98 +5,46 @@
 ## See LICENSE file for full information
 ##
 
-## specify this only here, lower levels use CMAKE_MINIMUM_REQUIRED_VERSION that this sets
-cmake_minimum_required ( VERSION 3.14 )
+cmake_minimum_required (VERSION ${CMAKE_MINIMUM_REQUIRED_VERSION})
 
-set ( CMAKE_BUILD_TYPE Release  CACHE STRING "Debug, Release, RelWithDebInfo, MinSizeRel" )
-set ( PROJECT unithipdriver )	## unithipdriver
-project ( ${PROJECT}
-         VERSION 1.0.1
-                DESCRIPTION "Driver for hip mddft transforms of different sizes" )
-##                  LANGUAGES C CXX ) CUDA )
+##  Each example by definition illustrates a concept or technique.  However, the
+##  example files are not necessarily complete tests in and of themselves, it
+##  may be necessary to pass additional files to SPIRAL to build out a test
+##  (e.g., configuration or sizing parameters or specific instructions for a
+##  test like CVector).
 
-##  Add additional paths for CMake to find HIP
-list ( APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm )	##  /opt/rocm-4.2.0/hip
+set ( _hip_examples
+    )
 
-find_package ( hip REQUIRED )
-if (${hip_FOUND})
-    ##  HIP found
-    message ( STATUS "Found HIP: Version = ${hip_VERSION}")
-else ()
-    message ( SEND_ERROR "HIP NOT FOUND: HIP is required to build/run examples")
-endif ()
+set ( _hip_nocheck
+      dft-batch-hip.g
+      mddft-hip.g
+    )
 
-##  Get SPIRAL home...
+##  _pre_fils are files to preceed that example script; _post_fils are files to
+##  follow the script.
 
-if ( DEFINED ENV{SPIRAL_HOME} )
-    message ( STATUS "SPIRAL_HOME = $ENV{SPIRAL_HOME}" )
-    set ( SPIRAL_SOURCE_DIR $ENV{SPIRAL_HOME} )
-else ()
-    if ( "x${SPIRAL_HOME}" STREQUAL "x" )
-        message ( FATAL_ERROR "SPIRAL_HOME environment variable undefined and not specified on command line" )
-    endif ()
-    set ( SPIRAL_SOURCE_DIR ${SPIRAL_HOME} )
-endif ()
+set ( _gpu_required_flag True )
+set ( _pre_fils "" )
+set ( _post_fils "../library-cuda/measures.g" "../library-cuda/vector-add.g" )
 
-##  Set compiler and linker.
-if ( NOT WIN32 )
-    set ( CMAKE_CXX_COMPILER ${HIP_HIPCC_EXECUTABLE} )
-    set ( CMAKE_CXX_LINKER   ${HIP_HIPCC_EXECUTABLE} )
-endif ()
+foreach ( _example ${_hip_examples} )
+    set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${CMAKE_CURRENT_SOURCE_DIR} ${_inp_fils} )
+endforeach ()
 
-##  Source file 
-set ( SOURCES ${PROJECT}.cpp )
+##  Currently can't automatically check example expecting an input symbol, do codegen only
 
-##  Need to add $ROCM_PATH for includes and libraries
-if ( DEFINED ENV{ROCM_PATH} )
-    message ( STATUS "ROCM_PATH is defined: $ENV{ROCM_PATH}" )
-    include_directories ( $ENV{ROCM_PATH}/hipfft/include $ENV{ROCM_PATH}/include )
-endif ()
+set ( _post_fils "" )
+foreach ( _example ${_hip_nocheck} )
+    set ( _inp_fils ${_pre_fils} ${_example} ${_post_fils} )
+    RunTestTarget( ${_gpu_required_flag} ${_example} ${CMAKE_CURRENT_SOURCE_DIR} ${_inp_fils} )
+endforeach ()
 
-##  set ( _local_dir $ENV{HOME}/.local )
-##  message ( STATUS "Local directory for rocfft & hipfft includes & libraries: ${_local_dir}" )
-include_directories ( ${CMAKE_SOURCE_DIR}
-                      ${CMAKE_BINARY_DIR} 
-##                        ${_local_dir}/hipfft/include
-##                        ${_local_dir}/rocfft/include
-                      ${SPIRAL_SOURCE_DIR}/profiler/targets/include )
+set_tests_properties (${_hip_examples} PROPERTIES LABELS "HIP examples")
+set_tests_properties (${_hip_nocheck}  PROPERTIES LABELS "HIP examples")
 
-##  Setup compilation flags
-##  Parameters are defined on the cmake command line to specify names & sizes for the driver program
-##  INCLUDE_DFT -- name of the file containing the generated code, included by driver program
-##  FUNCNAME -- name of the kernel to call
-##  DIM_M -- 1st dimension (slowest changing in C world)
-##  DIM_N -- 2nd dimension
-##  DIM_K -- 3rd dimension
-##  USE_DIFF_DATA -- optional define, test its presence in order not to emit hanging -D
+list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
-if ( "X${USE_DIFF_DATA}" STREQUAL "X" )
-    set ( _use_diff )
-else ()
-    set ( _use_diff "-DUSE_DIFF_DATA" )
-endif ()
-
-if (WIN32)
-    set ( HIP_COMPILE_FLAGS -include ${INCLUDE_DFT} )
-    set ( LIBS_FOR_HIP hipfft rocfft )
-    list ( APPEND ADDL_COMPILE_FLAGS -DWIN64 -DFUNCNAME=${FUNCNAME} -DM=${DIM_M} -DN=${DIM_N} -DK=${DIM_K} ${_use_diff} )
-else ()
-    set ( HIP_COMPILE_FLAGS -include ${INCLUDE_DFT} -g )
-    set ( LIBS_FOR_HIP hipfft rocfft )
-    list ( APPEND ADDL_COMPILE_FLAGS -DFUNCNAME=${FUNCNAME} -DM=${DIM_M} -DN=${DIM_N} -DK=${DIM_K} ${_use_diff} )
-endif ()
-
-message ( STATUS "PROJECT = ${PROJECT}, source file = ${PROJECT}.cpp" )
-
-set                        (   EXE_TARGET  ${PROJECT}-${DIM_M}x${DIM_N}x${DIM_K} )
-add_executable		   ( ${EXE_TARGET} ${PROJECT}.cpp )
-target_compile_options     ( ${EXE_TARGET} PRIVATE ${HIP_CCOMPILE_FLAGS} ${ADDL_COMPILE_FLAGS} )
-
-target_link_directories ( ${EXE_TARGET} PRIVATE $ENV{ROCM_PATH}/lib )
-target_link_libraries	   ( ${EXE_TARGET} hip::host hip::device ${LIBS_FOR_HIP} )
-
-install ( TARGETS
-    ${EXE_TARGET}
-    DESTINATION ${CMAKE_SOURCE_DIR}/executables )
-
+enable_testing ()
 
