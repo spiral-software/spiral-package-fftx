@@ -258,6 +258,13 @@ ParseOptsCUDA := function(conf, t)
                     _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
                     _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                     
+                    # handle IOPrunedMDRConv in CUDA -- TBD
+                    _opts.breakdownRules.PrunedMDPRDFT := [PrunedMDPRDFT_tSPL_Base, PrunedMDPRDFT_tSPL_RowCol1];
+                    _opts.breakdownRules.PrunedIMDPRDFT := [PrunedIMDPRDFT_tSPL_Base, PrunedIMDPRDFT_tSPL_RowCol1];
+                    _opts.breakdownRules.PrunedMDDFT := [PrunedMDDFT_tSPL_Base, PrunedMDDFT_tSPL_RowCol];
+                    _opts.breakdownRules.PrunedIMDDFT := [PrunedIMDDFT_tSPL_Base, PrunedIMDDFT_tSPL_RowCol];
+                    _opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_tSPL_InvDiagFwd];
+                    
                     _opts.globalUnrolling := 2*_thold + 1;
     
                     _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
