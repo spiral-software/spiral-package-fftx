@@ -13,7 +13,7 @@ conf := LocalConfig.fftx.confGPU();
 
 n := 2;
 d := 2;
-N := 128;
+N := 64;
 
 iter := List([1..d], i->Ind(n));
 

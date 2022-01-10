@@ -11,7 +11,7 @@ Import(simt);
 conf := LocalConfig.fftx.confGPU();
 
 nbatch := 2;
-szcube := 128;
+szcube := 64;
 d := 3;
 ns := Replicate(d, szcube);
 
