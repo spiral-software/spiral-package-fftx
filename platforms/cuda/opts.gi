@@ -145,7 +145,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
-                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
                         FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
                 _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
