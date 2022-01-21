@@ -145,7 +145,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
-                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
                         FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
                 _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
@@ -257,6 +257,13 @@ ParseOptsCUDA := function(conf, t)
                     _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
                     _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
                     _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                    
+                    # handle IOPrunedMDRConv in CUDA -- TBD
+                    _opts.breakdownRules.PrunedMDPRDFT := [PrunedMDPRDFT_tSPL_Base, PrunedMDPRDFT_tSPL_RowCol1];
+                    _opts.breakdownRules.PrunedIMDPRDFT := [PrunedIMDPRDFT_tSPL_Base, PrunedIMDPRDFT_tSPL_RowCol1];
+                    _opts.breakdownRules.PrunedMDDFT := [PrunedMDDFT_tSPL_Base, PrunedMDDFT_tSPL_RowCol];
+                    _opts.breakdownRules.PrunedIMDDFT := [PrunedIMDDFT_tSPL_Base, PrunedIMDDFT_tSPL_RowCol];
+                    _opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_tSPL_InvDiagFwd];
                     
                     _opts.globalUnrolling := 2*_thold + 1;
     
