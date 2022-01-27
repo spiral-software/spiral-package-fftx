@@ -54,11 +54,11 @@ Class(FFTXGlobals, rec(
                 opts.breakdownRules.IPRDFT2 := List([ IPRDFT2_Base1, IPRDFT2_Base2, IPRDFT2_CT], _noT);
                 opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT, PRDFT3_OddToPRDFT1], _noT);
                 opts.breakdownRules.URDFT := List([ URDFT1_Base1, URDFT1_Base2, URDFT1_Base4, URDFT1_CT ], _noT);
-                opts.breakdownRules.DFT := [DFT_Base, DFT_PD, DFT_CT];
+                opts.breakdownRules.DFT := [DFT_Base, DFT_PD, DFT_CT, CopyFields(DFT_Rader, rec(minSize := 17))];
                 opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_3D_2trip_zyx_freqdata];
                 opts.breakdownRules.MDDFT := [ MDDFT_Base, MDDFT_RowCol ];
                 opts.breakdownRules.GT := [ GT_NthLoop ];
-                opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
+                opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
                 opts.topTransforms := [DFT, MDDFT, PrunedDFT, PrunedIDFT, IOPrunedConv, PrunedPRDFT, PrunedIPRDFT, TTensorI, IOPrunedMDRConv, 
                     PRDFT, IPRDFT, PRDFT1, IPRDFT1, PRDFT2, IPRDFT2, PRDFT3, IPRDFT3, TTensorI ];
                 opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
@@ -83,7 +83,7 @@ Class(FFTXGlobals, rec(
             opts.breakdownRules.IPRDFT2 := List([ IPRDFT2_Base1, IPRDFT2_Base2, IPRDFT2_CT], _noT);
             opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT ], _noT);
             opts.breakdownRules.MDDFT := [ MDDFT_Base, MDDFT_RowCol ];
-            opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
+            opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD, CopyFields(DFT_Rader, rec(minSize := 17)) ];
             opts.breakdownRules.GT := [ GT_NthLoop ];
             opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
             return opts;  

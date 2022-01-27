@@ -14,7 +14,7 @@ conf := LocalConfig.fftx.confGPU();
 fwd := true;
 #fwd := false;
 
-szcube :=  [64, 64, 64];
+szcube :=       [272, 272, 272];
 
 if fwd then
     prdft := MDPRDFT;
@@ -27,7 +27,7 @@ fi;
 
 d := Length(szcube);
 
-name := "mdprdft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
+name := When(fwd, "", "i")::"mdprdft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
 
 PrintLine("mdprdft-cuda: d = ", d, " cube = ", szcube, ";\t\t##PICKME##");
 
@@ -39,3 +39,4 @@ tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+PrintTo(name::".cu", opts.prettyPrint(c));
