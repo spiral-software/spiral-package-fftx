@@ -46,7 +46,7 @@ fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.breakdownRules.TTensorI := [ IxA_SIMT,  AxI_SIMT ];
     opts.breakdownRules.TSparseMat := [CopyFields(TSparseMat_base, rec(max_rows := 1)), TSparseMat_VStack];
     
-    opts.globalUnrolling := 27;
+    opts.globalUnrolling := 2 * Maximum([PRDFT_PD_MAX, DFT_RADER_MIN, DFT_PD_MAX]) + 1;
     opts.codegen.GathPtr := fftx.codegen.MultiPtrCodegenMixin.GathPtr;
     opts.codegen.ScatPtr := fftx.codegen.MultiPtrCodegenMixin.ScatPtr;
     opts.codegen.OO := (self, o, y, x, opts) >> skip();
