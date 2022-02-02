@@ -80,7 +80,7 @@ cudaDeviceOpts := function(arg) # specific to WarpX size 100...
     opts.breakdownRules.PRDFT3 := List([ PRDFT3_Base1, PRDFT3_Base2, PRDFT3_CT ], _noT);
     opts.breakdownRules.DFT := [ DFT_Base, 
         CopyFields(DFT_CT, rec(children := nt ->Filtered(DFT_CT.children(nt), i->When(nt.params[1] = 100, Cols(i[1]) = 4, true)))), 
-        DFT_PD ];
+        DFT_PD, CopyFields(DFT_Rader, rec(minSize := 17)) ];
     opts.breakdownRules.TTensorInd := [dsA_base, L_dsA_L_base, dsA_L_base, L_dsA_base];    
     return opts;
 end;
@@ -103,7 +103,7 @@ ParseOptsCUDA := function(conf, t)
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
     MAX_KERNEL := 21;
-    MAX_PRIME := 13;
+    MAX_PRIME := 17;
     MIN_SIZE := 32;
     MAX_SIZE := 320;
 
@@ -145,7 +145,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
-                        FixUpCUDASigmaSPL_3Stage(s1, opts),
+                        FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
                         FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
                 _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
@@ -162,6 +162,7 @@ ParseOptsCUDA := function(conf, t)
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
+#                Error();
 
             # opts for high performance CUDA cuFFT
             if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
