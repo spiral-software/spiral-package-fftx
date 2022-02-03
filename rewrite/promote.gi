@@ -87,7 +87,7 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [MDRConv(n, fdata.var, true) ])),
 
-    IMDPRDFT_RCDiag_Lambda_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,RCDiag), @(4, Lambda), @(5,I)], 
+    IMDPRDFT_Pointwise_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,Pointwise), @(4, Lambda), @(5,I)], 
             @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [MDRConv(n, fdata, true) ])),

@@ -41,4 +41,10 @@ Class(MultiPtrCodegenMixin, rec(
         fi;
     end
 ));
+    
+CudaCodegen.Pointwise := (self, o, y, x, opts) >> let(i := Ind(), elt := o.element, 
+        loop(i, elt.domain(), chain(
+             assign(nth(y,i), 
+                 elt.at(i).at(x)))));
+    
 

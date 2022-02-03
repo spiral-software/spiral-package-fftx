@@ -21,3 +21,5 @@ Class(ScatPtr, Scat, rec(
 ));
 
 Class(OO, O);
+
+Class(Pointwise, RCDiag);
