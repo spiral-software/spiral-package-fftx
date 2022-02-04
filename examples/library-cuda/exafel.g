@@ -9,9 +9,6 @@ conf := LocalConfig.fftx.confGPU();
 
 szcube := [64, 64, 64];
 
-prdft := MDPRDFT(szcube, 1);
-iprdft := IMDPRDFT(szcube, -1);
-
 symvar := var("amplitudes", TPtr(TReal));
 name := "exaefl_kernel1";
 domain := 2*Product(DropLast(szcube, 1))* (Last(szcube)/2+1);

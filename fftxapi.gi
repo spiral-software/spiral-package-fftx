@@ -218,6 +218,6 @@ ExaFEL_Pointwise := (domain, symvar) -> let(
     cx_nth := (xr, i) -> cxpack(nth(xr, idiv(i, 2)), nth(xr, idiv(i, 2) + 1)),
     extract := (cval, i) -> cond(eq(imod(i, 2), V(0)), re(cval), im(cval)),
     ampli := FDataOfs(symvar, domain, 0),
-    Pointwise(Lambda(i, Lambda(x, pw_op(cx_nth(x, i), ampli.at(i)))))
+    Pointwise(Lambda(i, Lambda(x, extract(pw_op(cx_nth(x, i), ampli.at(i)), i))))
 );
 
