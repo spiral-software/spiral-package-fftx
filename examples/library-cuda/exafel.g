@@ -26,11 +26,6 @@ tt := opts.tagIt(t);
 #c := opts.codeSums(ss);
 c := opts.fftxGen(tt);
 
-
-
-
-
-
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));
 
