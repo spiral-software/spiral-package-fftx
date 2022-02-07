@@ -206,3 +206,18 @@ lin_idx := arg -> fTensor(List(arg, fBase)).at(0);
 TIterator1D := (A, n, l,  r) -> When(n = 1, A, TTensorI(A, n, l, r));
 
 _gflops := (n, b, t) -> (b*5*n*LogInt(n, 2))/(t*1000000);
+
+
+ExaFEL_Pointwise := (domain, symvar) -> let(
+    i := Ind(domain),
+    x := var.fresh_t("x", TPtr(TReal)),
+    pw_op := (cval, a) -> a * cxpack(
+        fdiv(re(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))), 
+        fdiv(im(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))) 
+    ),
+    cx_nth := (xr, i) -> cxpack(nth(xr, idiv(i, 2)), nth(xr, idiv(i, 2) + 1)),
+    extract := (cval, i) -> cond(eq(imod(i, 2), V(0)), re(cval), im(cval)),
+    ampli := FDataOfs(symvar, domain, 0),
+    Pointwise(Lambda(i, Lambda(x, extract(pw_op(cx_nth(x, i), ampli.at(i)), i))))
+);
+
