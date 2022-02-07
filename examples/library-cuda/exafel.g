@@ -7,11 +7,12 @@ ImportAll(fftx);
 
 conf := LocalConfig.fftx.confGPU();
 
-szcube := [64, 64, 64];
+#szcube := [64, 64, 64];
+szcube := [81, 81, 81];
 
 symvar := var("amplitudes", TPtr(TReal));
 name := "exaefl_kernel1";
-domain := 2*Product(DropLast(szcube, 1))* (Last(szcube)/2+1);
+domain := MDPRDFT(szcube, -1).dims()[1];
 
 t := TFCall(IMDPRDFT(szcube, 1) * ExaFEL_Pointwise(domain, symvar) * MDPRDFT(szcube, -1), 
     rec(fname := name, params := [symvar]));
