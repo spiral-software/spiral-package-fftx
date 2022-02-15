@@ -40,7 +40,7 @@ NewRulesFor(CConv, rec(
 NewRulesFor(MDRConv, rec(
     MDPRConv_Base := rec(
         info := "MDRConv -> IMDPRDFT * RCDiag(sym) * MDPRDFT",
-        applicable     := nt -> nt.params[3] and IsVar(nt.params[2]), # need symbol to be in frequency domain
+        applicable     := nt -> nt.params[3], # need symbol to be in frequency domain
 
         children       := nt -> [[ MDPRDFT(nt.params[1], -1).withTags(nt.getTags()),
                                    IMDPRDFT(nt.params[1], 1).withTags(nt.getTags())
@@ -49,20 +49,6 @@ NewRulesFor(MDRConv, rec(
         # nonterminal, children, children non-terminals
         apply          := (nt, C, Nonterms) -> C[2] * 
                             RCDiag(FDataOfs(nt.params[2], 2*Product(DropLast(nt.params[1], 1))* (Last(nt.params[1])/2+1), 0)) *
-                            C[1]
-    ),
-
-    MDPRConv_Lambda := rec(
-        info := "MDRConv -> IMDPRDFT * Pointwise(Lambda) * MDPRDFT",
-        applicable     := nt -> nt.params[3] and IsLambda(nt.params[2]), # need symbol to be in frequency domain
-
-        children       := nt -> [[ MDPRDFT(nt.params[1], -1).withTags(nt.getTags()),
-                                   IMDPRDFT(nt.params[1], 1).withTags(nt.getTags())
-                                 ]],
-
-        # nonterminal, children, children non-terminals
-        apply          := (nt, C, Nonterms) -> C[2] * 
-                            Pointwise(nt.params[2]) *
                             C[1]
     ),
 
