@@ -87,11 +87,6 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [MDRConv(n, fdata.var, true) ])),
 
-    IMDPRDFT_Pointwise_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,Pointwise), @(4, Lambda), @(5,I)], 
-            @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],
-        e->let(n := @(1).val.params[1], fdata := @(2).val.element,
-            [MDRConv(n, fdata, true) ])),
-
 # FIXME: the promotion rule does not (yet) have the guard to ensure the value of k is correct
     IMDPRDFT_Diag_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,Diag), [diagTensor, @(4, FDataOfs, e->e.ofs = 0), @(5,fConst, e->e.params = [ TReal, 2, 1 ])]], 
             @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],

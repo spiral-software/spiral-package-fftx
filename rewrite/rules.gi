@@ -58,9 +58,6 @@ RewriteRules(RulesStrengthReduce, rec(
     eq_false2 := Rule([@(1, eq), @(2, add, e->ForAny(e.args, j->IsValue(j) and j.v > 0)), @(0, Value, e->e.v=0)], e-> V(false)),
 
     fix_cond := Rule([eq, [mul, @(0,Value, e->e.t=TInt and e.v>0), @(1,var,IsLoopIndex)], @(2, Value, e->e.t=TInt and e.v<0)], e->V(false)),
-    
-    fix_leq := Rule([@(1, leq), [@(4, add), @(2, var), @(3, Value, e->e.v >1)], @(2, Value, e->e.v = 1)], e->V(false))
-    
 ));
 
 fixISumAccPDLoop := function(s, opts)
