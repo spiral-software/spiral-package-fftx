@@ -305,7 +305,3 @@ NewRulesFor(TTensorI, rec(
     )
   
 ));
-
-
-
-
