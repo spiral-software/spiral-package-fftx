@@ -12,7 +12,6 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 sizes := [
-#     [ 4, 4, 4],
 #     [ 96, 96, 320],
 #     [ 100, 100, 100],
 #     [ 224, 224, 100],

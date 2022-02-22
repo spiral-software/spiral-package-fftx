@@ -234,7 +234,7 @@ fixReplicatedData := function(c, opts)
     datas := Collect(c, data);
     for d in datas do
         replicas := Collect(d.cmd, @(1, data, 
-            e->e.value.t.size <= d.value.t.size and e.value.v = d.value.v{[1..e.value.t.size]}));
+            e->IsBound(e.value.t.size) and e.value.t.size <= d.value.t.size and e.value.v = d.value.v{[1..e.value.t.size]}));
         for r in replicas do
             cc := r.cmd;
             cc := SubstVars(cc, rec((r.var.id) := d.var));

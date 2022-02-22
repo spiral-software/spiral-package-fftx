@@ -58,8 +58,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
                  dn := TDAGNode(nbr.params[1] * @(2).val.params[1], nbr.params[2], @(2).val.params[3]),
                  TDAG([dn]::ch))),
     DAG_remove := Rule([@(1,TDAG), [@(2, TDAGNode), @(3), 
-            @(4).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["Y", "Yptr"])), 
-            @(5).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["X", "Xptr"])),
+            @(4).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["Y", "Yptr"] and Collect(e[1], TColMaj) = [])), 
+            @(5).cond(e->IsList(e) and Length(e) = 1 and let(_e := e[1].free(), Length(_e) = 1 and ObjId(_e[1]) = var and _e[1].id in ["X", "Xptr"] and Collect(e[1], TColMaj) = [])),
             ...],...],
         e-> @(2).val.params[1]),
         
@@ -70,6 +70,8 @@ RewriteRules(RulesFFTXPromoteNT, rec(
         
     Drop_TDecl := Rule(@(1, TDecl, e->ForAll(e.params[2], i->not i in e.params[1].free())),
         e -> @(1).val.params[1]), 
+        
+    Drop_TTensorI := Rule(@(1, TTensorI, e -> e.params[2] = 1), e -> e.params[1])    
 ));
 
 RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
@@ -99,11 +101,18 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
     Gath_MDDFT__PrunedIMDDFT := ARule(Compose, [[@(1, Gath), @(2,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))], @(3, MDDFT)],
         e -> [PrunedIMDDFT(@(3).val.params[1], @(3).val.params[2], 1,  List(@(2).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))))]),
 
-# the n-dimensional non-terminal is still missing here
 # PRDFT * Scat -> PrunedPRDFT
     PRDFT_Scat__PrunedPRDFT := ARule(Compose, [@(1,PRDFT), [@(2, Scat), @(3,fAdd)]],
         e -> [ PrunedPRDFT(@(1).val.params[1], @(1).val.params[2], 1,  _toSymList(List(@(3).val.tolist(), _unwrap)))] ),
         
+# MDPRDFT * Scat -> PrunedMDPRDFT
+    MDPRDFT_Scat__PrunedMDPRDFT := ARule(Compose, [@(1,MDPRDFT), [@(2, Scat), @(3,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))]],
+        e -> [ PrunedMDPRDFT(@(1).val.params[1], List(@(3).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))), @(1).val.params[2])] ),
+
+# Gath * IMDPRDFT -> PrunedIMDPRDFT
+    Gath_IMDPRDFT__PrunedIMDPRDFT := ARule(Compose, [[@(1, Gath), @(2,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))], @(3, IMDPRDFT)],
+        e -> [ PrunedIMDPRDFT(@(3).val.params[1], List(@(2).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))), @(3).val.params[2])] ),
+
 # Gath * PRDFT -> PrunedIPRDFT
     Gath_PRDFT__PrunedIPRDFT := ARule(Compose, [[@(1, Gath), @(2,fAdd)], @(3, IPRDFT)],
         e -> [PrunedIPRDFT(@(3).val.params[1], @(3).val.params[2], 1,  _toSymList(List(@(2).val.tolist(), _unwrap)))]),

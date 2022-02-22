@@ -19,9 +19,13 @@ Class(FFTXHIPOpts, FFTXOpts, rec(
 
 
 doHIPify := function(opts)
+    opts.originalCudaOptsID := Copy(opts.operations.Print);
     opts.operations := rec(Print := s -> Print("<FFTX HIPified CUDA options record>"));
     opts.unparser := HIPUnparser;
     opts.includes := ["\"hip/hip_runtime.h\""];
+#    opts.postProcessCode := (c, opts) -> FixUpHIP_Code(PingPong_3Stages(c, opts), opts);
+    opts.postProcessCode := (c, opts) -> FixUpHIP_Code(c, opts);
+
     return opts;
 end;
 
