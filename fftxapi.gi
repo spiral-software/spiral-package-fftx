@@ -5,8 +5,70 @@
 _orderedUniquify := l-> Flat([l[1]]::List([2..Length(l)], i->When(l[i] in l{[1..i-1]}, [], [l[i]])));
 
 Class(FFTXGenMixin, rec(
-    search := (self, t) >> When(IsBound(self.useDP) and self.useDP, DP(t, When(IsBound(self.dpopts), self.dpopts, rec()), self)[1], RuleTreeMid(t, self)),
+    search := (self, t) >> When(IsBound(self.useDP) and self.useDP, DP(t, When(IsBound(self.dpopts), self.dpopts, rec()), self)[1].ruletree, RuleTreeMid(t, self)),
     preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(t1)),
+    
+    codeSumsCPU := meth(self, ss) 
+                        local opts2, ss2, c;
+                        
+                        opts2 := Copy(SpiralDefaults);
+                        opts2.useDeref := false;
+#                        opts2.codegen := VecRecCodegen;
+#                        opts2.unparser := SSEUnparser;
+                        
+                        ss2 := Copy(ss);
+                        
+                        ss2 := SubstBottomUp(ss2, @(1, SIMTISum),
+                            e -> ISum(@(1).val.var, @(1).val.domain, @(1).val.child(1)));
+                            
+                        self.debug.ss_cpu := ss2;    
+                            
+                        c := CodeSums(ss2, opts2);
+                        c := fixReplicatedData(c, opts2);
+
+                        self.cpu_opts := opts2;
+                        c.dimensions := ss.dims();
+                        
+                        return c;
+                    end,
+
+    prettyPrintCPU := meth(self, c)
+                       local name;
+                       name := "fftx_generated";
+                       if (IsBound(c.ruletree) and IsBound(c.ruletree.node.params[2].fname)) then
+                           name := c.ruletree.node.params[2].fname;
+                       fi;
+                       PrintCode(name, c, self.cpu_opts);
+                   end,
+
+    fftxGenCPU := meth(self, t) 
+                   local tt, rt, c, s, r;
+				   if Length(t.params) > 1 then
+				       r := t.params[2];
+					   if IsRec(r) and IsBound(r.fname) then
+					      self.cudasubName := r.fname;
+					   fi;
+				   fi;
+
+                   self.debug := rec();  
+                   tt := self.preProcess(t);
+                   self.debug.tt := tt;
+                   rt := self.search(tt);
+                   self.debug.rt := rt;
+                   s := self.sumsRuleTree(rt);
+                   self.debug.ss := s;
+                   
+                   c := self.codeSumsCPU(s);
+                   c := SubstBottomUp(c, @(1,decl), e->let(fr := @(1).val.cmd.free(), decl(Filtered(e.vars, v->v in fr), @(1).val.cmd)));
+                   
+                   self.debug.c := c;
+                   c.ruletree := rt;
+                   c.dimensions := s.dims();
+                   
+                   return c;
+               end,    
+               
+    cmeasureCPU := (self, c) >> CMeasure(c, self.cpu_opts),           
     
     codeSums := meth(self, ss) 
                         local c, cc, Xptr, Yptr, plist, plist1, tags;
@@ -42,6 +104,10 @@ Class(FFTXGenMixin, rec(
                         cc := SubstTopDown(cc, @(1, Value, e->e.t = TReal and IsDouble(e.v) and let(delta := AbsFloat(e.v - IntDouble(e.v)), delta >0 and delta  < 0.00000000001 )),
                             e->Value(TReal, IntDouble(@(1).val.v))
                         );
+
+                        if IsBound(self.postProcessCode) then
+                            cc := self.postProcessCode(cc, self);
+                        fi;
 
                         cc := CopyFields(tags, cc);
                         return cc;
@@ -116,7 +182,7 @@ BoxND := (l, stype) -> Cond(IsInt(l), TArray(stype, l),
                              IsList(l) and Length(l) = 1, TArray(stype, l[1]), 
                              TArray(BoxND(Drop(l, 1), stype), l[1]));
 
-BoxNDcmj := (l, stype) -> TColMaj(BoxND(l, stype));
+BoxNDcmaj := (l, stype) -> TColMaj(BoxND(l, stype));
                              
 fBox := l -> fTensor(List(l, fId));
 fBoxInBox := (l2, l1, l3) ->fTensor(List([1..Length(l1)], _l -> fAdd(l1[_l], l2[_l], let(shft := l3[_l], When(IsInt(shft), shft, IntDouble(shft))))));
@@ -136,3 +202,7 @@ TMap := (krn, dims, al, ar) -> TCompose(
     When(ar = AVec, [TL(Product(List(dims, i->i.range)) * Cols(krn), Product(List(dims, i->i.range)), 1, 1)], []));
 
 lin_idx := arg -> fTensor(List(arg, fBase)).at(0);
+
+TIterator1D := (A, n, l,  r) -> When(n = 1, A, TTensorI(A, n, l, r));
+
+_gflops := (n, b, t) -> (b*5*n*LogInt(n, 2))/(t*1000000);

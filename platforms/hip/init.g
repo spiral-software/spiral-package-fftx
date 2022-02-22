@@ -3,4 +3,5 @@
 ##  See LICENSE for details
 
 # requires package cuda for HIP
+Include(code);
 Include(opts);

@@ -12,9 +12,8 @@ conf := LocalConfig.fftx.defaultConf();
 #szns := [2, 3];
 szns := [2, 3, 4];
 
-# FIXME: THIS IS NOT YET WORKING
-Xcmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), X);
-Ycmj := tcast(TPtrLayout(TComplex, BoxNDcmaj(szns)), Y);
+Xcmj := tcast(TPtr(BoxNDcmaj(szns, TComplex)), X);
+Ycmj := tcast(TPtr(BoxNDcmaj(szns, TComplex)), Y);
 
 PrintLine("mddft_cmj: ns = ", szns, ";\t\t##PICKME##");
 
