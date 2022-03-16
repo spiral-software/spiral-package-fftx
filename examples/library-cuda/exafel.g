@@ -7,8 +7,8 @@ ImportAll(fftx);
 
 conf := LocalConfig.fftx.confGPU();
 
-#szcube := [64, 64, 64];
-szcube := [81, 81, 81];
+szcube := [48, 48, 48];
+#szcube := [81, 81, 81];
 
 symvar := var("amplitudes", TPtr(TReal));
 name := "exaefl_kernel1";
@@ -20,9 +20,15 @@ t := TFCall(IMDPRDFT(szcube, 1) * ExaFEL_Pointwise(domain, symvar) * MDPRDFT(szc
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
-#_tt := opts.preProcess(tt);
-#rt := opts.search(_tt);
-#ss := opts.sumsRuleTree(rt);
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
+Debug(true);
+ss := opts.sumsRuleTree(rt);
+
+pp := Collect(ss, Pointwise)[1];
+pp.free();
+
 #--
 #c := opts.codeSums(ss);
 c := opts.fftxGen(tt);
