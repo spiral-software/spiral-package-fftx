@@ -7,11 +7,12 @@ ImportAll(fftx);
 
 conf := LocalConfig.fftx.confGPU();
 
-szcube := [48, 48, 48];
-#szcube := [81, 81, 81];
+#szcube := [48, 48, 48];
+#szcube := [64, 64, 64];
+szcube := [81, 81, 81];
 
 symvar := var("amplitudes", TPtr(TReal));
-name := "exaefl_kernel1";
+name := "exaefl_kernel1_"::ConcatSepList(List(szcube, StringInt), "x");
 domain := MDPRDFT(szcube, -1).dims()[1];
 
 t := TFCall(IMDPRDFT(szcube, 1) * ExaFEL_Pointwise(domain, symvar) * MDPRDFT(szcube, -1), 
@@ -25,13 +26,14 @@ rt := opts.search(_tt);
 
 Debug(true);
 ss := opts.sumsRuleTree(rt);
+#ss := RulesDiagStandalonePointwise(ss);
 
-pp := Collect(ss, Pointwise)[1];
-pp.free();
+#pp := Collect(ss, Pointwise)[1];
+#pp.free();
 
 #--
-#c := opts.codeSums(ss);
-c := opts.fftxGen(tt);
+c := opts.codeSums(ss);
+#c := opts.fftxGen(tt);
 
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));

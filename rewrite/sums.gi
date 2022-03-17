@@ -23,8 +23,9 @@ _buildLambda := function(e, at1, at2)
 end;   
 
 
+Class(RulesDiagStandalonePointwise, RuleSet);
 
-RewriteRules(RulesDiagStandalone, rec(
+RewriteRules(RulesDiagStandalonePointwise, rec(
  # Gath * Pointwise
  CommuteGathDiag := ARule( Compose,
        [ @(11, Gath), @(12, Pointwise) ], # o 1-> 2->

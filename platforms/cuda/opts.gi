@@ -276,7 +276,8 @@ ParseOptsCUDA := function(conf, t)
                     _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
     #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
     #                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
-                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesDiagStandalonePointwise, 
+                            RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                         When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
                             FixUpCUDASigmaSPL_3Stage(s1, opts),
                             FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
