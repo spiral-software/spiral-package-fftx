@@ -102,10 +102,10 @@ ParseOptsCUDA := function(conf, t)
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
-    MAX_KERNEL := 23;
+    MAX_KERNEL := 21;
     MAX_PRIME := 17;
     MIN_SIZE := 32;
-    MAX_SIZE := 680;
+    MAX_SIZE := 320;
 
     _thold := MAX_KERNEL;
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
@@ -276,7 +276,8 @@ ParseOptsCUDA := function(conf, t)
                     _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
     #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
     #                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
-                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesDiagStandalonePointwise, 
+                            RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                         When(Collect(t, MDPRDFT)::Collect(t, IMDPRDFT) = [], 
                             FixUpCUDASigmaSPL_3Stage(s1, opts),
                             FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 

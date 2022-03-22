@@ -2,8 +2,10 @@ Add(spiral.sigma.RightPull, Pointwise);
 
 
 _buildLambda := function(e, at1, at2)
-    local pw, iv, iiv, xv, av, ii;
+    local pw, iv, iiv, xv, av, ii, dotsl, dotsr;
 #    Error();
+    dotsl := ....left;
+    dotsr := ....right;
     pw := at2;
     iv := at2.element.vars[1];
     iiv := Ind(at1.func.domain());
@@ -11,20 +13,23 @@ _buildLambda := function(e, at1, at2)
     av := at2.free()[1];
     pw.element.vars := [iiv];
     pw := SubstTopDown(pw, @@(1, var, (e,cx)->e=iv and IsBound(cx.nth) and cx.nth <> [] and cx.nth[1].loc = xv), e->iiv);
-    ii := at1.func.at(iiv);
+    ii := RulesStrengthReduce(RulesFuncSimp(at1.func).at(iiv));
 #    pw := SubstTopDown(pw, @@(1, var, (e,cx)->e=iv and IsBound(cx.nth) and cx.nth <> [] and cx.nth[1].loc = av), e->ii);
-    pw := SubstTopDown(pw, @@(1, var, (e,cx)->e=iv), e->ii);
+    pw := RulesStrengthReduce(SubstTopDown(pw, @@(1, var, (e,cx)->e=iv), e->ii));
 #    Error();
+    ....left := dotsl;
+    ....right := dotsr;
     return pw;
 end;   
 
 
+Class(RulesDiagStandalonePointwise, RuleSet);
 
-RewriteRules(RulesDiagStandalone, rec(
+RewriteRules(RulesDiagStandalonePointwise, rec(
  # Gath * Pointwise
  CommuteGathDiag := ARule( Compose,
-       [ @(1, Gath), @(2, Pointwise) ], # o 1-> 2->
-       e->[_buildLambda(e, @(1).val, @(2).val), @(1).val]
+       [ @(11, Gath), @(12, Pointwise) ], # o 1-> 2->
+       e->[_buildLambda(e, @(11).val, @(12).val), @(11).val]
     ),
 
  # Pointwise * Scat
