@@ -207,17 +207,21 @@ TIterator1D := (A, n, l,  r) -> When(n = 1, A, TTensorI(A, n, l, r));
 
 _gflops := (n, b, t) -> (b*5*n*LogInt(n, 2))/(t*1000000);
 
+_idiv := (a, b) -> When(b = 2, bin_shr(a, LogInt(b, 2)), idiv(a,b));
+_imod := (a, b) -> When(b = 2, bin_and(a, b-1), imod(a, b));
+_fdiv := (a, b) -> cond(leq(abs(b), var("DPL_EPSILON")), V(0.0), fdiv(a, b));
 
 ExaFEL_Pointwise := (domain, symvar) -> let(
     i := Ind(domain),
+    ii := Ind(domain),
     x := var.fresh_t("x", TPtr(TReal)),
     pw_op := (cval, a) -> a * cxpack(
-        fdiv(re(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))), 
-        fdiv(im(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))) 
+        _fdiv(re(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))), 
+        _fdiv(im(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))) 
     ),
-    cx_nth := (xr, i) -> cxpack(nth(xr, idiv(i, 2)), nth(xr, idiv(i, 2) + 1)),
-    extract := (cval, i) -> cond(eq(imod(i, 2), V(0)), re(cval), im(cval)),
+    cx_nth := (xr, i) -> cxpack(nth(xr, _idiv(i, 2)), nth(xr, _idiv(i, 2) + 1)),
+    extract := (cval, i) -> cond(eq(_imod(i, 2), V(0)), re(cval), im(cval)),
     ampli := FDataOfs(symvar, domain, 0),
-    Pointwise(Lambda(i, Lambda(x, cond(leq(i, V(1)), nth(x, i), extract(pw_op(cx_nth(x, i), ampli.at(i)), i)))))
+    Pointwise(Lambda(i, Lambda(x, cond(leq(i, V(1)), nth(x, i), extract(pw_op(cx_nth(x, i), ampli.at(_idiv(i, 2))), i)))))
 );
 
