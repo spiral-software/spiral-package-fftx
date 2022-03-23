@@ -211,7 +211,7 @@ _idiv := (a, b) -> When(b = 2, bin_shr(a, LogInt(b, 2)), idiv(a,b));
 _imod := (a, b) -> When(b = 2, bin_and(a, b-1), imod(a, b));
 _fdiv := (a, b) -> cond(leq(abs(b), var("DBL_EPSILON")), V(0.0), fdiv(a, b));
 
-ExaFEL_Pointwise := (domain, symvar) -> let(
+StepPhase_Pointwise := (domain, symvar) -> let(
     i := Ind(domain),
     x := var.fresh_t("x", TPtr(TReal)),
     pw_op := (cval, a) -> a * cxpack(
