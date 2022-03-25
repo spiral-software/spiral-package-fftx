@@ -218,7 +218,7 @@ StepPhase_Pointwise := (domain, symvar) -> let(
         _fdiv(re(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))), 
         _fdiv(im(cval), sqrt(re(cval)*re(cval) +im(cval)*im(cval))) 
     ),
-    cx_nth := (xr, i) -> cxpack(nth(xr, _idiv(i, 2)), nth(xr, _idiv(i, 2) + 1)),
+    cx_nth := (xr, i) -> cxpack(nth(xr, _idiv(i, 2) * 2), nth(xr, (_idiv(i, 2) * 2) + 1)),
     extract := (cval, i) -> cond(eq(_imod(i, 2), V(0)), re(cval), im(cval)),
     ampli := FDataOfs(symvar, domain, 0),
     Pointwise(Lambda(i, Lambda(x, cond(leq(i, V(1)), nth(x, i), extract(pw_op(cx_nth(x, i), ampli.at(_idiv(i, 2))), i)))))
