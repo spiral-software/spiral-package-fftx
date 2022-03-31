@@ -37,6 +37,9 @@ t := TFCall(ApplyFunc(prdft, [szcube, pat, k]),
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));

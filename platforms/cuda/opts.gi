@@ -158,7 +158,7 @@ ParseOptsCUDA := function(conf, t)
         fi;
        
         # detect 3D DFT/Batch DFT
-        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
+        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, PrunedMDPRDFT)::Collect(t, PrunedIMDPRDFT);
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
