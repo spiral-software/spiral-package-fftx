@@ -170,6 +170,8 @@ ParseOptsCUDA := function(conf, t)
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.breakdownRules.PrunedMDPRDFT := [ PrunedMDPRDFT_tSPL_Pease_SIMT ];
+                _opts.breakdownRules.PrunedIMDPRDFT := [ PrunedIMDPRDFT_tSPL_Pease_SIMT ];
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 
