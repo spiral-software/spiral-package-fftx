@@ -6,7 +6,6 @@ NewRulesFor(PrunedMDPRDFT, rec(
                                tags := nt.getTags(),
                                prdft := PRDFT1(Last(a_lengths), a_exp),
                                rcdim := Rows(prdft),
-#                               Error(),
                                [ [ TCompose(List([1..Length(nt.params[1])-1], j->
                                 let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, a_exp, 1, nt.params[2][j]), 
                                     rcdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
@@ -29,11 +28,16 @@ NewRulesFor(PrunedIMDPRDFT, rec(
                                iprdft := IPRDFT1(Last(a_lengths), a_exp),
                                rdim := Rows(iprdft),
                                cdim := Cols(iprdft),
+                               #Error(),
                                [ [ TCompose([ TGrp(TCompose([
-                                             TTensorI(IPRDFT1(Last(a_lengths), a_exp), Product(DropLast(a_lengths, 1)), APar, APar),
-                                             TL(cdim * Product(DropLast(a_lengths, 1)) / 2, Product(DropLast(a_lengths, 1)), 1, 2), 
+                                             TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, 1, Last(nt.params[2])), 
+                                                Product(List(DropLast(nt.params[2], 1), Length)), APar, APar),
+                                             TL(cdim * Product(List(DropLast(nt.params[2], 1), Length)) / 2, Product(List(DropLast(nt.params[2], 1), Length)), 1, 2), 
                                        ])) ] ::
-                                       Reversed(List(DropLast(a_lengths, 1), i->TRC(TTensorI(DFT(i, a_exp), cdim * Product(DropLast(a_lengths, 1))/(2*i), APar, AVec))))
+                                       Reversed(List([1..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
+                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp,1, nt.params[2][j]), 
+                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(2*i), 
+                                           APar, AVec)))))
                                     ).withTags(tags) ]] ),
         apply := (nt, C, cnt) -> C[1]
     )
