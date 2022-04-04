@@ -37,7 +37,7 @@ RewriteRules(RulesFFTXPromoteNT, rec(
             symf := Lambda(ii, nth(sym,ii)),
             opat := List(@(8).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
             ipat := List(@(9).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
-        [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, true) ])),
+        [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, True) ])),
         
 # This is one mega promotion rule for Hockney that needs to be broken apart after MDRConv and/or PrunedMDRDFT is introduced
     Hockney_hack2 := ARule(Compose, [[@(6, Gath), @(8,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))],
