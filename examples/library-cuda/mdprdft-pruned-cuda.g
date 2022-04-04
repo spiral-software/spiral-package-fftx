@@ -41,7 +41,6 @@ _tt := opts.preProcess(tt);
 
 Debug(true);
 rt := opts.search(_tt);
-# this breaks
 SPLRuleTree(rt);
 
 c := opts.fftxGen(tt);
