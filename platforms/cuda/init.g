@@ -4,6 +4,7 @@
 
 # requires package simt for CUDA
 Include(breakdown);
+Include(prune);
 Include(rconv);
 #Include(codegen);
 #Include(unparser);

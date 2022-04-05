@@ -102,10 +102,10 @@ ParseOptsCUDA := function(conf, t)
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
-    MAX_KERNEL := 21;
+    MAX_KERNEL := 23;
     MAX_PRIME := 17;
     MIN_SIZE := 32;
-    MAX_SIZE := 320;
+    MAX_SIZE := 680;
 
     _thold := MAX_KERNEL;
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
@@ -158,7 +158,7 @@ ParseOptsCUDA := function(conf, t)
         fi;
        
         # detect 3D DFT/Batch DFT
-        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT);
+        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, PrunedMDPRDFT)::Collect(t, PrunedIMDPRDFT);
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
@@ -170,11 +170,15 @@ ParseOptsCUDA := function(conf, t)
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.breakdownRules.PrunedMDPRDFT := [ PrunedMDPRDFT_tSPL_Pease_SIMT ];
+                _opts.breakdownRules.PrunedIMDPRDFT := [ PrunedIMDPRDFT_tSPL_Pease_SIMT ];
+                _opts.breakdownRules.PrunedDFT := [ PrunedDFT_base, PrunedDFT_DFT, PrunedDFT_CT, PrunedDFT_CT_rec_block, 
+                    CopyFields(PrunedDFT_tSPL_CT, rec(switch := true)) ];
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
-                    fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
+                    fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT, fftx.platforms.cuda.IxA_SIMT_peelof]::_opts.breakdownRules.TTensorI;
                 _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
                     filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
                 
@@ -246,7 +250,7 @@ ParseOptsCUDA := function(conf, t)
         if ObjId(tt) = TFCall then
             _tt := tt.params[1];
             # check for convolution
-            if (ObjId(_tt) in [MDRConv, MDRConvR, IOPrunedMDRConv]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
+            if (ObjId(_tt) in [PrunedMDPRDFT, PrunedIMDPRDFT, MDRConv, MDRConvR, IOPrunedMDRConv]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
                 _conf := FFTXGlobals.confMDRConvCUDADevice();
                 _opts := FFTXGlobals.getOpts(_conf);
 
