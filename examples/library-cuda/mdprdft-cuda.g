@@ -14,7 +14,8 @@ conf := LocalConfig.fftx.confGPU();
 fwd := true;
 #fwd := false;
 
-szcube :=       [272, 272, 272];
+##  szcube :=       [272, 272, 272];
+szcube :=       [80, 80, 80];
 
 if fwd then
     prdft := MDPRDFT;
