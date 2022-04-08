@@ -11,8 +11,8 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-fwd := true;
-#fwd := false;
+#fwd := true;
+fwd := false;
 
 d := 3;
 n := 64;
