@@ -38,10 +38,11 @@ opts := conf.getOpts(t);
 
 tt := opts.tagIt(t);
 #_tt := opts.preProcess(tt);
-
+#
 #Debug(true);
 #rt := opts.search(_tt);
-#SPLRuleTree(rt);
+#s := SPLRuleTree(rt);
+#ss := opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
