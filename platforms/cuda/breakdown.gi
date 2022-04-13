@@ -269,8 +269,8 @@ NewRulesFor(TTensorI, rec(
         # these config parameters need to be moved into the opts...
         mem := 1024*96,
         mem_per_pt := 2*8*2,
-#        max_threads := 2048,
-        max_threads := 1024,
+        max_threads := 2048,
+#        max_threads := 1024,
         max_kernel := 18 * 18,
         _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
             f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
@@ -290,8 +290,8 @@ NewRulesFor(TTensorI, rec(
         # these config parameters need to be moved into the opts...
         mem := 1024*96,
         mem_per_pt := 2*8*2,
-#        max_threads := 2048,
-        max_threads := 1024,
+        max_threads := 2048,
+#        max_threads := 1024,
         max_kernel := 18 * 18,
         _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
             f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
