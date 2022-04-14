@@ -37,11 +37,12 @@ t := TFCall(ApplyFunc(prdft, [szcube, pat, k]),
 opts := conf.getOpts(t);
 
 tt := opts.tagIt(t);
-_tt := opts.preProcess(tt);
-
-Debug(true);
-rt := opts.search(_tt);
-SPLRuleTree(rt);
+#_tt := opts.preProcess(tt);
+#
+#Debug(true);
+#rt := opts.search(_tt);
+#s := SPLRuleTree(rt);
+#ss := opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);

@@ -6,6 +6,7 @@ NewRulesFor(PrunedMDPRDFT, rec(
                                tags := nt.getTags(),
                                prdft := PRDFT1(Last(a_lengths), a_exp),
                                rcdim := Rows(prdft),
+                               #Error(),
                                [ [ TCompose(List([1..Length(nt.params[1])-1], j->
                                 let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, a_exp, 1, nt.params[2][j]), 
                                     rcdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
@@ -36,7 +37,7 @@ NewRulesFor(PrunedIMDPRDFT, rec(
                                        ])) ] ::
                                        Reversed(List([1..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
                                            DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp,1, nt.params[2][j]), 
-                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(2*i), 
+                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
                                            APar, AVec)))))
                                     ).withTags(tags) ]] ),
         apply := (nt, C, cnt) -> C[1]
