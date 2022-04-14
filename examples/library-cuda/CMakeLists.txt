@@ -23,6 +23,7 @@ set ( _gpu_examples
       mddft-batch-cuda.g
       mdprdft-batch-cuda.g
       mdprdft-cuda.g
+      mdprdft-pruned-cuda.g
       prdft-batch-cuda.g
     )
   
