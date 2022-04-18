@@ -37,7 +37,7 @@ RewriteRules(RulesFFTXPromoteNT, rec(
             symf := Lambda(ii, nth(sym,ii)),
             opat := List(@(8).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
             ipat := List(@(9).val.children(), i-> _toSymList(List(i.tolist(), _unwrap))),
-        [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, true) ])),
+        [ IOPrunedMDRConv(@(1).val.params[1], symf, 1, opat, 1, ipat, True) ])),
         
 # This is one mega promotion rule for Hockney that needs to be broken apart after MDRConv and/or PrunedMDRDFT is introduced
     Hockney_hack2 := ARule(Compose, [[@(6, Gath), @(8,fTensor, e->ForAll(e.children(), i->ObjId(i)=fAdd))],
@@ -86,6 +86,11 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
             @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],
         e->let(n := @(1).val.params[1], fdata := @(2).val.element,
             [MDRConv(n, fdata.var, true) ])),
+
+    IMDPRDFT_Pointwise_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,Pointwise), @(4, Lambda), @(5,I)], 
+            @(3,MDPRDFT, e -> e.params[2] = Product(e.params[1])-1)],
+        e->let(n := @(1).val.params[1], fdata := @(2).val.element,
+            [MDRConv(n, fdata, true) ])),
 
 # FIXME: the promotion rule does not (yet) have the guard to ensure the value of k is correct
     IMDPRDFT_Diag_MDPRDFT__RConv_ARule := ARule(Compose, [@(1,IMDPRDFT, e -> e.params[2] = 1), [@(2,Diag), [diagTensor, @(4, FDataOfs, e->e.ofs = 0), @(5,fConst, e->e.params = [ TReal, 2, 1 ])]], 

@@ -97,7 +97,8 @@ NewRulesFor(PrunedIMDDFT, rec(
 NewRulesFor(IOPrunedMDRConv, rec(
     IOPrunedMDRConv_tSPL_InvDiagFwd := rec(
        forTransposition := false,
-       applicable :=  (self, nt) >> false, #not nt.hasTags() and Length(nt.params[1]) = 3 and nt.params[7], Breaks!
+       applicable :=  (self, nt) >> nt.hasTags() and Length(nt.params[1]) = 3 and IsFunc(nt.params[7]) and nt.params[7]()
+                                    and nt.params[3] = 1 and nt.params[5] = 1, 
        children := nt -> let(nlist := nt.params[1],
                             diag := nt.params[2],
                             oblk := nt.params[3],
@@ -105,59 +106,121 @@ NewRulesFor(IOPrunedMDRConv, rec(
                             iblk := nt.params[5],
                             ipats := nt.params[6],
                             nfreq := nlist[1]/2+1,
-                            i := Ind(nfreq*nlist[2]),
-                            hfunc := Cond(ObjId(diag) = Lambda,
-                                let(j := Ind(nlist[3]),
-                                    Lambda(j, cxpack(diag.at(2*(j + i*nlist[3])), diag.at(2*(j + i*nlist[3])+1)))
-                                ),
-                                ObjId(diag) = fUnk,
-                                fUnk(TComplex, nlist[3]),
-                                let(list := nt.params[2].list,  # here we assume FList(TReal, [...])
-                                    clist := List([1..Length(list)/2], i->Cplx(list[2*i-1], list[2*i])),
-                                    fc := FList(TComplex, clist),
-                                    gf := fTensor(fBase(i), fId(nlist[3])),
-                                    fCompose(fc, gf)
-                                )
-                            ),
-                            [[ PrunedPRDFT(nlist[2], -1, iblk, ipats[2]),  # stage 1: PRDFT y
-                                PrunedDFT(nlist[1], -1, iblk, ipats[1]),    # stage 2: DFT z
-                                IOPrunedConv(nlist[3], hfunc, oblk, opats[3], iblk, ipats[3], true), # stage 3+4+5: complex conv in x
-                                PrunedIDFT(nlist[1], 1, oblk, opats[1]), # stage 6: iDFT in z
-                                PrunedIPRDFT(nlist[2], 1, oblk, opats[2]),   # stage 7: iPRDFT in y
-                                InfoNt(i)
+                            [[ TCompose([ 
+                                PrunedIMDPRDFT(nt.params[1], nt.params[4], 1),
+                                TDiag(nt.params[2]),
+                                PrunedMDPRDFT(nt.params[1], nt.params[6], -1)]).withTags(nt.getTags())
                             ]]),
 
-       apply := (nt, C, cnt) -> let(prdft1d := C[1],
-                                    pdft1d := C[2],
-                                    iopconv := C[3],
-                                    ipdft1d := C[4],
-                                    iprdft1d := C[5],
-                                    i := cnt[6].params[1],
-                                    nlist := nt.params[1],
-                                    n1 := nlist[1],
-                                    nfreq := nlist[2]/2+1,
-                                    n2 := nlist[2],
-                                    n3 := nlist[3],
-                                    oblk := nt.params[3],
-                                    opats := nt.params[4],
-                                    iblk := nt.params[5],
-                                    ipats := nt.params[6],
-                                    ns1 := iblk * Length(ipats[1]),
-                                    ns2 := iblk * Length(ipats[2]),
-                                    ns3 := iblk * Length(ipats[3]),
-                                    nd1 := oblk * Length(opats[1]),
-                                    nd2 := oblk * Length(opats[2]),
-                                    nd3 := oblk * Length(opats[3]),
-                                    stage1 := Tensor(I(nfreq*ns2), L(2*ns3, ns3)) * Tensor(I(ns2), prdft1d, I(ns3)),
-                                    stage2 := RC(Tensor(pdft1d, I(nfreq*ns3))),
-                                    stage543c := IDirSum(i, iopconv),
-                                    stage543 := RC(stage543c),
-                                    stage6 := RC(Tensor(ipdft1d, I(nfreq*nd3))),
-                                    stage7 := Tensor(I(nd2), iprdft1d, I(nd3)) * Tensor(I(nfreq*nd2), L(2*nd3, 2)),
-                                    conv3dr := stage7 * stage6 * stage543 * stage2 * stage1,
-                                    conv3dr
-                            ),
+       apply := (nt, C, cnt) -> C[1]
     ),
+
+    IOPrunedMDRConv_tSPL_5stage := rec(
+       forTransposition := false,
+       applicable :=  (self, nt) >> nt.hasTags() and Length(nt.params[1]) = 3 and IsFunc(nt.params[7]) and nt.params[7]()
+                                    and nt.params[3] = 1 and nt.params[5] = 1, 
+
+       children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[3],
+                               tags := nt.getTags(),
+                               iprdft := IPRDFT1(Last(a_lengths), a_exp),
+                               prdft := PRDFT1(Last(a_lengths), a_exp),
+                               rcdim := Rows(prdft),
+                               rdim := Rows(iprdft),
+                               cdim := Cols(iprdft),
+                               #Error(),
+                               [ [ TCompose([ TGrp(TCompose([
+                                             TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, 1, Last(nt.params[2])), 
+                                                Product(List(DropLast(nt.params[2], 1), Length)), APar, APar),
+                                             TL(cdim * Product(List(DropLast(nt.params[2], 1), Length)) / 2, Product(List(DropLast(nt.params[2], 1), Length)), 1, 2), 
+                                       ])) ] ::
+                                       Reversed(List([1..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
+                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp,1, nt.params[2][j]), 
+                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
+                                           APar, AVec)))))
+                                      ::
+                                      TDiag(nt.params[2])
+                                      ::
+                                       List([1..Length(nt.params[1])-1], j->
+                                        let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, a_exp, 1, nt.params[2][j]), 
+                                            rcdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
+                                            AVec, APar)))) ::
+                                               [ TGrp(TCompose([TL(rcdim * Product(List(DropLast(nt.params[2], 1), Length)) / 2, rcdim / 2, 1, 2), 
+                                                 TTensorI(PrunedPRDFT(Last(a_lengths), a_exp, 1, Last(nt.params[2])), 
+                                                    Product(List(DropLast(nt.params[2], 1), Length)), APar, APar)
+                                                 ])) ]).withTags(tags) ]] ),
+
+        apply := (nt, C, cnt) -> C[1]
+    )
+    
 ));
-
-
+#
+#
+#    ## GPU/TITAN V Hockney algotithm variant
+#    ## 2-trip, 5-step, ZYX ====================================================
+#    IOPrunedMDRConv_3D_2trip_zyx_freqdata := rec(
+#       forTransposition := false,
+#       applicable :=  (self, nt) >> not nt.hasTags() and Length(nt.params[1]) = 3 and nt.params[7],
+#       children := nt -> let(nlist := nt.params[1],
+#                            diag := nt.params[2],
+#                            oblk := nt.params[3],
+#                            opats := nt.params[4],
+#                            iblk := nt.params[5],
+#                            ipats := nt.params[6],
+#                            nfreq := nlist[1]/2+1,
+#                            i := Ind(nfreq*nlist[2]),
+#                            hfunc := Cond(ObjId(diag) = Lambda,
+#                                let(j := Ind(nlist[3]),
+#                                    # Lambda(j, cxpack(diag.at(2*(j + i*nlist[3])), diag.at(2*(j + i*nlist[3])+1)))
+#                                    pos := i +j*nfreq*nlist[2],
+#                                    Lambda(j, cxpack(diag.at(2*pos), diag.at(2*pos+1)))
+#                                ),
+#                                ObjId(diag) = fUnk,
+#                                fUnk(TComplex, nlist[3]),
+#                                let(list := nt.params[2].list,  # here we assume FList(TReal, [...])
+#                                    clist := List([1..Length(list)/2], i->Cplx(list[2*i-1], list[2*i])),
+#                                    fc := FList(TComplex, clist),
+#                                    gf := fTensor(fBase(i), fId(nlist[3])),
+#                                    fCompose(fc, gf)
+#                                )
+#                            ),
+#                            [[ PrunedPRDFT(nlist[1], -1, iblk, ipats[1]),  # stage 1: PRDFT z
+#                                PrunedDFT(nlist[2], -1, iblk, ipats[2]),    # stage 2: DFT y
+#                                IOPrunedConv(nlist[3], hfunc, oblk, opats[3], iblk, ipats[3], true), # stage 3+4+5: complex conv in x
+#                                PrunedIDFT(nlist[2], 1, oblk, opats[2]), # stage 6: iDFT in y
+#                                PrunedIPRDFT(nlist[1], 1, oblk, opats[1]),   # stage 7: iPRDFT in z
+#                                InfoNt(i)
+#                            ]]),
+#
+#       apply := (nt, C, cnt) -> let(prdft1d := C[1],
+#                                    pdft1d := C[2],
+#                                    iopconv := C[3],
+#                                    ipdft1d := C[4],
+#                                    iprdft1d := C[5],
+#                                    i := cnt[6].params[1],
+#                                    nlist := nt.params[1],
+#                                    n1 := nlist[1],
+#                                    nfreq := nlist[1]/2+1,
+#                                    n2 := nlist[2],
+#                                    n3 := nlist[3],
+#                                    oblk := nt.params[3],
+#                                    opats := nt.params[4],
+#                                    iblk := nt.params[5],
+#                                    ipats := nt.params[6],
+#                                    ns1 := iblk * Length(ipats[1]),
+#                                    ns2 := iblk * Length(ipats[2]),
+#                                    ns3 := iblk * Length(ipats[3]),
+#                                    nd1 := oblk * Length(opats[1]),
+#                                    nd2 := oblk * Length(opats[2]),
+#                                    nd3 := oblk * Length(opats[3]),
+#                                    stage1 := L(2*nfreq*ns3*ns2, ns3) * Tensor(I(ns2), Tensor(L(2*nfreq, 2) * prdft1d, I(ns3))) * Tensor(L(ns2*ns1, ns2), I(ns3)),
+#                                    stage2 := Tensor(I(ns3), Tensor(RC(pdft1d), I(nfreq))),
+#                                    pp := Tensor(L(ns3*n2*nfreq, n2*nfreq), I(2)) * Tensor(I(ns3), L(2*nfreq*n2, nfreq)),
+#                                    ppi := Tensor(I(nd3), L(2*nfreq*n2, 2*n2)) * Tensor(L(nd3*n2*nfreq, nd3), I(2)),
+#                                    stage543 := ppi * IDirSum(i, RC(iopconv)) * pp,
+#                                    stage76 := Tensor(L(nd2*nd1, nd1), I(nd3)) * Grp(Tensor((Tensor(I(nd2), iprdft1d * L(2*nfreq, nfreq)) *
+#                                        Tensor(RC(ipdft1d), I(nfreq))), I(nd3)) * L(2*nfreq*nd3*n2, 2*nfreq*n2)),
+#                                    conv3dr := stage76 * stage543 * stage2 * stage1,
+#                                    conv3dr
+#                            ),
+#    ),
