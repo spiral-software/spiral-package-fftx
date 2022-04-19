@@ -135,13 +135,13 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                              TL(cdim * Product(List(DropLast(nt.params[6], 1), Length)) / 2, Product(List(DropLast(nt.params[6], 1), Length)), 1, 2), 
                                        ])) ] ::
                                        Reversed(List([2..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
-                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
+                                           TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
                                                 cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
                                            APar, AVec)))))
                                       ::
                                       [ TGrp(TCompose([
                                       let(j := 1, i := nt.params[1][j], 
-                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
+                                           TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
                                                 cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
                                            APar, AVec))),
                                       TDiag(nt.params[2]),
