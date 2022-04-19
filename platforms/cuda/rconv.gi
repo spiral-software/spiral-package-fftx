@@ -134,14 +134,23 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                                 Product(List(DropLast(nt.params[6], 1), Length)), APar, APar),
                                              TL(cdim * Product(List(DropLast(nt.params[6], 1), Length)) / 2, Product(List(DropLast(nt.params[6], 1), Length)), 1, 2), 
                                        ])) ] ::
-                                       Reversed(List([1..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
+                                       Reversed(List([2..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
                                            DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
                                                 cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
                                            APar, AVec)))))
                                       ::
-                                      [TDiag(nt.params[2])]
+                                      [ TGrp(TCompose([
+                                      let(j := 1, i := nt.params[1][j], 
+                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
+                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
+                                           APar, AVec))),
+                                      TDiag(nt.params[2]),
+                                      let(j := 1, i := nt.params[1][j], 
+                                           TRC(TTensorI(PrunedDFT(i, -a_exp, nt.params[3], nt.params[4][j]), 
+                                               rcdim * Product(nt.params[1]{[j+1..Length(nt.params[4])-1]}) * Product(List(nt.params[4]{[1..j]}, Length))/(i), AVec, APar)))
+                                      ]))]
                                       ::
-                                       List([1..Length(nt.params[1])-1], j->
+                                      List([2..Length(nt.params[1])-1], j->
                                         let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, -a_exp, nt.params[3], nt.params[4][j]), 
                                             rcdim * Product(nt.params[1]{[j+1..Length(nt.params[4])-1]}) * Product(List(nt.params[4]{[1..j]}, Length))/(i), 
                                             AVec, APar)))) ::
