@@ -244,12 +244,12 @@ NewRulesFor(TTensorInd, rec(
             f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
         
         applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParPar(nt.params) and 
-            nt.params[2] > 1 and self._peelof(Cols(nt.params[1]), nt.params[2]) > 1 and
+            nt.params[2] > 1 and self._peelof(Cols(nt.params[1]), nt.params[2].range) > 1 and 
             ## FF: the next statement gets stuck/into an infinite loop in the GAP kernel ?!
-            (nt.params[2] / self._peelof(Cols(nt.params[1]), nt.params[2])) > 1,
-        children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
+            (nt.params[2].range / self._peelof(Cols(nt.params[1]), nt.params[2].range)) > 1,
+        children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2].range, peelof := self._peelof(n,m), remainder := m/peelof,
             k:= Ind(peelof), j := Ind(remainder), 
-            [[  TTensorInd(TTensorInd(nt.params[1], k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
+            [[  TTensorInd(TTensorInd(SubstVars(nt.params[1], rec((nt.params[2].id):=j * k.range + k)), k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     )
     
