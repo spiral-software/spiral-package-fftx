@@ -275,7 +275,7 @@ ParseOptsCUDA := function(conf, t)
 #                    _opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_tSPL_InvDiagFwd];
                     _opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_tSPL_5stage];
                     
-                    _opts.breakdownRules.TTensorInd := [TTensorInd_SIMT_peelof2, TTensorInd_SIMT];
+                    _opts.breakdownRules.TTensorInd := [TTensorInd_SIMT_peelof, TTensorInd_SIMT_peelof2, TTensorInd_SIMT];
                     
                     _opts.globalUnrolling := 2*_thold + 1;
     
