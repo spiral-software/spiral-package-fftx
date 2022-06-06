@@ -248,7 +248,7 @@ NewRulesFor(TTensorInd, rec(
         children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2].range, peelof := self._peelof(n,m), remainder := m/peelof, 
             dp := DivisorPairs(nt.params[2].range), kj := dp[When(IsEvenInt(Length(dp)), Length(dp)/2, (Length(dp)+1)/2)],
             k:= Ind(When(remainder = 1, kj[1], peelof)), j := Ind(When(remainder = 1, kj[2], remainder)),
-            [[ TTensorInd(TTensorInd(SubstVars(nt.params[1], rec((nt.params[2].id):=j * k.range + k)), k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
+            [[ TTensorInd(TTensorInd(SubstVars(Copy(nt.params[1]), rec((nt.params[2].id):=j * k.range + k)), k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     ),
     
@@ -272,7 +272,7 @@ NewRulesFor(TTensorInd, rec(
         children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2].range, peelof := self._peelof(n,m), remainder := m/peelof,
             dp := DivisorPairs(nt.params[2].range), kj := dp[When(IsEvenInt(Length(dp)), Length(dp)/2, (Length(dp)+1)/2)],
             k:= Ind(When(remainder = 1, kj[1], peelof)), j := Ind(When(remainder = 1, kj[2], remainder)),
-            [[  TTensorInd(TTensorInd(SubstVars(nt.params[1], rec((nt.params[2].id):=j * k.range + k)), k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
+            [[  TTensorInd(TTensorInd(SubstVars(Copy(nt.params[1]), rec((nt.params[2].id):=j * k.range + k)), k, APar, APar), j, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
     )
     

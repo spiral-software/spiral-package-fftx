@@ -145,7 +145,7 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                            APar, AVec)))))
                                       ::
                                       [
-                                      TRC(TTensorInd(IOPrunedConv(nt.params[1][1], f, nt.params[3], nt.params[4][1], nt.params[5], nt.params[6][1], true), kk, APar, APar))
+                                      TRC(TTensorInd(IOPrunedConv(nt.params[1][1], Copy(f), nt.params[3], nt.params[4][1], nt.params[5], nt.params[6][1], true), kk, APar, APar))
                                       ]
 #                                      [ TGrp(TCompose([
 #                                      let(j := 1, i := nt.params[1][j], 
