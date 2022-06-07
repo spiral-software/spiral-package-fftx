@@ -22,11 +22,11 @@ t := let(symvar := var("sym", TPtr(TReal)),
 
 opts := conf.getOpts(t);
 opts.wrapCFuncs := true;
-_tt := opts.tagIt(t);
-tt := opts.preProcess(_tt);
-Debug(true);
-rt := opts.search(tt);
-PrintTo("rt.g", rt);
+tt := opts.tagIt(t);
+#tt := opts.preProcess(_tt);
+#Debug(true);
+#rt := opts.search(tt);
+#PrintTo("rt.g", rt);
 
 
 c := opts.fftxGen(tt);
