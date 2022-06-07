@@ -1,0 +1,11 @@
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_81_cu.cu(1916): error : identifier "i36" is undefined [D:\mdf-git\Python
+\snowwhite\examples\A\tmpbalp2cks\libMdrconv_81_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_81_cu.cu(1916): error : identifier "i39" is undefined [D:\mdf-git\Python
+\snowwhite\examples\A\tmpbalp2cks\libMdrconv_81_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_81_cu.cu(1916): error : identifier "i43" is undefined [D:\mdf-git\Python
+\snowwhite\examples\A\tmpbalp2cks\libMdrconv_81_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_81_cu.cu(1916): error : identifier "i44" is undefined [D:\mdf-git\Python
+\snowwhite\examples\A\tmpbalp2cks\libMdrconv_81_cu.vcxproj]

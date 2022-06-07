@@ -1,0 +1,14 @@
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_32_cu.cu(691): error : identifier "i40" is undefined [D:\mdf-git\Python\
+snowwhite\examples\A\tmpq7thcmia\libMdrconv_32_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_32_cu.cu(691): error : identifier "i47" is undefined [D:\mdf-git\Python\
+snowwhite\examples\A\tmpq7thcmia\libMdrconv_32_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_32_cu.cu(691): error : identifier "i48" is undefined [D:\mdf-git\Python\
+snowwhite\examples\A\tmpq7thcmia\libMdrconv_32_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_32_cu.cu(691): error : identifier "i51" is undefined [D:\mdf-git\Python\
+snowwhite\examples\A\tmpq7thcmia\libMdrconv_32_cu.vcxproj]
+
+D:\mdf-git\Python\snowwhite\examples\A\Mdrconv_32_cu.cu(691): error : identifier "i52" is undefined [D:\mdf-git\Python\
+snowwhite\examples\A\tmpq7thcmia\libMdrconv_32_cu.vcxproj]

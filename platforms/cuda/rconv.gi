@@ -131,9 +131,17 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                
                                k := rcdim * Product(nt.params[1]{[2..Length(nt.params[4])-1]}) * Length(nt.params[4][1])/(nt.params[1][1]),
                                kk := Ind(k),
-                               f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(kk))).lambda(),
                                
+                               k1 := nt.params[1][2],
+                               k2 := rcdim * Length(nt.params[4][1])/(nt.params[1][1]),
+
+                               # here we need to check all 4 variants: div or mod, k1 or k2...
+                               kk1 := Ind(imod(kk, k2)),
+                               kk2 := Ind(idiv(kk, k1)),
+                                
                                #Error(),
+                               #f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(kk))).lambda(),
+                               f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(kk1), fBase(kk2))).lambda(),
                                [ [ TCompose([ TGrp(TCompose([
                                              TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, nt.params[5], Last(nt.params[6])), 
                                                 Product(List(DropLast(nt.params[6], 1), Length)), APar, APar),
