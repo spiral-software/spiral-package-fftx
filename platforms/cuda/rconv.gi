@@ -130,15 +130,43 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                cdim := Cols(iprdft),
                                
                                k := rcdim * Product(nt.params[1]{[2..Length(nt.params[4])-1]}) * Length(nt.params[4][1])/(nt.params[1][1]),
-                               kk := Ind(k),
+                               kk := Ind(k), # yx iterator
                                
-                               k1 := nt.params[1][2],
-                               k2 := rcdim * Length(nt.params[4][1])/(nt.params[1][1]),
+                               k1 := nt.params[1][2], # y range
+                               k2 := rcdim * Length(nt.params[4][1])/(nt.params[1][1]), # x range
 
                                #Error(),
                                #f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(kk))).lambda(),
-                               # here we need to check all 4 variants: div or mod, k1 or k2...
-                               f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(imod(kk, k2), k2), fBase(idiv(kk, k2), k1))).lambda(),
+
+                                #input: zyx: [64, 64, 33]
+                                #symbol: zyx: [64, 64, 33]
+                                #
+                                #stage 1: PRDFTx [zy]x -> x[zy]
+                                #stage 2: DFTy [xz]y -> y[xz]
+                                #
+                                #stage 3-4-5: 1DConv z: [yx]z -> [yx]z
+                                #
+                                #yx: [0..64*33=2112]
+                                #z = 64
+                                #y = idiv(yx, 33) = [0..63]
+                                #x = imod(yx, 33) = [0..32]
+                                #f = fTensor(fId(z) fBase(y), fBase(x)) 
+                                #
+                                #stage 6: iDFTy y[xz] -> [xz]y
+                                #stage 7: iPRDFTz x[zy] -> [zy]x
+                                #
+                                #output: zyx: [64, 64, 33]                               
+                              
+                                # f accesses the symbol in z-y-x linearized order. 
+                                # linearization zyx: z is slowest varying, x is fastes varying (MDDFT/tensor order)
+                                # we extract the "virtual" x and y iterator from the flattened xy iterator via div and mod
+                                # the input and output are in [yx] z order and traversed by a yx loop with z data contiguous
+                                # -> y is the slower varying index, x is the faster varying index
+                               f := fCompose(nt.params[2], fTensor(
+                                    fId(nt.params[1][1]), 
+                                    fBase(idiv(kk, k2), k1), 
+                                    fBase(imod(kk, k2), k2))).lambda(),
+                               
                                [ [ TCompose([ TGrp(TCompose([
                                              TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, nt.params[5], Last(nt.params[6])), 
                                                 Product(List(DropLast(nt.params[6], 1), Length)), APar, APar),
