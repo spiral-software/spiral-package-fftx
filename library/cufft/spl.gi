@@ -7,16 +7,22 @@ Class(CUFFTCall, BaseMat, SumsBase, rec(
     rChildren := self >> [self.L, self.codegen],
     rSetChild := rSetChildFields("L", "codegen"),
     #-----------------------------------------------------------------------
-    new := (self, L, codegen) >> SPL(WithBases(self,
+    new := (self, L, codegen) >> let( #Print("CUFFT: ",L,"\n"),
+      SPL(WithBases(self,
         rec(L   := L,
             codegen   := CopyFields(codegen, rec(
                 plan_var := var.fresh_t("plan", TSym("cufftHandle")),
                 size_var := var.fresh_t("size", TInt),
                 data := (self, c) >> data(self.size_var, V(self.N), c),
-                init := self >> call(rec(id:="cufftPlanMany"), addrof(self.plan_var), V(1), addrof(self.size_var), addrof(self.size_var), V(1), V(self.M),
-    	            addrof(self.size_var), V((self.N * self.K) / (self.p1 * self.p2)), V(1), "CUFFT_Z2Z", V((self.N * self.K) / (self.p1 * self.p2))),
+                init := self >> let(  #Print("DFT ",self.K," X (",self.N," x ",self.M,")\n"),
+		     call(rec(id:="cufftPlanMany"), addrof(self.plan_var), V(1), addrof(self.size_var),
+#  input params
+		     addrof(self.size_var),  V(self.instride), V(self.indist), #V((self.M * self.K) / (self.p1 * self.p2)), 
+#  output params
+  	             addrof(self.size_var), V(self.outstride), V(self.outdist), #V((self.M * self.K) / (self.p1 * self.p2)), V(self.outdist),#V(1),
+	             "CUFFT_Z2Z", V((self.M * self.K) / (self.p1 * self.p2)))),
             )),
-            dimensions     := L.dims())
+            dimensions     := L.dims()))
     )),
 
     #-----------------------------------------------------------------------
