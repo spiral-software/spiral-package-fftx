@@ -68,6 +68,14 @@ NewRulesFor(MDDFT, rec(
                                tags := nt.getTags(),
                                [ [TCompose(List(nt.params[1], i->TTensorI(DFT(i, a_exp), Product(nt.params[1])/i, AVec, APar))).withTags(tags) ]]),
         apply := (nt, C, cnt) -> C[1]
+    ),
+    MDDFT_tSPL_KL_SIMT := rec(
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        children  := nt -> let(a_lengths := nt.params[1],
+                               a_exp := nt.params[2],
+                               tags := nt.getTags(),
+                               [ [TCompose(List(Reversed(nt.params[1]), i->TTensorI(DFT(i, a_exp), Product(nt.params[1])/i, APar, AVec))).withTags(tags) ]]),
+        apply := (nt, C, cnt) -> C[1]
     )
 ));
 
@@ -314,16 +322,20 @@ NewRulesFor(TTensorI, rec(
         forTransposition := false,
         
         # these config parameters need to be moved into the opts...
-        mem := 1024*96,
-        mem_per_pt := 2*8*2,
+        mem := 1024*64,
+        mem_per_pt := 2*8,
         max_threads := 2048,
 #        max_threads := 1024,
         max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        ch_loops := (self, n) >> let(dpn := DivisorPairs(n), i := Int(Length(dpn)/2)+1, Maximum(dpn[i])),
+#        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(self.ch_loops(n)*DivisorsInt(m), e-> e<self.max_threads),
+#            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n), 
         
+        _peelof := (self,n,m) >> Maximum(Filtered(n * self.mem_per_pt * Filtered(DivisorsInt(m), e-> e <= self.max_threads / self.ch_loops(n)), 
+            f -> f <= When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+            
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecPar(nt.params) and nt.params[2] > 1,
-        children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
+        children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, #Error(),
             [[ TCompose([TL(Rows(nt)/peelof, n, 1, peelof), 
                 TTensorI(
                     TCompose([TL(Rows(nt.params[1]) * peelof, Rows(nt.params[1])), TTensorI(nt.params[1], peelof, APar, APar)]),
@@ -335,16 +347,20 @@ NewRulesFor(TTensorI, rec(
         forTransposition := false,
         
         # these config parameters need to be moved into the opts...
-        mem := 1024*96,
-        mem_per_pt := 2*8*2,
+        mem := 1024*64,
+        mem_per_pt := 2*8,
         max_threads := 2048,
 #        max_threads := 1024,
         max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        ch_loops := (self, n) >> let(dpn := DivisorPairs(n), i := Int(Length(dpn)/2)+1, Maximum(dpn[i])),
+#        _peelof := (self,n,m) >> Maximum(Filtered(self.mem_per_pt * Filtered(self.ch_loops(n)*DivisorsInt(m), e-> e<self.max_threads), 
+#            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+
+        _peelof := (self,n,m) >> Maximum(Filtered(n * self.mem_per_pt * Filtered(DivisorsInt(m), e-> e <= self.max_threads / self.ch_loops(n)), 
+            f -> f <= When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
         
         applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParVec(nt.params) and nt.params[2] > 1,
-        children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof,
+        children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, #Error(),
             [[ TCompose([
                 TTensorI(
                     TCompose([TTensorI(nt.params[1], peelof, APar, APar), TL(Cols(nt.params[1]) * peelof, peelof)]), remainder, APar, APar),
@@ -362,11 +378,12 @@ NewRulesFor(TTensorI, rec(
 #        max_threads := 2048,
         max_threads := 1024,
         max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum([1]::Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        _peelof := (self,n,m) >> 16,
+#        Maximum([1]::Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
+#            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
         
         applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParPar(nt.params) and nt.params[2] > 1 and self._peelof(Rows(nt.params[1]), nt.params[2]) > 1 and 
-            (nt.params[2] / self._peelof(Rows(nt.params[1]), nt.params[2])) > 1,
+            (nt.params[2] / self._peelof(Rows(nt.params[1]), nt.params[2])) > 1 and nt.params[2] > 4096,
         children := (self, nt) >> let(n := Rows(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, 
             [[  TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
@@ -381,11 +398,12 @@ NewRulesFor(TTensorI, rec(
 #        max_threads := 2048,
         max_threads := 1024,
         max_kernel := 18 * 18,
-        _peelof := (self,n,m) >> Maximum([1]::Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
-            f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
+        _peelof := (self,n,m) >> 16,
+        #Maximum([1]::Filtered(self.mem_per_pt * Filtered(n*DivisorsInt(m), e-> e<self.max_threads), 
+        #    f -> f < When(n >= self.max_kernel, self.mem/2, self.mem)))/(self.mem_per_pt*n),
         
         applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParPar(nt.params) and nt.params[2] > 1 and self._peelof(Cols(nt.params[1]), nt.params[2]) > 1 and 
-            (nt.params[2] / self._peelof(Cols(nt.params[1]), nt.params[2])) > 1,
+            (nt.params[2] / self._peelof(Cols(nt.params[1]), nt.params[2])) > 1 and nt.params[2] > 4096,
         children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, 
             [[  TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]

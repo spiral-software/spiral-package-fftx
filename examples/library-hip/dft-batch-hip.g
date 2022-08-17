@@ -25,5 +25,8 @@ t := let(
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
