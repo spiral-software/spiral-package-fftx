@@ -80,11 +80,39 @@ RewriteRules(RulesCxRC_Op, rec(
 opts := conf.getOpts(t);
 opts.cudasubName := name;
 
+
 # set up vector stuff
 Class(HIP_2x64f, SSE_2x64f);
-Add(opts.tags, AVecRegCx(HIP_2x64f));
+isa := HIP_2x64f;
+
+isa.mul_cx := (self, opts) >> (
+    (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
+        u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
+        decl([u1, u2, u3, u4], chain(
+            assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
+            assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
+            assign(u3, mul(u2, velem(c, 1))),               # vushuffle_2x64f(c, [2,2])
+            assign(u4, vpack(velem(x, 1), velem(x, 0))),    # vushuffle_2x64f(u3, [2,1])
+            assign(y, add(u1, u4))
+        ))));
+
+vopts := SIMDGlobals.getOpts(HIP_2x64f);
+
+
+Add(opts.tags, AVecRegCx(isa));
 opts.tags;
 opts.breakdownRules.TRC := [CopyFields(TRC_cplxvect, rec(switch := true))];
+
+# set up the options
+opts.codegen.VGath := VectorCodegen.VGath;
+opts.codegen.VScat := VectorCodegen.VScat;
+opts.codegen.VTensor := VectorCodegen.VTensor;
+opts.codegen.RCVDiag := VectorCodegen.RCVDiag;
+opts.codegen.VContainer := VectorCodegen.VContainer;
+
+opts.vector := vopts.vector;
+opts.vector.SIMD := "SSE2";
+
 
 # temporary fix
 #opts.tags := opts.tags{[1,3]};
