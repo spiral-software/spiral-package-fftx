@@ -110,6 +110,28 @@ opts.codegen.VTensor := VectorCodegen.VTensor;
 opts.codegen.RCVDiag := VectorCodegen.RCVDiag;
 opts.codegen.VContainer := VectorCodegen.VContainer;
 
+opts.unparser.vpack := (self, o, i, is) >> Print("lib_make_vector2<double2>", "(", self.infix(Reversed(o.args), ", "), ")");
+opts.unparser.velem := (self, o, i, is) >> self.printf("$1.$2", [ o.loc, When(o.idx.v=0,"x", "y") ]);
+opts.unparser.re := (self, o, i, is) >> self.printf("($1).x", [ o.args[1] ]);
+opts.unparser.im := (self, o, i, is) >> self.printf("($1).y", [ o.args[1] ]);
+
+opts.c99 := rec(I :=  "__I__");
+opts.unparser.TVect := (self, t, vars, i, is) >> Print("double2 ", self.infix(vars, ", ", i + is));
+
+opts.unparser.Value :=
+(self, o, i, is) >> Cond(
+    o.t = TComplex, let(c := Complex(o.v), re := ReComplex(c), im := ImComplex(c),
+        Print("{", self._decval(re), ", ", self._decval(im), "}")), 
+    o.t = TReal, let(v := Cond(IsCyc(o.v), ReComplex(Complex(o.v)), o.v),
+        Cond(v < 0, Print("(", self._decval(v), ")"), Print(self._decval(v))) ), 
+    IsArray(o.t), Print("{", WithBases(self, rec(infixbreak := 4 )).infix(o.v, ", ", i), "}"), o.v < 0, Print("(", o.v, ")"), 
+    o.t = TBool, When(o.v in [ true, 1 ], Print("1"), Print("0")), 
+    o.t = TUInt, Print(o.v, "u"), Print(o.v));
+
+
+opts.TComplexCtype := "double2";
+
+
 opts.vector := vopts.vector;
 opts.vector.SIMD := "SSE2";
 
@@ -123,6 +145,7 @@ opts.vector.SIMD := "SSE2";
 ##  Comment out next line if trying standalone or with profiler
 opts.wrapCFuncs := true;
 if(IsBound(fftx_includes)) then opts.includes:=fftx_includes; fi;
+opts.includes[2] := "\"common.h\"";
 
 tt := opts.tagIt(t);
 _tt := opts.preProcess(tt);
@@ -161,7 +184,7 @@ opts.max_shmem_size := Product(szcube)/4;
 c:= opts.codeSums(ss);
 
 #c := opts.fftxGen(tt);
-##  opts.prettyPrint(c);
+opts.prettyPrint(c);
 
 PrintTo(name::file_suffix, opts.prettyPrint(c));
 #fi;
