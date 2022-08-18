@@ -89,10 +89,10 @@ isa.mul_cx := (self, opts) >> (
     (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
         u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
         decl([u1, u2, u3, u4], chain(
-            assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
-            assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
-            assign(u3, mul(u2, velem(c, 1))),               # vushuffle_2x64f(c, [2,2])
-            assign(u4, vpack(velem(x, 1), velem(x, 0))),    # vushuffle_2x64f(u3, [2,1])
+            assign(u1, mul(x, re(c))),                # vushuffle_2x64f(c, [1,1])
+            assign(u2, vpack(re(x), -im(x))),   #chshi_2x64f(x)),
+            assign(u3, mul(u2, im(c))),               # vushuffle_2x64f(c, [2,2])
+            assign(u4, vpack(im(x), re(x))),    # vushuffle_2x64f(u3, [2,1])
             assign(y, add(u1, u4))
         ))));
 
