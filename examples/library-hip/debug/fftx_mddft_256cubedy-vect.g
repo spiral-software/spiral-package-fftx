@@ -89,16 +89,39 @@ opts.cudasubName := name;
 Class(HIP_2x64f, SSE_2x64f);
 isa := HIP_2x64f;
 
-isa.mul_cx := (self, opts) >> (
-    (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
+#isa.mul_cx := (self, opts) >> (
+#    (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
+#        u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
+#        decl([u1, u2, u3, u4], RulesStrengthReduce(chain(
+#            assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
+#            assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
+#            assign(u3, mul(u2, velem(c, 1))),               # vushuffle_2x64f(c, [2,2])
+#            assign(u4, vpack(velem(u3, 1), velem(u3, 0))),    # vushuffle_2x64f(u3, [2,1])
+#            assign(y, add(u1, u4))
+#        )))));
+
+
+isa.mul_cx := (self, opts) >> ( # (a+bi)(c+di)
+    (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), 
         u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
-        decl([u1, u2, u3, u4], RulesStrengthReduce(chain(
-            assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
-            assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
-            assign(u3, mul(u2, velem(c, 1))),               # vushuffle_2x64f(c, [2,2])
-            assign(u4, vpack(velem(u3, 1), velem(u3, 0))),    # vushuffle_2x64f(u3, [2,1])
-            assign(y, add(u1, u4))
+        decl([u1, u3, u4], RulesStrengthReduce(chain(
+            assign(u1, mul(x, velem(c, 0))),  # ac + bci             
+            assign(u3, mul(x, velem(c, 1))),  # ad + bdi            
+            assign(y, vpack(
+                add(velem(u1, 0), velem(u3, 1)),  # ac + bd
+                sub(velem(u1, 1), velem(u3, 0))))# (bc +ad)i
         )))));
+
+isa.mul_cx := (self, opts) >> ( # (a+bi)(c+di)
+    (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), 
+        u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
+        decl([u1, u3, u4], RulesStrengthReduce(chain(
+            assign(u1, mul(x, velem(c, 0))),  # (a b) * (c c) = (ac bc)
+            assign(u3, mul(vpack(velem(x, 1), velem(x, 0)), vpack(-velem(c, 1), velem(c, 1)))),  # (b a) * (-d d) = (-bd ad)        
+            assign(y, add(u1, u3)) # (ac - bd | ad + bc)
+        )))));
+
+
 
 vopts := SIMDGlobals.getOpts(HIP_2x64f);
 
@@ -146,6 +169,7 @@ opts.vector.SIMD := "SSE2";
 #opts.tags := opts.tags{[1,3]};
 
 
+opts.globalUnrolling := 16;
 
 ##  We need the Spiral functions wrapped in 'extern C' for adding to a library
 ##  Comment out next line if trying standalone or with profiler
@@ -188,6 +212,9 @@ ss := SubstBottomUp(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag an
 opts.max_shmem_size := Product(szcube)/4;
 
 c:= opts.codeSums(ss);
+c := SubstBottomUp(c, [@(1, mul), @(2, Value, e->ObjId(e.t) = TVect and e.v[1] = V(1) and e.v[2] = V(-1)), @(3, vpack)],
+	e->vpack(@(3).val.args[1], - @(3).val.args[2]));
+c := SubstBottomUp(c, @(1, Value, e->ObjId(e.t) = TVect and e.v[1] = e.v[2]), e->e.v[1]);
 
 #c := opts.fftxGen(tt);
 opts.prettyPrint(c);
