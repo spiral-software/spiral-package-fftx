@@ -75,7 +75,7 @@ RewriteRules(RulesCxRC_Op, rec(
     vRC_Gath := Rule([vRC, @(1, Gath)], e -> VGath(@(1).val.func, 2)),
     vRC_Scat := Rule([vRC, @(1, Scat)], e -> VScat(@(1).val.func, 2)),
 
-    vRC_Diag := Rule([@(1, vRC), @(2, Diag) ], e -> Error(vRC(VDiag(@(2).val.element, 1)))),
+    vRC_Diag := Rule([@(1, vRC), @(2, Diag) ], e -> vRC(VDiag(@(2).val.element, 1))),
     vRC_VDiag     := Rule([@(1, vRC), @(2, VDiag)], e -> let(v:=2*@(2).val.v, 
         RCVDiag(VData(RCData(@(2).val.element), v), v)))
 ));
@@ -92,11 +92,11 @@ isa := HIP_2x64f;
 isa.mul_cx := (self, opts) >> (
     (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
         u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
-        decl([u1, u2, u3, u4], RulesStrengthReduce(chain(When(ObjId(c.t) <> TVect, DbgBreak(), skip()),
+        decl([u1, u2, u3, u4], RulesStrengthReduce(chain(
             assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
             assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
-            assign(u3, mul(u2, velem(c, 0))),               # vushuffle_2x64f(c, [2,2])
-            assign(u4, vpack(velem(x, 1), vpack(x, 0))),    # vushuffle_2x64f(u3, [2,1])
+            assign(u3, mul(u2, velem(c, 1))),               # vushuffle_2x64f(c, [2,2])
+            assign(u4, vpack(velem(u3, 1), velem(u3, 0))),    # vushuffle_2x64f(u3, [2,1])
             assign(y, add(u1, u4))
         )))));
 
@@ -114,10 +114,11 @@ opts.codegen.VTensor := VectorCodegen.VTensor;
 opts.codegen.RCVDiag := VectorCodegen.RCVDiag;
 opts.codegen.VContainer := VectorCodegen.VContainer;
 
-opts.unparser.vpack := (self, o, i, is) >> Print("lib_make_vector2<double2>", "(", self.infix(Reversed(o.args), ", "), ")");
+opts.unparser.vpack := (self, o, i, is) >> Print("lib_make_vector2<double2>", "(", self.infix(o.args, ", "), ")");
 opts.unparser.velem := (self, o, i, is) >> self.printf("$1.$2", [ o.loc, When(o.idx.v=0,"x", "y") ]);
-opts.unparser.re := (self, o, i, is) >> self.printf("($1).x", [ o.args[1] ]);
-opts.unparser.im := (self, o, i, is) >> self.printf("($1).y", [ o.args[1] ]);
+opts.unparser.re := (self, o, i, is) >> self.printf("$1.x", [ o.args[1] ]);
+opts.unparser.im := (self, o, i, is) >> self.printf("$1.y", [ o.args[1] ]);
+opts.unparser.neg := (self, o, i, is) >> Print("-", self(o.args[1], i, is));
 
 opts.c99 := rec(I :=  "__I__");
 opts.unparser.TVect := (self, t, vars, i, is) >> Print("double2 ", self.infix(vars, ", ", i + is));
@@ -128,6 +129,7 @@ opts.unparser.Value :=
         Print("{", self._decval(re), ", ", self._decval(im), "}")), 
     o.t = TReal, let(v := Cond(IsCyc(o.v), ReComplex(Complex(o.v)), o.v),
         Cond(v < 0, Print("(", self._decval(v), ")"), Print(self._decval(v))) ), 
+    ObjId(o.t) = TVect, Print("lib_make_vector2<double2>", "(", self.infix(o.v, ", "), ")"),    
     IsArray(o.t), Print("{", WithBases(self, rec(infixbreak := 4 )).infix(o.v, ", ", i), "}"), o.v < 0, Print("(", o.v, ")"), 
     o.t = TBool, When(o.v in [ true, 1 ], Print("1"), Print("0")), 
     o.t = TUInt, Print(o.v, "u"), Print(o.v));
