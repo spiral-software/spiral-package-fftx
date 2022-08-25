@@ -73,7 +73,11 @@ RewriteRules(RulesCxRC_Op, rec(
     vRC_SIMTISum := Rule([@(2, vRC), @(1, SIMTISum)], e -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.domain, vRC(@(1).val.child(1)))),
     vRC_SIMTSUM := Rule([@(2, vRC), @(1, SIMTSUM)], e -> SIMTSUM(@(1).val.simt_dim, List(@(1).val.children(), vRC))),
     vRC_Gath := Rule([vRC, @(1, Gath)], e -> VGath(@(1).val.func, 2)),
-    vRC_Scat := Rule([vRC, @(1, Scat)], e -> VScat(@(1).val.func, 2))
+    vRC_Scat := Rule([vRC, @(1, Scat)], e -> VScat(@(1).val.func, 2)),
+
+    vRC_Diag := Rule([@(1, vRC), @(2, Diag) ], e -> Error(vRC(VDiag(@(2).val.element, 1)))),
+    vRC_VDiag     := Rule([@(1, vRC), @(2, VDiag)], e -> let(v:=2*@(2).val.v, 
+        RCVDiag(VData(RCData(@(2).val.element), v), v)))
 ));
 
 
@@ -88,13 +92,13 @@ isa := HIP_2x64f;
 isa.mul_cx := (self, opts) >> (
     (y,x,c) -> let(u1 := var.fresh_t("U", TVectDouble(2)), u2 := var.fresh_t("U", TVectDouble(2)),
         u3 := var.fresh_t("U", TVectDouble(2)), u4 := var.fresh_t("U", TVectDouble(2)),
-        decl([u1, u2, u3, u4], chain(
-            assign(u1, mul(x, re(c))),                # vushuffle_2x64f(c, [1,1])
-            assign(u2, vpack(re(x), -im(x))),   #chshi_2x64f(x)),
-            assign(u3, mul(u2, im(c))),               # vushuffle_2x64f(c, [2,2])
-            assign(u4, vpack(im(x), re(x))),    # vushuffle_2x64f(u3, [2,1])
+        decl([u1, u2, u3, u4], RulesStrengthReduce(chain(When(ObjId(c.t) <> TVect, DbgBreak(), skip()),
+            assign(u1, mul(x, velem(c, 0))),                # vushuffle_2x64f(c, [1,1])
+            assign(u2, vpack(velem(x, 0), -velem(x, 1))),   #chshi_2x64f(x)),
+            assign(u3, mul(u2, velem(c, 0))),               # vushuffle_2x64f(c, [2,2])
+            assign(u4, vpack(velem(x, 1), vpack(x, 0))),    # vushuffle_2x64f(u3, [2,1])
             assign(y, add(u1, u4))
-        ))));
+        )))));
 
 vopts := SIMDGlobals.getOpts(HIP_2x64f);
 

@@ -70,7 +70,7 @@ NewRulesFor(MDDFT, rec(
         apply := (nt, C, cnt) -> C[1]
     ),
     MDDFT_tSPL_KL_SIMT := rec(
-        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), _isSIMTTag) and Length(nt.params[1]) > 1,
+        applicable := nt->nt.hasTags() and ForAll(nt.getTags(), t -> _isSIMTTag(t) or ObjId(t) = AVecRegCx) and Length(nt.params[1]) > 1,
         children  := nt -> let(a_lengths := nt.params[1],
                                a_exp := nt.params[2],
                                tags := nt.getTags(),
@@ -79,6 +79,14 @@ NewRulesFor(MDDFT, rec(
     )
 ));
 
+NewRulesFor(DFT, rec(
+    DFT_SIMT_cplxvect := rec(
+        switch := false,
+        applicable := nt -> nt.numTags() = 1 and nt.firstTagIs(AVecRegCx),
+        children  := nt ->  [[ nt.dropTags() ]],
+        apply := (nt, C, cnt) -> C[1]
+    )
+));
 
 
 NewRulesFor(MDPRDFT, rec(
