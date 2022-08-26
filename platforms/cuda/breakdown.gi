@@ -423,18 +423,19 @@ NewRulesFor(TTensorI, rec(
         forTransposition := false,
         filter := e->true,
         minDFTsize := 8,
+        maxDFTSize := 32,
         parIterations := 16,
         applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and  IsParPar(nt.params) and nt.params[2] > 1 and
-            ObjId(nt.params[1]) = DFT and Maximum(nt.params[1].dims()) > self.minDFTsize,
+            ObjId(nt.params[1]) = DFT and Maximum(nt.params[1].dims()) > self.minDFTsize and Minimum(nt.params[1].dims()) <= self.maxDFTsize,
         children := (self, nt) >> Map2(Filtered(DivisorPairs(nt.params[1].params[1]), self.filter), (m,n) -> [
             TCompose(List([
-                When(IsInt(n / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]), 
+                When(IsInt(n / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]) and self.parIterations / nt.params[2] > 1, 
                     TTensorI(TTensorI(DFT(m, nt.params[1].params[2] mod m), n / (self.parIterations / nt.params[2]), AVec, AVec), self.parIterations / nt.params[2], AVec, AVec),
                     TTensorI(DFT(m, nt.params[1].params[2] mod m), n , AVec, AVec)
                 ),
                 # need to deal with TTwiddle...
                 TTwiddle(m*n, n, nt.params[1].params[2]),
-                When(IsInt(m / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]), 
+                When(IsInt(m / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]) and self.parIterations / nt.params[2] > 1, 
                     TTensorI(TTensorI(DFT(n, nt.params[1].params[2] mod n), m / (self.parIterations / nt.params[2]), APar, APar), self.parIterations / nt.params[2], APar, APar),
                     TTensorI(DFT(n, nt.params[1].params[2] mod n), m, APar, APar)
                 ),
