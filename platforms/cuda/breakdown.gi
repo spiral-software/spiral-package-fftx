@@ -415,9 +415,66 @@ NewRulesFor(TTensorI, rec(
         children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, 
             [[  TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
-    )
-    
+    ),
+
+
+#   I x DFT
+    IxA_DFT_CT_SIMT := rec(
+        forTransposition := false,
+        filter := e->true,
+        minDFTsize := 8,
+        parIterations := 16,
+        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and  IsParPar(nt.params) and nt.params[2] > 1 and
+            ObjId(nt.params[1]) = DFT and Maximum(nt.params[1].dims()) > self.minDFTsize,
+        children := (self, nt) >> Map2(Filtered(DivisorPairs(nt.params[1].params[1]), self.filter), (m,n) -> [
+            TCompose(List([
+                When(IsInt(n / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]), 
+                    TTensorI(TTensorI(DFT(m, nt.params[1].params[2] mod m), n / (self.parIterations / nt.params[2]), AVec, AVec), self.parIterations / nt.params[2], AVec, AVec),
+                    TTensorI(DFT(m, nt.params[1].params[2] mod m), n , AVec, AVec)
+                ),
+                # need to deal with TTwiddle...
+                TTwiddle(m*n, n, nt.params[1].params[2]),
+                When(IsInt(m / (self.parIterations / nt.params[2])) and IsInt(self.parIterations / nt.params[2]), 
+                    TTensorI(TTensorI(DFT(n, nt.params[1].params[2] mod n), m / (self.parIterations / nt.params[2]), APar, APar), self.parIterations / nt.params[2], APar, APar),
+                    TTensorI(DFT(n, nt.params[1].params[2] mod n), m, APar, APar)
+                ),
+                TL(m*n, m, 1, 1)
+            ], e-> When(nt.params[2] = 1, e, TTensorI(e, nt.params[2], APar, APar)))).withTags([nt.getTag(1)]::nt.getTags())
+        ]),
+        apply := (nt, c, cnt) -> c[1]
+    ),
   
+    IxA_SIMT_peelIter := rec(
+        forTransposition := false,
+        maxIterations := 16,
+        
+        # these config parameters need to be moved into the opts...
+        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsParPar(nt.params) and nt.params[2] > 1 and 
+            nt.params[2] > self.maxIterations and IsInt(nt.params[2] / self.maxIterations),
+        children := (self, nt) >> let(outer := self.maxIterations, inner := nt.params[2] / self.maxIterations, 
+            [[  TTensorI(nt.params[1], inner, APar, APar).withTags(Drop(nt.getTags(), 1)) ]]),
+        apply := (self, nt, c, cnt) >> 
+            SIMTTensor(_toSIMTDim(nt.getTags(), self.maxIterations), I(self.maxIterations), c[1])
+    ),
+    AxI_SIMT_peelIter := rec(
+        forTransposition := false,
+        maxIterations := 16,
+        
+        # these config parameters need to be moved into the opts...
+        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecVec(nt.params) and nt.params[2] > 1 and 
+            nt.params[2] > self.maxIterations and IsInt(nt.params[2] / self.maxIterations),
+        children := (self, nt) >> let(outer := self.maxIterations, inner := nt.params[2] / self.maxIterations, 
+            [[  TTensorI(nt.params[1], inner, AVec, AVec).withTags(Drop(nt.getTags(), 1)) ]]),
+        apply := (self, nt, c, cnt) >> 
+            SIMTTensor(_toSIMTDim(nt.getTags(), self.maxIterations), c[1], I(self.maxIterations))
+    ),
+    IxA_TTwiddle_SIMT := rec(
+        forTransposition := false,
+        applicable := nt -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and  IsParPar(nt.params) and ObjId(nt.params[1]) = TTwiddle,
+        children := nt -> [[ nt.params[1].withTags(Drop(nt.getTags(), 1)) ]],
+        apply := (nt, c, cnt) -> 
+            Diag(diagTensor(fConst(nt.params[2], V(1.0)), c[1].element))
+    ),
 ));
 
 
