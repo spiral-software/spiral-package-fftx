@@ -280,6 +280,11 @@ ss := SubstBottomUp(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag an
 ss := SubstTopDown(ss, [@(1, ISum, e->e.var.range = 4), @(2, BB)],
 	e -> BB(ISum(@(1).val.var, @(2).val.child(1))));
 
+# make middle stage inplace
+
+ss := SubstBottomUp(ss, [@(1, Compose), @(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(3, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(4, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX)],
+    e -> @(2).val * Inplace(@(3).val) * @(4).val   
+);
 
 
 # temporary fix
