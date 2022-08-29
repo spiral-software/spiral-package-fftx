@@ -297,6 +297,44 @@ c := SubstBottomUp(c, @(1, Value, e->ObjId(e.t) = TVect and e.v[1] = e.v[2]), e-
 
 #c := opts.fftxGen(tt);
 c.ruletree := rt;
+
+# variable reuse ---------
+fs := Collect(c, specifiers_func);
+
+for c1 in fs do
+#Debug(true);
+#Error();
+    srec := rec();
+    ds := Collect(c1, @(1, decl, e->ForAny(e.vars, i->ObjId(i.t) = TVect or i.t = TComplex)));
+    
+    dd := List(ds, d -> Filtered(d.vars, e->ObjId(e.t) = TVect or e.t = TComplex));
+    nvars := List([1..Maximum(List(dd, Length))], i->var.fresh_t("R", TVect(TReal, 2)));
+    
+    for d in dd do
+       for i in [1..Length(d)] do
+           srec.(d[i].id) := nvars[i]; 
+       od;
+    od;
+
+    c1 := SubstVars(c1, srec);
+
+    nodecl := Flat(nvars::dd);
+    c1 := SubstBottomUp(c1, @(1, decl), 
+        e-> decl(Filtered(@(1).val.vars, e->not e in nodecl), @(1).val. cmd));
+
+    c1 := SubstBottomUp(c1, @(1, specifiers_func), 
+        e->specifiers_func(@(1).val.decl_specs, @(1).val.ret, @(1).val.id, @(1).val.params,
+            decl(nvars, @(1).val.cmd)));
+
+    c := SubstBottomUp(c, @(1, specifiers_func, e->e.id = c1.id), e->c1);
+
+od;
+
+
+
+
+#-------------------------
+
 opts.prettyPrint(c);
 
 PrintTo(name::file_suffix, opts.prettyPrint(c));
