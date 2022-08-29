@@ -230,7 +230,39 @@ ss := opts.sumsRuleTree(rt);
 ss := RulesCxRC_Op(ss);
 ss := RulesCxRC_Term(ss);
 
-# break loops
+# flatten X/X -> X loops
+ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), ...],
+    e-> let(
+        sx1 := @(1).val,
+        nn := sx1.simt_dim.params[1],
+        ni := Ind(nn),
+        ch := sx1.child(1).child(1),
+        i1 := sx1.var,
+        i2 := sx1.child(1).var,
+        i1new := idiv(ni, i2.range),
+        i2new := imod(ni, i2.range),
+        ch2 := SubstVars(ch, rec((i1.id) := i1new, (i2.id) := i2new)),
+        SIMTISum(ASIMTBlockDimX(nn), ni, nn, ch2)    
+));
+
+# flatten Y/X -> X loops
+ss := SubstTopDown(ss, 
+    [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), @(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), ...],
+    e->let(s1 := @(1).val,
+        i1 := s1.var,
+        i2 := s1.child(1).var,
+        rng := i1.range * i2.range,
+        ii := Ind(rng),
+        sr := rec(
+            (i1.id) := idiv(ii, i2.range),
+            (i2.id) := imod(ii, i2.range)
+        ),
+        sdim := ASIMTBlockDimX(rng),
+        SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
+    )
+);
+
+# break and scramble GridDimX
 ix := Ind(blk.x);
 iy := Ind(blk.y);
 iz := Ind(blk.z);
@@ -244,6 +276,11 @@ ss := SubstBottomUp(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag an
             SubstVars(@(1).val.child(1), rec((@(1).val.var.id) := _tolin(blk)))
 ))));
 
+# unroll the lonely Radix-4 kernels
+ss := SubstTopDown(ss, [@(1, ISum, e->e.var.range = 4), @(2, BB)],
+	e -> BB(ISum(@(1).val.var, @(2).val.child(1))));
+
+
 
 # temporary fix
 opts.max_shmem_size := Product(szcube)/4;
@@ -254,6 +291,7 @@ c := SubstBottomUp(c, [@(1, mul), @(2, Value, e->ObjId(e.t) = TVect and e.v[1] =
 c := SubstBottomUp(c, @(1, Value, e->ObjId(e.t) = TVect and e.v[1] = e.v[2]), e->e.v[1]);
 
 #c := opts.fftxGen(tt);
+c.ruletree := rt;
 opts.prettyPrint(c);
 
 PrintTo(name::file_suffix, opts.prettyPrint(c));
