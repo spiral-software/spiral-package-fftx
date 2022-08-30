@@ -3,9 +3,18 @@ n2 := 16;
 n := n1*n2;
 
 radix := 8;
-fftParIter := 16;
+fftParIter := 32;
 
-blk := rec(x := 16, y := 32, z := 8);
+memk := 64;
+#memk := 16;
+mem := memk * 1024;
+
+bx := 16;
+by := 32;
+bz := 512/memk;
+
+blk := rec(x := bx, y := by, z := bz);
+#blk := rec(x := 16, y := 32, z := 8);
 
 szcube := Replicate(3, n);
 libdir := ".";
@@ -131,7 +140,8 @@ vopts := SIMDGlobals.getOpts(HIP_2x64f);
 
 Add(opts.tags, AVecRegCx(isa));
 opts.tags;
-opts.breakdownRules.TRC := [CopyFields(TRC_cplxvect, rec(switch := true))];
+#opts.breakdownRules.TRC := [CopyFields(TRC_cplxvect, rec(switch := true))];
+opts.breakdownRules.TRC := [CopyFields(TRC_dag, rec(switch := true))];
 
 # set up the options
 opts.codegen.VGath := VectorCodegen.VGath;
@@ -201,8 +211,8 @@ opts.breakdownRules.DFT := [CopyFields(DFT_CT, rec(maxSize := 8, forcePrimeFacto
 
 
 opts.breakdownRules.TTensorI := [ CopyFields(IxA_L_split, rec(switch := true)),
-    CopyFields(L_IxA_SIMT, rec(applicable := (nt) -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.firstTag() <> ASIMTBlockDimX and IsVecPar(nt.params) and nt.params[2] > 1)),
-    CopyFields(IxA_L_SIMT, rec(applicable := (nt) -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.firstTag() <> ASIMTBlockDimX and IsParVec(nt.params) and nt.params[2] > 1)),
+    CopyFields(L_IxA_SIMT, rec(mem := mem, applicable := (nt) -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.firstTag() <> ASIMTBlockDimX and IsVecPar(nt.params) and nt.params[2] > 1)),
+    CopyFields(IxA_L_SIMT, rec(mem := mem, applicable := (nt) -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and nt.firstTag() <> ASIMTBlockDimX and IsParVec(nt.params) and nt.params[2] > 1)),
     CopyFields(AxI_SIMT_peelIter, rec(maxIterations := fftParIter)),
     IxA_TTwiddle_SIMT,
     CopyFields(IxA_DFT_CT_SIMT, rec(minDFTsize := radix, parIterations := fftParIter, maxDFTsize := n/radix)),
@@ -213,7 +223,7 @@ opts.breakdownRules.TTensorI := [ CopyFields(IxA_L_split, rec(switch := true)),
             (nt.getTag(1) = ASIMTBlockDimY or (ObjId(nt.params[1]) <> DFT or Maximum(nt.params[1].dims()) <= radix)))), 
     CopyFields(AxI_SIMT, 
         rec(applicable := (nt) -> nt.hasTags() and _isSIMTTag(nt.firstTag()) and IsVecVec(nt.params) and nt.params[2] > 1 and nt.params[2] <= fftParIter and 
-        (nt.getTag(1) = ASIMTBlockDimY or (ObjId(nt.params[1]) <> DFT or Maximum(nt.params[1].dims()) < radix))
+        (nt.getTag(1) = ASIMTBlockDimY or (ObjId(nt.params[1]) <> DFT or Maximum(nt.params[1].dims()) <= radix))
          )) 
     ];
 opts.breakdownRules.TL := [ L_SIMT, CopyFields(L_base, rec(applicable := (nt) -> nt.isTag(1, AVecRegCx) or not nt.hasTags())) ];
@@ -227,14 +237,14 @@ rt := opts.search(_tt);
 #DoForAll(xx, PrintLine);
 
 ss := opts.sumsRuleTree(rt);
-ss := RulesCxRC_Op(ss);
-ss := RulesCxRC_Term(ss);
+#ss := RulesCxRC_Op(ss);
+#ss := RulesCxRC_Term(ss);
 
 # flatten X/X -> X loops
 ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(2, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), ...],
     e-> let(
         sx1 := @(1).val,
-        nn := sx1.simt_dim.params[1],
+        nn := @(1).val.domain * @(2).val.domain,
         ni := Ind(nn),
         ch := sx1.child(1).child(1),
         i1 := sx1.var,
@@ -277,8 +287,8 @@ ss := SubstBottomUp(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag an
 ))));
 
 ## unroll the lonely Radix-4 kernels
-#ss := SubstTopDown(ss, [@(1, ISum, e->e.var.range = 4), @(2, BB)],
-#	e -> BB(ISum(@(1).val.var, @(2).val.child(1))));
+ss := SubstTopDown(ss, [@(1, ISum, e->e.var.range = 2), @(2, BB)],
+	e -> BB(ISum(@(1).val.var, @(2).val.child(1))));
 
 # make middle stage inplace
 
@@ -298,37 +308,37 @@ c := SubstBottomUp(c, @(1, Value, e->ObjId(e.t) = TVect and e.v[1] = e.v[2]), e-
 #c := opts.fftxGen(tt);
 c.ruletree := rt;
 
-# variable reuse ---------
+## variable reuse ---------
 fs := Collect(c, specifiers_func);
 
-for c1 in fs do
-#Debug(true);
-#Error();
-    srec := rec();
-    ds := Collect(c1, @(1, decl, e->ForAny(e.vars, i->ObjId(i.t) = TVect or i.t = TComplex)));
-    
-    dd := List(ds, d -> Filtered(d.vars, e->ObjId(e.t) = TVect or e.t = TComplex));
-    nvars := List([1..Maximum(List(dd, Length))], i->var.fresh_t("R", TVect(TReal, 2)));
-    
-    for d in dd do
-       for i in [1..Length(d)] do
-           srec.(d[i].id) := nvars[i]; 
-       od;
-    od;
-
-    c1 := SubstVars(c1, srec);
-
-    nodecl := Flat(nvars::dd);
-    c1 := SubstBottomUp(c1, @(1, decl), 
-        e-> decl(Filtered(@(1).val.vars, e->not e in nodecl), @(1).val. cmd));
-
-    c1 := SubstBottomUp(c1, @(1, specifiers_func), 
-        e->specifiers_func(@(1).val.decl_specs, @(1).val.ret, @(1).val.id, @(1).val.params,
-            decl(nvars, @(1).val.cmd)));
-
-    c := SubstBottomUp(c, @(1, specifiers_func, e->e.id = c1.id), e->c1);
-
-od;
+#for c1 in fs do
+##Debug(true);
+##Error();
+#    srec := rec();
+#    ds := Collect(c1, @(1, decl, e->ForAny(e.vars, i->i.t = TReal)));
+#    
+#    dd := List(ds, d -> Filtered(d.vars, e->e.t = TReal));
+#    nvars := List([1..Maximum(List(dd, Length))], i->var.fresh_t("R", TReal));
+#    
+#    for d in dd do
+#       for i in [1..Length(d)] do
+#           srec.(d[i].id) := nvars[i]; 
+#       od;
+#    od;
+#
+#    c1 := SubstVars(c1, srec);
+#
+#    nodecl := Flat(nvars::dd);
+#    c1 := SubstBottomUp(c1, @(1, decl), 
+#        e-> decl(Filtered(@(1).val.vars, e->not e in nodecl), @(1).val. cmd));
+#
+#    c1 := SubstBottomUp(c1, @(1, specifiers_func), 
+#        e->specifiers_func(@(1).val.decl_specs, @(1).val.ret, @(1).val.id, @(1).val.params,
+#            decl(nvars, @(1).val.cmd)));
+#
+#    c := SubstBottomUp(c, @(1, specifiers_func, e->e.id = c1.id), e->c1);
+#
+#od;
 
 
 
