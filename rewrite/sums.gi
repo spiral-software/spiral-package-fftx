@@ -27,7 +27,7 @@ Class(RulesDiagStandalonePointwise, RuleSet);
 
 RewriteRules(RulesDiagStandalonePointwise, rec(
  # Gath * Pointwise
- CommuteGathDiag := ARule( Compose,
+ CommuteGathPointwise := ARule( Compose,
        [ @(11, Gath), @(12, Pointwise) ], # o 1-> 2->
        e->[_buildLambda(e, @(11).val, @(12).val), @(11).val]
     ),
