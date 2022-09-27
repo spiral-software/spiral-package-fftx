@@ -12,7 +12,7 @@ t := let(symvar := var("sym", TPtr(TReal)),
         Compose([
             ExtractBox([64,64,64], [[32..63],[32..63],[32..63]]),
             IMDPRDFT([64,64,64], 1),
-            RCDiag(FDataOfs(tcast(TPtr(TComplex), symvar), 270336, 0)),
+            RCDiag(FDataOfs(symvar, 270336, 0)),
             MDPRDFT([64,64,64], -1),
             ZeroEmbedBox([64,64,64], [[0..31],[0..31],[0..31]])
         ]),
