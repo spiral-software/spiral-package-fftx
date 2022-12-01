@@ -211,7 +211,7 @@ _idiv := (a, b) -> When(b = 2, bin_shr(a, LogInt(b, 2)), idiv(a,b));
 _imod := (a, b) -> When(b = 2, bin_and(a, b-1), imod(a, b));
 _fdiv := (a, b) -> cond(leq(abs(b), var("DBL_EPSILON")), V(0.0), fdiv(a, b));
 
-StepPhase_Pointwise := (domain, symvar) -> let(
+StepPhase_Pointwise := (domain, symvar, c) -> let(
     i := Ind(domain),
     x := var.fresh_t("x", TPtr(TReal)),
     pw_op := (cval, a) -> a * cxpack(
@@ -221,6 +221,6 @@ StepPhase_Pointwise := (domain, symvar) -> let(
     cx_nth := (xr, i) -> cxpack(nth(xr, _idiv(i, 2) * 2), nth(xr, (_idiv(i, 2) * 2) + 1)),
     extract := (cval, i) -> cond(eq(_imod(i, 2), V(0)), re(cval), im(cval)),
     ampli := FDataOfs(symvar, domain, 0),
-    Pointwise(Lambda(i, Lambda(x, cond(leq(i, V(1)), nth(x, i), extract(pw_op(cx_nth(x, i), ampli.at(_idiv(i, 2))), i)))))
+    Pointwise(Lambda(i, Lambda(x, c * cond(leq(i, V(1)), nth(x, i), extract(pw_op(cx_nth(x, i), ampli.at(_idiv(i, 2))), i)))))
 );
 
