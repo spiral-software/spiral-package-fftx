@@ -172,12 +172,20 @@ Class(TNoPullLeft, Tagged_tSPL_Container, rec(
         )
 ));
 
+flipDims := function(orig)
+	local t;
+	t := Copy(orig);
+	t.params[1] := Reversed(t.params[1]);
+	return t;
+end;
+
 #F   tSPL ColMajor -> RowMajor transformation
 Class(TColMajor, Tagged_tSPL_Container, rec(
     _short_print := true,
     abbrevs :=  [ (A) -> Checked(IsNonTerminal(A) or IsSPL(A), [A]) ],
     dims := self >> 2*self.params[1].dims(),
-    terminate := self >> Mat(MatSPL(RC(self.params[1]))),
+
+    terminate := self >> Mat(MatSPL(flipDims(self.params[1]))),
 
     transpose := self >> ObjId(self)(
 	self.params[1].conjTranspose()).withTags(self.getTags()),
