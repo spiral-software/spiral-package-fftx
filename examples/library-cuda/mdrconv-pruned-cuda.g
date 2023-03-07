@@ -14,10 +14,10 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 d := 3;
-n := 64;
+n := 70;
 ns := n/2;
 nd := n/2;
-name := "prconv"::StringInt(d);
+name := "fsconv"::StringInt(n)::"x"::StringInt(n)::"x"::StringInt(n);
 
 PrintLine("mdrconv-pruned: n = ", n, " nd = ", nd, " ns = ", ns, ";\t\t##PICKME##");
 
@@ -36,16 +36,15 @@ t := let(name := name,
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
-Debug(true);
-_tt := opts.preProcess(tt);
-rt := opts.search(_tt);
 
-ss := opts.sumsRuleTree(rt);
-c := opts.codeSums(ss);
-
+#Debug(true);
+#_tt := opts.preProcess(tt);
+#rt := opts.search(_tt);
+#
+#ss := opts.sumsRuleTree(rt);
+#c := opts.codeSums(ss);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));
 
-PrintLine("mdrconv-pruned: codegen test only (no compiled test with 'symbol')\t\t##PICKME##");
