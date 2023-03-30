@@ -34,7 +34,7 @@ hockneyOpts := function(arg)
     opts.breakdownRules.DFT := [ DFT_Base, DFT_CT, DFT_Rader, CopyFields(DFT_GoodThomas, rec(maxSize := 15)), DFT_PD ];
     opts.topTransforms := [DFT, MDDFT, PrunedDFT, PrunedIDFT, IOPrunedConv, PrunedPRDFT, PrunedIPRDFT, TTensorI, IOPrunedMDRConv, 
         PRDFT, IPRDFT, PRDFT1, IPRDFT1, PRDFT2, IPRDFT2, PRDFT3, IPRDFT3, TTensorI ];
-    opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
+    #opts.breakdownRules.MDRConv := [ MDRConv_3D_2trip_zyx_freqdata ]; # [MDRConv_Base]
 
     opts.breakdownRules.PrunedPRDFT := [ CopyFields(PrunedPRDFT_base, rec(maxSize := argrec.prunedBasemaxSize)), PrunedPRDFT_CT_rec_block ];
     opts.breakdownRules.PrunedIPRDFT := [ CopyFields(PrunedIPRDFT_base, rec(maxSize := argrec.prunedBasemaxSize)), PrunedIPRDFT_CT_rec_block ];
