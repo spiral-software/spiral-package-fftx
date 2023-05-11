@@ -22,7 +22,4 @@ Class(ScatPtr, Scat, rec(
 
 Class(OO, O);
 
-
-Class(Pointwise, RCDiag, rec(isBlock := true));
-# set isBlock so the BlockSums() pass in SumsRuleTree() allows the Pointwise in a larger 
-# unrolled block before the Pointwise dims are fixed up
+Class(Pointwise, RCDiag);

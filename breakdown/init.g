@@ -9,5 +9,5 @@ Include(mdprdft);
 Include(prune);
 Include(mdrconv);
 Include(dft_pd_loop);
-
+Include(dft_multstage);
 

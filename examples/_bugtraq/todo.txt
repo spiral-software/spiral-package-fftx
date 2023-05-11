@@ -1,0 +1,6 @@
+- 1d batch
+- free space convolution more sizes per Peter
+- three stage++
+- Fortran order (complex)
+- Sine transform
+- SYCL

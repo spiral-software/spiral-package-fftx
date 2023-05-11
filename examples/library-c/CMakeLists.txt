@@ -18,6 +18,7 @@ set ( CPU_EXAMPLES_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 
 set ( _cpu_examples
       mddft-batch.g
+      mddft-colmajor-dag.g
       mddft-colmajor.g
       mddft.g
       mddft-pruned.g
@@ -28,7 +29,6 @@ set ( _cpu_examples
     )
 
 set ( _cpu_nocheck
-      mddft-colmajor-dag.g
       mdrconv-batch.g
       mdrconv.g
       mdrconv-pruned.g

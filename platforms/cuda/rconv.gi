@@ -108,7 +108,7 @@ NewRulesFor(IOPrunedMDRConv, rec(
                             nfreq := nlist[1]/2+1,
                             [[ TCompose([ 
                                 PrunedIMDPRDFT(nt.params[1], nt.params[4], 1),
-                                RCDiag(FDataOfs(nt.params[2].expr.loc, nt.params[2].vars[1].range, 0)),
+                                TDiag(nt.params[2]),
                                 PrunedMDPRDFT(nt.params[1], nt.params[6], -1)]).withTags(nt.getTags())
                             ]]),
 
@@ -128,26 +128,76 @@ NewRulesFor(IOPrunedMDRConv, rec(
                                rcdim := Rows(prdft),
                                rdim := Rows(iprdft),
                                cdim := Cols(iprdft),
+                               
+                               k := rcdim * Product(nt.params[1]{[2..Length(nt.params[4])-1]}) * Length(nt.params[4][1])/(nt.params[1][1]),
+                               kk := Ind(k), # yx iterator
+                               
+                               k1 := nt.params[1][2], # y range
+                               k2 := rcdim * Length(nt.params[4][1])/(nt.params[1][1]), # x range
+
                                #Error(),
+                               #f := fCompose(nt.params[2], fTensor(fId(nt.params[1][1]), fBase(kk))).lambda(),
+
+                                #input: zyx: [64, 64, 33]
+                                #symbol: zyx: [64, 64, 33]
+                                #
+                                #stage 1: PRDFTx [zy]x -> x[zy]
+                                #stage 2: DFTy [xz]y -> y[xz]
+                                #
+                                #stage 3-4-5: 1DConv z: [yx]z -> [yx]z
+                                #
+                                #yx: [0..64*33=2112]
+                                #z = 64
+                                #y = idiv(yx, 33) = [0..63]
+                                #x = imod(yx, 33) = [0..32]
+                                #f = fTensor(fId(z) fBase(y), fBase(x)) 
+                                #
+                                #stage 6: iDFTy y[xz] -> [xz]y
+                                #stage 7: iPRDFTz x[zy] -> [zy]x
+                                #
+                                #output: zyx: [64, 64, 33]                               
+                              
+                                # f accesses the symbol in z-y-x linearized order. 
+                                # linearization zyx: z is slowest varying, x is fastes varying (MDDFT/tensor order)
+                                # we extract the "virtual" x and y iterator from the flattened xy iterator via div and mod
+                                # the input and output are in [yx] z order and traversed by a yx loop with z data contiguous
+                                # -> y is the slower varying index, x is the faster varying index
+                               f := fCompose(nt.params[2], fTensor(
+                                    fId(nt.params[1][1]), 
+                                    fBase(idiv(kk, k2), k1), 
+                                    fBase(imod(kk, k2), k2))).lambda(),
+                               
                                [ [ TCompose([ TGrp(TCompose([
-                                             TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, 1, Last(nt.params[2])), 
-                                                Product(List(DropLast(nt.params[2], 1), Length)), APar, APar),
-                                             TL(cdim * Product(List(DropLast(nt.params[2], 1), Length)) / 2, Product(List(DropLast(nt.params[2], 1), Length)), 1, 2), 
+                                             TTensorI(PrunedIPRDFT(Last(a_lengths), a_exp, nt.params[5], Last(nt.params[6])), 
+                                                Product(List(DropLast(nt.params[6], 1), Length)), APar, APar),
+                                             TL(cdim * Product(List(DropLast(nt.params[6], 1), Length)) / 2, Product(List(DropLast(nt.params[6], 1), Length)), 1, 2), 
                                        ])) ] ::
-                                       Reversed(List([1..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
-                                           DropLast(a_lengths, 1), TRC(TTensorI(PrunedIDFT(i, a_exp,1, nt.params[2][j]), 
-                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
+                                       Reversed(List([2..Length(nt.params[1])-1], j->let(i := nt.params[1][j], 
+                                           TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
+                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
                                            APar, AVec)))))
                                       ::
-                                      TDiag(nt.params[2])
+                                      [
+                                      TRC(TTensorInd(IOPrunedConv(nt.params[1][1], Copy(f), nt.params[3], nt.params[4][1], nt.params[5], nt.params[6][1], true), kk, APar, APar))
+                                      ]
+#                                      [ TGrp(TCompose([
+#                                      let(j := 1, i := nt.params[1][j], 
+#                                           TRC(TTensorI(PrunedIDFT(i, a_exp, nt.params[5] , nt.params[6][j]), 
+#                                                cdim * Product(nt.params[1]{[j+1..Length(nt.params[6])-1]}) * Product(List(nt.params[6]{[1..j]}, Length))/(i), 
+#                                           APar, AVec))),
+#                                      TDiag(nt.params[2]),
+#                                      let(j := 1, i := nt.params[1][j], 
+#                                           TRC(TTensorI(PrunedDFT(i, -a_exp, nt.params[3], nt.params[4][j]), 
+#                                               rcdim * Product(nt.params[1]{[j+1..Length(nt.params[4])-1]}) * Product(List(nt.params[4]{[1..j]}, Length))/(i), AVec, APar)))
+#                                      ]))]
                                       ::
-                                       List([1..Length(nt.params[1])-1], j->
-                                        let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, a_exp, 1, nt.params[2][j]), 
-                                            rcdim * Product(nt.params[1]{[j+1..Length(nt.params[2])-1]}) * Product(List(nt.params[2]{[1..j]}, Length))/(i), 
+                                      List([2..Length(nt.params[1])-1], j->
+                                        let(i := nt.params[1][j], TRC(TTensorI(PrunedDFT(i, -a_exp, nt.params[3], nt.params[4][j]), 
+                                            rcdim * Product(nt.params[1]{[j+1..Length(nt.params[4])-1]}) * Product(List(nt.params[4]{[1..j]}, Length))/(i), 
                                             AVec, APar)))) ::
-                                               [ TGrp(TCompose([TL(rcdim * Product(List(DropLast(nt.params[2], 1), Length)) / 2, rcdim / 2, 1, 2), 
-                                                 TTensorI(PrunedPRDFT(Last(a_lengths), a_exp, 1, Last(nt.params[2])), 
-                                                    Product(List(DropLast(nt.params[2], 1), Length)), APar, APar)
+                                               [ TGrp(TCompose([TL(rcdim * Product(List(DropLast(nt.params[4], 1), Length)) / 2, rcdim / 2, 1, 2), 
+                                                 TTensorI(PrunedPRDFT(Last(a_lengths), -a_exp, nt.params[3], Last(nt.params[4])), 
+                                                    Product(List(DropLast(nt.params[4], 1), Length)), APar, APar)
                                                  ])) ]).withTags(tags) ]] ),
 
         apply := (nt, C, cnt) -> C[1]
