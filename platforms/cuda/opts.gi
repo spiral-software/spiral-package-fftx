@@ -96,7 +96,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
-ParseOptsCUDA := function(conf, t)
+OLDParseOptsCUDA := function(conf, t)
     local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold,
     MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter;
     

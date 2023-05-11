@@ -9,4 +9,5 @@ Include(rconv);
 #Include(codegen);
 #Include(unparser);
 Include(rewrite);
+Include(opts_derivation);
 Include(opts);
