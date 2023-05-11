@@ -102,7 +102,7 @@ ParseOptsCUDA := function(conf, t)
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
-    MAX_KERNEL := 23;
+    MAX_KERNEL := 26;
     MAX_PRIME := 17;
     MIN_SIZE := 32;
     MAX_SIZE := 680;
