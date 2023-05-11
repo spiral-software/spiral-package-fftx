@@ -7,6 +7,12 @@ NewRulesFor(TFCall, rec(
         forTransposition := false,
         children := nt -> [[ nt.params[1].withTags(nt.getTags()) ]],
         apply := (nt, c, cnt) -> c[1]
+    ),
+    TFCall_drop_tag2 := rec(
+        applicable := nt -> Length(nt.getTags()) = 3, 
+        forTransposition := false,
+        children := nt -> [[ TFCall(nt.params[1], nt.params[2]).withTags(nt.getTags(){[1,3]}) ]],
+        apply := (nt, c, cnt) -> c[1]
     )
 ));
 

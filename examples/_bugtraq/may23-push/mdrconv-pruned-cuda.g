@@ -14,10 +14,13 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 
+sizes := [105, 64, 16, 81, 150, 144, 120, 100, 60, 40, 32, 54, 36, 24, 16, 90, 81];
+# broken: [189, 180, 135, 64, 105, 125, 165, 189, 225, 245];
+i := 1;
 
 
 d := 3;
-n := 100;
+n := 2*sizes[i];
 ns := n/2;
 nd := n/2;
 name := "fsconv"::StringInt(n)::"x"::StringInt(n)::"x"::StringInt(n);
@@ -43,7 +46,7 @@ tt := opts.tagIt(t);
 #Debug(true);
 #_tt := opts.preProcess(tt);
 #rt := opts.search(_tt);
-#
+#tt1 := FindUnexpandableNonterminal(_tt, opts);
 #ss := opts.sumsRuleTree(rt);
 #c := opts.codeSums(ss);
 
