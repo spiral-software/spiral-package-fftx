@@ -16,25 +16,38 @@ fwd := true;
 #fwd := false;
 
 nbatch := 2;
-d := 3;
-szcube := 64;
-ns :=  Replicate(d, szcube);
+szcube := [ 64, 64, 64 ];
 
 if fwd then
     prdft := MDPRDFT;
-    k := 1;
+    sign := -1;
+    name := "mdprdft_3d_batch";
 else
     prdft := IMDPRDFT;
-    k := -1;
+    sign := 1;
+    name := "imdprdft_3d_batch";
 fi;
 
+# t := let(batch := nbatch,
+#     apat := APar,
+#     k := -1,
+#     name := "dft"::StringInt(Length(ns))::"d_batch",  
+#     TFCall(TTensorI(prdft(ns, k), nbatch, apat, apat), 
+#         rec(fname := name, params := []))
+# );
 
-t := let(batch := nbatch,
-    apat := APar,
-    k := -1,
-    name := "dft"::StringInt(Length(ns))::"d_batch",  
-    TFCall(TTensorI(prdft(ns, k), nbatch, apat, apat), 
-        rec(fname := name, params := []))
+szhalfcube := DropLast ( szcube, 1 )::[ Int ( Last ( szcube ) / 2 ) + 1 ];
+var_1:= var("var_1", BoxND([0,0,0], TReal));
+var_2:= var("var_2", BoxND(szcube, TReal));
+var_3:= var("var_3", BoxND(szhalfcube, TReal));
+var_2:= X;
+var_3:= Y;
+t := TFCall ( TDecl ( TDAG ([
+                                TDAGNode ( TTensorI ( prdft ( szcube, sign ), nbatch, APar, APar ), var_3, var_2 ),
+                            ]),
+                      [var_1]
+                    ),
+              rec ( fname := name, params := [ ] )
 );
 
 opts := conf.getOpts(t);
