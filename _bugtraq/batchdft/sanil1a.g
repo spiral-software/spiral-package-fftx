@@ -41,8 +41,8 @@ m2 := MatSPL(t);;
 InfinityNormMat(m2-mm);
 
 #i := 1;
-i := Random([0..n-1]);
 n := Length(m2);
+i := Random([0..n-1]);
 v := BasisVec(n, i);;
 mv := CVector(c, v, opts);;
 mv2 := List(mm, j->j[i+1]);;
