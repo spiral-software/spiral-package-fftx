@@ -12,6 +12,10 @@ N1 := 32;
 #N := 4;
 N := 8;
 
+# reaL size
+#N := 256;
+#N1 := 256;
+
 # testing
 #pat1 := APar; pat2 := APar;
 pat1 := AVec; pat2 := APar;
@@ -29,6 +33,7 @@ opts.prettyPrint(c);
 PrintTo("grid_dft"::"d_cont2cr"::".c", opts.prettyPrint(c));
 
 cyc := CMeasure(c, opts);
+## -- from here on only for smallsizes
 
 mm := CMatrix(c, opts);;
 m2 := MatSPL(t);;
