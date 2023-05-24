@@ -1,5 +1,6 @@
 Load(fftx);
 ImportAll(fftx);
+ImportAll(realdft);
 
 #conf := FFTXGlobals.defaultHIPConf();
 conf := LocalConfig.fftx.confGPU();
@@ -15,35 +16,37 @@ N := 8;
 #N := 256;
 #N1 := 256;
 
-
 # testing
-#pat1 := APar; pat2 := AVec;
 pat1 := APar; pat2 := APar;
+#pat1 := AVec; pat2 := APar;
 
 t := let(
     name := "grid_dft"::"d_cont",
     TFCall(
+       TTensorI(IPRDFT(N1, -1), N*N, pat1, pat2) * 
+        Prm(fTensor(L(IPRDFT1(N1, -1).dims()[2]/2 * N*N, N*N), fId(2))), 
 #         Tensor( 
-#             L(PRDFT1(N1, -1).dims()[1]/2 * N*N, PRDFT1(N1, -1).dims()[1]/2),
+#             L(IPRDFT1(N1, -1).dims()[2]/2 * N*N, N*N),
 #             I(2)
-#         ) * 
-        Prm(fTensor(L(PRDFT1(N1, -1).dims()[1]/2 * N*N, PRDFT1(N1, -1).dims()[1]/2), fId(2))) * 
-        TTensorI(PRDFT1(N1, -1), N*N, pat1, pat2), 
+#         ),
         rec(fname := name, params := []))
 );
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
+
+#pm(tt);
+
+
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
-PrintTo("grid_dft"::"d_cont1rc"::".c", opts.prettyPrint(c));
+PrintTo("grid_dft"::"d_cont2cr"::".c", opts.prettyPrint(c));
 
 cyc := CMeasure(c, opts);
 ## -- from here on only for smallsizes
 
 mm := CMatrix(c, opts);;
 m2 := MatSPL(t);;
-
 InfinityNormMat(m2-mm);
 
 #i := 1;
