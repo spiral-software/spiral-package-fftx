@@ -11,20 +11,20 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-n := 2;
-d := 2;
 N := 16^3;
+batch := 16;
+name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
-iter := List([1..d], i->Ind(n));
-
-t := let(
-    name := "grid_dft"::StringInt(d)::"d_cont",
-    TFCall(TRC(TMap(DFT(N, -1), iter, APar, APar)), 
-        rec(fname := name, params := []))
-);
+t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, APar)), 
+        rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
+_tt := opts.preProcess(tt);
+
+rt := opts.search(_tt);
+
+# ==
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
