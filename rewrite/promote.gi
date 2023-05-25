@@ -12,7 +12,8 @@ Class(RulesF2C, RuleSet);
 RewriteRules(RulesF2C, rec(
     FCallF_FCall := Rule(@(1, TFCallF), 
         e -> TFCall(FContainer(@(1).val.params[1], rec(Xtype := @(1).val.params[2].Xtype, Ytype := @(1).val.params[2].Ytype)),
-            CopyFields(@(1).val.params[2], rec(Xtype := @(1).val.params[2].Xtype.ctype(), Ytype := @(1).val.params[2].Ytype.ctype())))),
+            CopyFields(@(1).val.params[2], rec(Xtype := @(1).val.params[2].Xtype.ctype(), Ytype := @(1).val.params[2].Ytype.ctype()))).withTags(@(1).val.getTags()
+            )),
             
     FContainer_TRC := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TRC), e -> TRC(FContainer(@(1).val.child(1).params[1], @(1).val.context))),
         
