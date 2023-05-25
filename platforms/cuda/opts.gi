@@ -3,6 +3,9 @@
 ##  See LICENSE for details
 
 Import(simt);
+ImportAll(dct_dst);
+ImportAll(realdft);
+ImportAll(dtt);
 
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
@@ -338,6 +341,23 @@ ParseOptsCUDA := function(conf, t)
                 return _opts;
             fi;
         fi;
+        
+        # check for MDDST1
+        _conf := FFTXGlobals.confFFTCUDADevice();
+        _opts := FFTXGlobals.getOpts(_conf);
+        tt := _opts.preProcess(Copy(t));
+        if ObjId(tt) = TFCall and ObjId(tt.params[1]) = MDDST1 then
+            _opts.breakdownRules.DCT3 := [ DCT3_toSkewDCT3 ];
+            _opts.breakdownRules.DST1 := [ DST1_toDCT3 ];
+            _opts.breakdownRules.SkewDTT := [ SkewDTT_Base2, SkewDCT3_VarSteidl ];
+            _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)),
+                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT,
+                fftx.platforms.cuda.IxA_SIMT_peelof, fftx.platforms.cuda.IxA_SIMT_peelof2]::_opts.breakdownRules.TTensorI;
+        
+            _opts.operations.Print := s -> Print("<FFTX CUDA MDDST1 options record>");
+            return _opts;
+        fi;
+
         # we are doing nothing special
         return FFTXGlobals.getOpts(conf); 
     fi;
