@@ -2,7 +2,6 @@ Load(fftx);
 ImportAll(fftx);
 Import(dct_dst);
 
-# conf := LocalConfig.fftx.confGPU();
 conf := LocalConfig.fftx.defaultConf();
 
 n := 15;
@@ -13,7 +12,6 @@ name := t.name::"_"::StringInt(n)::"x"::StringInt(n)::"x"::StringInt(n);
 t := TFCall(t, rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
-opts.breakdownRules.SkewDTT := opts.breakdownRules.SkewDTT{[1..2]};
 
 tt := opts.tagIt(t);
 #rt := opts.search(tt);
