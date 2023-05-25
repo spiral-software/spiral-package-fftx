@@ -114,6 +114,9 @@ ParseOptsCUDA := function(conf, t)
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
     size1 := Filtered([MIN_SIZE..MAX_SIZE], i -> ForAny(DivisorPairs(i), filter) and ForAll(Factors(i), j -> not IsPrime(j) or j <= MAX_PRIME));
     _HPCSupportedSizesCUDA := size1;
+    
+    # -- initial guard for 3 stages algorithm
+    _ThreeStageSizesCUDA := [16^3];
 
 #    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
 #    _thold := 16;
@@ -157,6 +160,32 @@ ParseOptsCUDA := function(conf, t)
                 _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch DFT options record>");
 
             fi;
+
+# -- 3 stage algorithm detection here --            
+            if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])), i -> i in _ThreeStageSizesCUDA)  then
+                _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
+                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                
+                _opts.globalUnrolling := 2*_thold + 1;
+
+                _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
+                    fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                
+                _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
+                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                    When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
+                        FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
+                        FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
+                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(c, opts);    
+#                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
+                _opts.fixUpTeslaV_Code := true;
+
+                _opts.operations.Print := s -> Print("<FFTX CUDA HPC Batch DFT 3 stages options record>");
+
+            fi;
+# -- end 3 stage algo --           
             return _opts;
         fi;
        
