@@ -11,6 +11,7 @@ Import(filtering);
 
 Declare(_toBox);
 
+Include(types);
 LoadImport(fftx.sigma);
 LoadImport(fftx.nonterms);
 LoadImport(fftx.breakdown);
