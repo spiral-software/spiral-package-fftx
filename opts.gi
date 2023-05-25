@@ -130,7 +130,10 @@ ParseOpts := function(conf, t)
             fi;
         fi;
         # we are doing nothing special
-        return FFTXGlobals.getOpts(); 
+        _opts := FFTXGlobals.getOpts();
+        _opts.breakdownRules.SkewDTT := _opts.breakdownRules.SkewDTT{[1..2]};
+
+        return _opts;
     fi;
     
     # Here we have to handle GPU configs
