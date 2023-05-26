@@ -8,6 +8,12 @@ Class(TFCall, Tagged_tSPL_Container, rec(
     transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
 ));
 
+Class(TFCallF, Tagged_tSPL_Container, rec(
+    abbrevs :=  [ (nt, cconf) -> Checked(IsSPL(nt), [nt, cconf]) ],
+    transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
+));
+
+
 Class(TDeviceCall, Tagged_tSPL_Container, rec(
     abbrevs :=  [ (nt, cconf) -> Checked(IsSPL(nt), [nt, cconf]) ],
     transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
