@@ -7,6 +7,8 @@
 Load(fftx);
 ImportAll(fftx);
 
+Debug(true);
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();

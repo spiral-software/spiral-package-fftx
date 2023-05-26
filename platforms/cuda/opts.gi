@@ -100,7 +100,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold,
+    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _ThreeStageSizesCUDA,
     MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
@@ -116,7 +116,7 @@ ParseOptsCUDA := function(conf, t)
     _HPCSupportedSizesCUDA := size1;
     
     # -- initial guard for 3 stages algorithm
-    _ThreeStageSizesCUDA := [16^3];
+    _ThreeStageSizesCUDA := [ 16*16*16];
 
 #    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
 #    _thold := 16;
@@ -165,13 +165,16 @@ ParseOptsCUDA := function(conf, t)
             if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])), i -> i in _ThreeStageSizesCUDA)  then
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
                 _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+#                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
+                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 1)),
                     fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
                 _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+                    filter := e-> ((e in _ThreeStageSizesCUDA) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
+                        )]::_opts.breakdownRules.DFT;
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
