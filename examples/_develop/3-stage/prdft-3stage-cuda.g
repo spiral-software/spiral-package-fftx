@@ -9,6 +9,12 @@ ImportAll(fftx);
 
 Debug(true);
 
+## ToDO
+# For PRDFT bigger surgery is needed: 
+# 1) upgrade CT rules to NewRulesFor() to guard against tags, and 
+# 2) tspl_CT version of the PRDFT_CT rule                    
+
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();

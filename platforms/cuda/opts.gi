@@ -148,6 +148,10 @@ ParseOptsCUDA := function(conf, t)
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
                 filter := e-> ( _ThreeStageSizesCUDA(e) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
                     )]::_opts.breakdownRules.DFT;
+ 
+# For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
+#            _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT, PRDFT_PD ];        
+#            _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT, IPRDFT_PD ];
             
             _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
             _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
