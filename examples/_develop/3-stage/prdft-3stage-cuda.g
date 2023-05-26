@@ -13,20 +13,27 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 16^3;
-batch := 16;
+N := 1024;
+batch := 2;
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
-t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, APar)), 
-        rec(fname := name, params := []));
+t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
+#t := TFCall(TRC(PRDFT1(N, -1)), rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
 _tt := opts.preProcess(tt);
-
 rt := opts.search(_tt);
 
 # ==
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
+
+cyc := CMeasure(c, opts);
+
+mt := MatSPL(tt);
+mc := CMatrix(c, opts);
+
+diff := InfinityNormMat(mc-mt);
+

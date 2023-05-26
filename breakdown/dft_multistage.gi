@@ -25,24 +25,24 @@
 #     )
 # ));
 
-
-NewRulesFor(TTensorI, rec(
-    TTensorI_vecrec := rec(
-        forTransposition := false,
-        minSize := false,
-        numTags := false,
-        supportedNTs := [],
-        applicable := (self, nt) >>
-            ObjId(nt.params[1]) in self.supportedNTs and 
-            When(IsBound(self.minSize), ForAll(nt.params[1].dims(), i-> i >= self.minSize), true) and
-            nt.hasTags() and
-            When(IsBound(self.numTags), Length(nt.getTags()) = self.numTags, true),
-
-        children := nt -> [[nt.params[1].withTags(Drop(nt.params[1].getTags(), 1))]],
-
-        apply := (nt, c, cnt) -> Error(),
-
-        switch := false
-
-    )
-));
+# 
+# NewRulesFor(TTensorI, rec(
+#     TTensorI_vecrec := rec(
+#         forTransposition := false,
+#         minSize := false,
+#         numTags := false,
+#         supportedNTs := [],
+#         applicable := (self, nt) >>
+#             ObjId(nt.params[1]) in self.supportedNTs and 
+#             When(IsBound(self.minSize), ForAll(nt.params[1].dims(), i-> i >= self.minSize), true) and
+#             nt.hasTags() and
+#             When(IsBound(self.numTags), Length(nt.getTags()) = self.numTags, true),
+# 
+#         children := nt -> [[nt.params[1].withTags(Drop(nt.params[1].getTags(), 1))]],
+# 
+#         apply := (nt, c, cnt) -> Error(),
+# 
+#         switch := false
+# 
+#     )
+# ));
