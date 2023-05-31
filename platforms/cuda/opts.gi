@@ -132,7 +132,8 @@ ParseOptsCUDA := function(conf, t)
 
 
 # -- 3 stage algorithm detection here --            
-        if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])),  _ThreeStageSizesCUDA)  then
+        if ((Length(Collect(t, DFT)) = 1) or (Length(Collect(t, PRDFT)) = 1) or (Length(Collect(t, IPRDFT)) = 1)) and
+            ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])),  _ThreeStageSizesCUDA)  then
             _conf := FFTXGlobals.confBatchFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
 
