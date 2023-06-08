@@ -34,3 +34,4 @@ Class(TArrayNDF, TArrayBase, rec(
     ctype := self >> TPtr(self.t.realType())
 ));
 
+Class(TArrayNDF_ConjEven, TArrayNDF);
