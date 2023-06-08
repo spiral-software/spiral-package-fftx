@@ -323,7 +323,7 @@ ParseOptsCUDA := function(conf, t)
         # promote with default conf rules
         tt := _promote1(Copy(t));
 
-        if ObjId(tt) = TFCall then
+        if ObjId(tt) in [TFCall, TFCallF] then
             _tt := tt.params[1];
             # check for convolution
             if (ObjId(_tt) in [PrunedMDPRDFT, PrunedIMDPRDFT, MDRConv, MDRConvR, IOPrunedMDRConv]) or ((ObjId(_tt) in [TTensorI, TTensorInd]) and (ObjId(_tt.params[1]) in [MDRConv, MDRConvR])) then 
@@ -405,7 +405,7 @@ ParseOptsCUDA := function(conf, t)
         _conf := FFTXGlobals.confWarpXCUDADevice();
         _opts := FFTXGlobals.getOpts(_conf);
         tt := _opts.preProcess(Copy(t));
-        if ObjId(tt) = TFCall and ObjId(tt.params[1]) = TCompose then
+        if ObjId(tt) in [TFCall, TFCallF] and ObjId(tt.params[1]) = TCompose then
             _tt := tt.params[1].params[1];
             # detect promoted WarpX
             if IsList(_tt) and Length(_tt) = 3 and List(_tt, ObjId) = [ TNoDiagPullinRight, TRC, TNoDiagPullinLeft ] then
@@ -417,7 +417,7 @@ ParseOptsCUDA := function(conf, t)
         _conf := FFTXGlobals.confFFTCUDADevice();
         _opts := FFTXGlobals.getOpts(_conf);
         tt := _opts.preProcess(Copy(t));
-        if ObjId(tt) = TFCall and ObjId(tt.params[1]) = MDDST1 then
+        if ObjId(tt) in [TFCall, TFCallF] and ObjId(tt.params[1]) = MDDST1 then
             _opts.breakdownRules.DCT3 := [ DCT3_toSkewDCT3 ];
             _opts.breakdownRules.DST1 := [ DST1_toDCT3 ];
             _opts.breakdownRules.SkewDTT := [ SkewDTT_Base2, SkewDCT3_VarSteidl ];
