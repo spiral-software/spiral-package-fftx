@@ -17,8 +17,11 @@ RewriteRules(RulesF2C, rec(
             
     FContainer_TRC := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TRC), e -> TRC(FContainer(@(1).val.child(1).params[1], @(1).val.context))),
         
-    FContainer_MDDFT := Rule([@(1, FContainer), @(2, MDDFT), ...], e -> MDDFT(Reversed(@(2).val.params[1]), @(2).val.params[2]))
-    
+    FContainer_MDDFT := Rule([@(1, FContainer), @(2, [MDDFT, MDPRDFT, IMDPRDFT]), ...], e -> ApplyFunc(ObjId(@(2).val) , [Reversed(@(2).val.params[1]), @(2).val.params[2]])),
+
+    FContainer_MDRConv := Rule([@(1, FContainer), @(2, MDRConv), ...], 
+        e -> ApplyFunc(ObjId(@(2).val) , [Reversed(@(2).val.params[1])]::Drop(@(2).val.params, 1)))
+
 ));
 
 

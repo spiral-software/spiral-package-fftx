@@ -6,7 +6,7 @@ _orderedUniquify := l-> Flat([l[1]]::List([2..Length(l)], i->When(l[i] in l{[1..
 
 Class(FFTXGenMixin, rec(
     search := (self, t) >> When(IsBound(self.useDP) and self.useDP, DP(t, When(IsBound(self.dpopts), self.dpopts, rec()), self)[1].ruletree, RuleTreeMid(t, self)),
-    preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(RulesF2C(t1))),
+    preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesF2C(RulesFFTXPromoteNT_Cleanup(RulesF2C(t1)))),
     
     codeSumsCPU := meth(self, ss) 
                         local opts2, ss2, c;
