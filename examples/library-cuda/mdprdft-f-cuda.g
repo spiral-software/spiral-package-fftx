@@ -38,7 +38,7 @@ PrintLine("mdprdft-cuda: d = ", d, " cube = ", szcube, ";\t\t##PICKME##");
 
 t := TFCallF(ApplyFunc(prdft, [szcube, k]), 
         rec(fname := name, params := [],
-            Xtype := xtype, Ytype := ytype));
+            XType := xtype, YType := ytype));
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);

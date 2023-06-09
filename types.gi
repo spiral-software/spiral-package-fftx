@@ -1,3 +1,8 @@
+BoxND := (l, stype) -> Cond(IsInt(l), TArray(stype, l), 
+                             IsList(l) and Length(l) = 1, TArray(stype, l[1]), 
+                             TArray(BoxND(Drop(l, 1), stype), l[1]));
+
+
 Class(TArrayNDC, TArrayBase, rec(
     isArrayT := true,
     toPtrType := self >> TPtr(self.t),

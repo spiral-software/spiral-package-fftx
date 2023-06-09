@@ -20,7 +20,7 @@ symvar := var("sym", TPtr(TReal));
 
 t := TFCallF(IMDPRDFT(szcube, 1) * RCDiag(FDataOfs(symvar, 2*Product(DropLast(szcube, 1))* (Last(szcube)/2+1), 0)) * MDPRDFT(szcube, -1), 
         rec(fname := name, params := [symvar],
-        Xtype := TArrayNDF(TReal, szcube), Ytype := TArrayNDF(TReal, szcube)));
+        XType := TArrayNDF(TReal, szcube), YType := TArrayNDF(TReal, szcube)));
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);

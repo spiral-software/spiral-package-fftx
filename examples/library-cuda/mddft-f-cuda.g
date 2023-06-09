@@ -31,7 +31,7 @@ sizes := [
     
     t := TFCallF(TRC(MDDFT(szcube, 1)), 
             rec(fname := name, params := [],
-                Xtype := TArrayNDF(TComplex, szcube), Ytype := TArrayNDF(TComplex, szcube)));
+                XType := TArrayNDF(TComplex, szcube), YType := TArrayNDF(TComplex, szcube)));
     
     opts := conf.getOpts(t);
     tt := opts.tagIt(t);
