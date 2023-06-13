@@ -6,6 +6,7 @@
 
 Load(fftx);
 ImportAll(fftx);
+ImportAll(realdft);
 
 Debug(true);
 
@@ -27,6 +28,9 @@ t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, 
 #t := TFCall(TRC(PRDFT1(N, -1)), rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
+opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT_, PRDFT_PD ];
+opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT_, IPRDFT_PD ];
+
 tt := opts.tagIt(t);
 
 _tt := opts.preProcess(tt);
