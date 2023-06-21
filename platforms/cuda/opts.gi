@@ -145,7 +145,9 @@ ParseOptsCUDA := function(conf, t)
 
             _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
-                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
+                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
+               
+                
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
                 filter := e-> ( _ThreeStageSizesCUDA(e) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
                     )]::_opts.breakdownRules.DFT;
