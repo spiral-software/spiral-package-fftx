@@ -163,7 +163,7 @@ ParseOptsCUDA := function(conf, t)
 #                _opts.postProcessCode := (c, opts) -> FixUpTeslaV_Code(PingPong_3Stages(c, opts), opts);    
             _opts.fixUpTeslaV_Code := true;
 
-            _opts.operations.Print := s -> Print("<FFTX CUDA HPC DFT 3+ stages options record>");
+            _opts.operations.Print := s -> Print("<FFTX CUDA HPC (PR)DFT 3+ stages options record>");
             return _opts;
         fi;
 # -- end 3 stage algo --           
@@ -248,6 +248,7 @@ ParseOptsCUDA := function(conf, t)
                 _opts.breakdownRules.PrunedIMDPRDFT := [ PrunedIMDPRDFT_tSPL_Pease_SIMT ];
                 _opts.breakdownRules.PrunedDFT := [ PrunedDFT_base, PrunedDFT_DFT, PrunedDFT_CT, PrunedDFT_CT_rec_block, 
                     CopyFields(PrunedDFT_tSPL_CT, rec(switch := true)) ];
+                _opts.breakdownRules.TFCall := _opts.breakdownRules.TFCall{[1]};    # when is rule [2] needed?
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 #Error();

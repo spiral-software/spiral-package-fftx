@@ -54,7 +54,7 @@ warpXCUDADeviceOpts := function(arg) # specific to WarpX size 80 and 100... # th
     opts.codegen.OO := (self, o, y, x, opts) >> skip();
     
     opts.sumsgen.IterHStack := MultiPtrSumsgenMixin.IterHStack;
-    opts.preProcess := t -> ApplyStrategy(t, 
+    opts.preProcess := t -> ApplyStrategy(RulesF2C(t), 
                     [ RulesFFTXPromoteWarpX1, 
                       MergedRuleSet(rfs, RulesSums, RulesFFTXPromoteWarpX2), 
                       RulesFFTXPromoteNT, 
