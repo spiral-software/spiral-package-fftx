@@ -116,7 +116,7 @@ ParseOptsCUDA := function(conf, t)
     _HPCSupportedSizesCUDA := size1;
     
     # -- initial guard for 3 stages algorithm
-    _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2;
+    _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2 or e in [512];
 
 #    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
 #    _thold := 16;
