@@ -10,33 +10,30 @@ ImportAll(realdft);
 
 Debug(true);
 
-## ToDO
-# For PRDFT bigger surgery is needed: 
-# 1) upgrade CT rules to NewRulesFor() to guard against tags, and 
-# 2) tspl_CT version of the PRDFT_CT rule                    
-
-
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 1024;
+N := 512;
 batch := 2;
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
 t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
-#t := TFCall(TRC(PRDFT1(N, -1)), rec(fname := name, params := []));
+#t := TFCall(TRC(TTensorI(IPRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
-opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT_, PRDFT_PD ];
-opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT_, IPRDFT_PD ];
+#opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), i -> i[1].params[1] <= 16);
+#opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), i -> i[1].params[1] <= 16);
 
 tt := opts.tagIt(t);
 
+# ==
 _tt := opts.preProcess(tt);
 rt := opts.search(_tt);
-
+ss := opts.sumsRuleTree(rt);
+c := opts.codeSums(ss);
 # ==
+
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 

@@ -41,3 +41,6 @@ tt := opts.tagIt(t);
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 PrintTo(name::".cu", opts.prettyPrint(c));
+
+CMeasure(c, opts);
+
