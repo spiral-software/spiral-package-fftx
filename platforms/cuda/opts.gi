@@ -100,7 +100,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _ThreeStageSizesCUDA,
+    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA,
     MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
@@ -111,12 +111,14 @@ ParseOptsCUDA := function(conf, t)
     MAX_SIZE := 680;
 
     _thold := MAX_KERNEL;
+    _thold_prdft := MAX_PRIME;
+    
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
     size1 := Filtered([MIN_SIZE..MAX_SIZE], i -> ForAny(DivisorPairs(i), filter) and ForAll(Factors(i), j -> not IsPrime(j) or j <= MAX_PRIME));
     _HPCSupportedSizesCUDA := size1;
     
     # -- initial guard for 3 stages algorithm
-    _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2;
+    _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2 or e in [512];
 
 #    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
 #    _thold := 16;
@@ -145,15 +147,19 @@ ParseOptsCUDA := function(conf, t)
 
             _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
-                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
+                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
+               
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                filter := e-> ( _ThreeStageSizesCUDA(e) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
+                filter := e-> ( (_ThreeStageSizesCUDA(e) and e[1] <= _thold) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
                     )]::_opts.breakdownRules.DFT;
  
 # For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
 #            _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT, PRDFT_PD ];        
 #            _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT, IPRDFT_PD ];
-            
+# this is a quick hack to get correct code for up to 1024, but the code is slow as all parallelism is dropped by the legacy PRDFT rule
+            _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);    
+            _opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);
+           
             _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
             _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                 When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
@@ -358,7 +364,7 @@ ParseOptsCUDA := function(conf, t)
                         
                     _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
                         filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
-                    
+                        
                     _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
     #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
     #                    FixUpCUDASigmaSPL_3Stage(s1, opts)); 
