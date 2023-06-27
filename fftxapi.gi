@@ -167,6 +167,7 @@ Class(FFTXGenMixin, rec(
                    rt := self.search(tt);
                    s := self.sumsRuleTree(rt);
                    c := self.codeSums(s);
+				   c.sums := s;
                    return c;
                end    
 ));

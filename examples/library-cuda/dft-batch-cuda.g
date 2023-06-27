@@ -1,28 +1,23 @@
 
-##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  Copyright (c) 2018-2023, Carnegie Mellon University
 ##  See LICENSE for details
 
-# 1d batch of 1d and multidimensional of complex DFTs
+# multidimensional batch of 1D complex DFTs
 
 Load(fftx);
 ImportAll(fftx);
 
-# startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
-# conf := LocalConfig.fftx.defaultConf();  
-conf := LocalConfig.fftx.confGPU();
 
-n := 2;
-d := 2;
+b1 := 2;
+b2 := 2;
 N := 64;
 
-iter := List([1..d], i->Ind(n));
-
 t := let(
-    name := "grid_dft"::StringInt(d)::"d_cont",
-    TFCall(TRC(TMap(DFT(N, -1), iter, APar, APar)), 
-        rec(fname := name, params := []))
+    name := "grid_dft"::StringInt(N)::"_"::StringInt(b1)::"x"::StringInt(b2),
+    TFCall(TRC(TTensorI(DFT(N, -1), b1*b2 ,APar, APar)), rec(fname := name, params := []))
 );
 
+conf := LocalConfig.fftx.confGPU();
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
