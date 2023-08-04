@@ -8,6 +8,12 @@ Class(TFCall, Tagged_tSPL_Container, rec(
     transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
 ));
 
+Class(TFCallF, Tagged_tSPL_Container, rec(
+    abbrevs :=  [ (nt, cconf) -> Checked(IsSPL(nt), [nt, cconf]) ],
+    transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
+));
+
+
 Class(TDeviceCall, Tagged_tSPL_Container, rec(
     abbrevs :=  [ (nt, cconf) -> Checked(IsSPL(nt), [nt, cconf]) ],
     transpose := self >> ObjId(self)(self.params[1].transpose(), self.params[2]).withTags(self.getTags())
@@ -202,4 +208,59 @@ Class(TColMajor, Tagged_tSPL_Container, rec(
 	h := [ When(IsBound(self.params[1].HashId), self.params[1].HashId(),
 		    self.params[1]) ],
         When(IsBound(self.tags), Concatenation(h, self.tags), h))
+));
+
+TMapPar := (krn, dims) -> When(Length(dims) = 0, krn, let(tti := When(IsVar(dims[1]), TTensorInd, TTensorI), ApplyFunc(tti, [TMapPar(krn, Drop(dims, 1)), dims[1], APar, APar])));
+_TMap := (krn, dims, al, ar) -> TCompose(
+    When(al = AVec, [TL(Product(List(dims, i->i.range)) * Rows(krn), Rows(krn), 1, 1)], []) ::
+    [ TMapPar(krn, dims)] ::
+    When(ar = AVec, [TL(Product(List(dims, i->i.range)) * Cols(krn), Product(List(dims, i->i.range)), 1, 1)], []));
+
+# FIXME: This class is here only for Fortran promotion rules, not fully implemented
+Class(TMap, Tagged_tSPL_Container, rec(
+    abbrevs :=  [ (nt, idx, l, r) -> Checked(
+        IsSPL(nt), IsList(idx), ForAll(idx, IsVar), l in [APar, AVec], r in [APar, AVec],
+	[nt, idx, l, r])
+    ],
+
+    dims := self >> self.params[1].dims() * Product(List(self.params[2], i->i.range)),
+
+    SPLtSPL := (self, nt, P) >> let(
+	A := nt[1], idx := P[2], m := A.dims()[2], n := idx.range,
+        dsA := IDirSum(idx, A),
+        Cond(IsParPar(P), dsA,
+             IsVecVec(P), L(m*n, m) * dsA * L(m*n, n),
+             IsParVec(P), dsA * L(m*n, n),
+             IsVecPar(P), L(m*n, m) * dsA)
+    ),
+
+    terminate := self >> let(
+	P := self.params, A := P[1], idx:= P[2],
+        lstA := List([0..idx.range-1],
+	    i -> SubstVars(Copy(A), rec((idx.id) := V(i))).terminate()),
+        d := A.dims(),
+	n := idx.range,
+        dsA := DirectSum(lstA),
+        Cond(IsParPar(P), dsA,
+             IsVecVec(P), L(d[1]*n, d[1]) * dsA * L(d[2]*n, n),
+             IsParVec(P), dsA * L(m*n, n),
+             IsVecPar(P), L(m*n, m) * dsA)
+    ),
+
+    transpose := self >> TTensorInd(
+       self.params[1].transpose(), self.params[2], self.params[4], self.params[3])
+          .withTags(self.getTags()),
+
+    isReal := self >> self.params[1].isReal(),
+
+    normalizedArithCost := self >>
+        self.params[1].normalizedArithCost() * self.params[2].range,
+
+#    doNotMeasure := true,
+
+    HashId := self >> let(
+	p := self.params,
+	h := When(IsBound(p[1].HashId), p[1].HashId(), p[1]),
+        [h, p[2].range, p[3], p[4]] :: When(IsBound(self.tags), self.tags, [])
+    )
 ));

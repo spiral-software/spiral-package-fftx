@@ -54,7 +54,7 @@ fftCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.sumsgen.IterHStack := MultiPtrSumsgenMixin.IterHStack;
     opts.preProcess := t -> ApplyStrategy(t, 
                     [ MergedRuleSet(RulesFuncSimp, RulesSums), 
-                      RulesFFTXPromoteNT, 
+                      RulesFFTXPromoteNT, RulesF2C, 
                       MergedRuleSet(RulesFuncSimp, RulesSums) ],
         BUA, opts);
         

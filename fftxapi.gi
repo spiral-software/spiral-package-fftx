@@ -6,7 +6,7 @@ _orderedUniquify := l-> Flat([l[1]]::List([2..Length(l)], i->When(l[i] in l{[1..
 
 Class(FFTXGenMixin, rec(
     search := (self, t) >> When(IsBound(self.useDP) and self.useDP, DP(t, When(IsBound(self.dpopts), self.dpopts, rec()), self)[1].ruletree, RuleTreeMid(t, self)),
-    preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesFFTXPromoteNT_Cleanup(t1)),
+    preProcess := (self, t) >> let(t1 := RulesFFTXPromoteNT(Copy(t)), RulesF2C(RulesFFTXPromoteNT_Cleanup(RulesF2C(t1)))),
     
     codeSumsCPU := meth(self, ss) 
                         local opts2, ss2, c;
@@ -167,6 +167,7 @@ Class(FFTXGenMixin, rec(
                    rt := self.search(tt);
                    s := self.sumsRuleTree(rt);
                    c := self.codeSums(s);
+				   c.sums := s;
                    return c;
                end    
 ));
@@ -178,10 +179,8 @@ _toBox := (ns, nps)-> When(IsList(ns), fTensor(List(Zip2(ns, nps), i->ApplyFunc(
 
 ZeroEmbedBox := (ns, nps) -> Scat(_toBox(ns, nps));
 ExtractBox := (ns, nps) -> Gath(_toBox(ns, nps));
-BoxND := (l, stype) -> Cond(IsInt(l), TArray(stype, l), 
-                             IsList(l) and Length(l) = 1, TArray(stype, l[1]), 
-                             TArray(BoxND(Drop(l, 1), stype), l[1]));
 
+BoxNDF := (l, stype) -> TColMaj(BoxND(l, stype));
 BoxNDcmaj := (l, stype) -> TColMaj(BoxND(l, stype));
                              
 fBox := l -> fTensor(List(l, fId));
@@ -194,12 +193,6 @@ M_PI := d_acos(-1);
 
 _cplx := (r,i) -> cxpack(r,i);
 _imag := i -> cxpack(0, i);
-
-TMapPar := (krn, dims) -> When(Length(dims) = 0, krn, let(tti := When(IsVar(dims[1]), TTensorInd, TTensorI), ApplyFunc(tti, [TMapPar(krn, Drop(dims, 1)), dims[1], APar, APar])));
-TMap := (krn, dims, al, ar) -> TCompose(
-    When(al = AVec, [TL(Product(List(dims, i->i.range)) * Rows(krn), Rows(krn), 1, 1)], []) ::
-    [ TMapPar(krn, dims)] ::
-    When(ar = AVec, [TL(Product(List(dims, i->i.range)) * Cols(krn), Product(List(dims, i->i.range)), 1, 1)], []));
 
 lin_idx := arg -> fTensor(List(arg, fBase)).at(0);
 

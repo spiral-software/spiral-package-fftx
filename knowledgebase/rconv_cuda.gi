@@ -53,7 +53,8 @@ mdrconvCUDADeviceOpts := function(arg) # specific to FFT size 100...
     opts.preProcess := t -> ApplyStrategy(t, 
                     [ MergedRuleSet(RulesFuncSimp, RulesSums), 
                       RulesFFTXPromoteNT, RulesFFTXPromoteNT_Cleanup,   ### THIS IS THE DIFFERENCE HERE TO FFT
-                      MergedRuleSet(RulesFuncSimp, RulesSums) ],
+                      MergedRuleSet(RulesFuncSimp, RulesSums),
+                      RulesF2C ],
         BUA, opts);
         
     opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),

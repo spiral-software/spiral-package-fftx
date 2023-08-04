@@ -7,6 +7,53 @@ Class(RulesFFTXPromoteNT, RuleSet);
 
 Class(RulesFFTXPromoteNT_Cleanup, RuleSet);
 
+Class(RulesF2C, RuleSet);
+
+_ctype := t->When(ObjId(t) = TPtr, TPtr(t.t.ctype()), t.ctype());
+_boxDim := e->When(ObjId(e.t) = TArray, [e.size]::_boxDim(e.t), [e.size]);
+_boxType := e->When(ObjId(e) = TArray, _boxType(e.t), e);
+_fortranizeBox := e-> let(sz := _boxDim(e), t := _boxType(e), 
+    BoxND(When(Length(sz) = 4, sz{[1]}::Reversed(Drop(sz,1)), sz), t));
+_fortranizeVar := e-> var(e.id::"f", _fortranizeBox(e.t));
+
+RewriteRules(RulesF2C, rec(
+    FCallF_FCall := Rule(@(1, TFCallF), 
+        e -> TFCall(FContainer(@(1).val.params[1], rec(XType := @(1).val.params[2].XType, YType := @(1).val.params[2].YType)),
+            CopyFields(@(1).val.params[2], rec(XType := _ctype(@(1).val.params[2].XType), YType := _ctype(@(1).val.params[2].YType)))).withTags(@(1).val.getTags()
+            )),
+            
+    FContainer_TRC := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TRC), e -> TRC(FContainer(@(1).val.child(1).params[1], @(1).val.context))),
+        
+    FContainer_MDDFT := Rule([@(1, FContainer), @(2, [MDDFT, MDPRDFT, IMDPRDFT]), ...], e -> ApplyFunc(ObjId(@(2).val) , [Reversed(@(2).val.params[1]), @(2).val.params[2]])),
+
+    FContainer_MDRConv := Rule([@(1, FContainer), @(2, MDRConv), ...], 
+        e -> ApplyFunc(ObjId(@(2).val) , [Reversed(@(2).val.params[1])]::Drop(@(2).val.params, 1))),
+
+    FContainer_TDecl := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TDecl), 
+        e -> let(cvars := @(1).val.child(1).params[2], fvars := List(cvars, _fortranizeVar), 
+                substrec:= FoldR(Zip2(cvars, fvars), (a,b) -> CopyFields(a, rec((b[1].id) := V(b[2]))), rec()),
+            TDecl(SubstVars(FContainer(@(1).val.child(1).params[1], @(1).val.context), substrec), fvars))),
+
+    FContainer_TDAG := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TDAG), 
+        e -> TDAG(List(@(1).val.child(1).params[1], e->FContainer(e, @(1).val.context)))),
+
+    FContainer_TDAGNode := Rule(@(1, FContainer, e->ObjId(e.child(1)) = TDAGNode), 
+        e -> TDAGNode(FContainer(@(1).val.child(1).params[1], @(1).val.context), @(1).val.child(1).params[2], @(1).val.child(1).params[3])),
+       
+    FContainer_TResample := Rule([@(1, FContainer), @(2, TResample), ...], 
+        e -> ApplyFunc(TResample , List(@(2).val.params, Reversed))),
+
+    FContainer_TTTensorI_ND := Rule([@(1, FContainer), @(2, TTensorI), @(3).cond(e->ObjId(e.XType) = TPtr and ObjId(e.XType.t) = TArrayNDF and ObjId(e.YType) = TPtr and ObjId(e.YType.t) = TArrayNDF)], 
+        e -> TTensorI(FContainer(@(2).val.params[1], @(1).val.context), @(2).val.params[2], @(2).val.params[3], @(2).val.params[4])),
+
+    FContainer_TMap := Rule([@(1, FContainer), @(2, TMap), ...], 
+        e -> TMap(@(2).val.params[1], Reversed(@(2).val.params[2]), @(2).val.params[3], @(2).val.params[4])),
+
+));
+
+
+
+
 #RewriteRules(RulesFFTXPromoteNT, rec(
 #    IPRDFT_RCDiag_PRDFT__Circulant_Rule := Rule([Compose, @(1,IPRDFT), [@(2,RCDiag), @(4, FDataOfs, e->e.ofs = 0), @(5,I)], @(3,PRDFT)],
 #        e->let(n := @(1).val.params[1], fdata := @(2).val.element,
@@ -130,6 +177,8 @@ RewriteRules(RulesFFTXPromoteNT_Cleanup, rec(
 # WarpX stuff
 Class(RulesFFTXPromoteWarpX1, RuleSet);
 RewriteRules(RulesFFTXPromoteWarpX1, rec(
+    Terminate_TMap := Rule(@(1, TMap), e-> ApplyFunc(_TMap, @(1).val.params)),
+
     MultiX := Rule([@(0, TDAGNode), @(1), @(2), @(3).cond(e->IsList(e) and Length(e) = 1 and ObjId(e[1]) = nth and e[1].loc = X), ...],
         e -> TDAGNode(@(1).val * GathPtr(@(3).val[1], fId(Cols(@(1).val))), @(2).val, [ @(3).val[1].loc ]).withTags(@(0).val.getTags())),
 
