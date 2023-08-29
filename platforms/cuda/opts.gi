@@ -184,7 +184,12 @@ ParseOptsCUDA := function(conf, t)
             # opts for high performance CUDA cuFFT
             if ForAll(Flat(List(Collect(t, @(1, [DFT, PRDFT, IPRDFT])), j-> j.params[1])), i -> i in _HPCSupportedSizesCUDA)  then
                 _opts.breakdownRules.TTwiddle := [ TTwiddle_Tw1 ];
-                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                
+                if Length(Collect(t, TTensorI)) = 2 then
+                    _opts.tags := [ ASIMTKernelFlag(ASIMTGridDimX), ASIMTGridDimY, ASIMTBlockDimY, ASIMTBlockDimX ];
+                else
+                    _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                fi;
                 
                 _opts.globalUnrolling := 2*_thold + 1;
 
