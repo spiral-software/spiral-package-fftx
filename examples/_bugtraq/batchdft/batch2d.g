@@ -20,24 +20,24 @@ ImportAll(fftx);
 conf := LocalConfig.fftx.confGPU();
 
 # target
-N1 := 64;
-N := 64*64;
-Nb := 4;
+# N1 := 64;
+# N := 64*64;
+# Nb := 4;
 
 # test
 N1 := 64;
-N := 2;
-Nb := 2;
+# up to N=16 CMatrix verification is ok
+N := 2048;
+Nb := 4;
 
 
 
 # works
 pat1 := APar; pat2 := APar;
-# works
+
+# not tested
 #pat1 := AVec; pat2 := AVec;
-# works
 #pat1 := APar; pat2 := AVec;
-# works
 #pat1 := AVec; pat2 := APar;
 
 t := let(
@@ -56,19 +56,19 @@ PrintTo("grid_dft"::"d_cont1a"::".c", opts.prettyPrint(c));
 cyc := CMeasure(c, opts);
 
 ## -- from here on only for smallsizes
-mm := CMatrix(c, opts);;
-m2 := MatSPL(t);;
-InfinityNormMat(m2-mm);
-
+# mm := CMatrix(c, opts);;
+# m2 := MatSPL(t);;
+# InfinityNormMat(m2-mm);
+# 
 
 
 #==
 i := 0;
-n := Length(m2);
+n := N1*N*Nb*2;
 #i := Random([0..n-1]);
 v := BasisVec(n, i);;
 mv := CVector(c, v, opts);;
-mv2 := Flat(List([1..Length(mv)/8], i->[1.0, 0.0] :: Replicate(2 * (N-1), 0.0)))::Replicate(2 * N * N1 *(Nb-1), 0.0);
+mv2 := Flat(List([1..N1], i->[1.0, 0.0] :: Replicate(2 * (Nb-1), 0.0)))::Replicate(2 * (N-1) * N1* Nb, 0.0);
 InfinityNormMat([mv-mv2]);
 
 
