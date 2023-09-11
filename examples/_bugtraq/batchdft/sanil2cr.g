@@ -8,9 +8,9 @@ conf := LocalConfig.fftx.confGPU();
 N1 := 32;
 
 # testing
-#N := 2;
+N := 2;
 #N := 4;
-N := 8;
+#N := 8;
 
 # reaL size
 #N := 256;
