@@ -1,36 +1,27 @@
 
-##  Copyright (c) 2018-2021, Carnegie Mellon University
+##  Copyright (c) 2018-2023, Carnegie Mellon University
 ##  See LICENSE for details
 
-# 3d batch of 1d real DFTs
+# multidimensional batch of 1D real DFTs
 
 Load(fftx);
 ImportAll(fftx);
 Import(realdft);
 
-conf := LocalConfig.fftx.confGPU();
 
-n := 2;
-d := 2;
-N := 128;
-
-iter := List([1..d], i->Ind(n));
-
-pdft := When(false,
-    PRDFT,
-    IPRDFT
-);
+b1 := 2;
+b2 := 2;
+N := 64;
 
 t := let(
-    name :="grid_"::pdft.name::StringInt(d)::"d_cont",
-    TFCall(TMap(pdft(N, -1), iter, APar, APar), 
-        rec(fname := name, params := []))
+    name := "grid_prdft"::StringInt(N)::"_"::StringInt(b1)::"x"::StringInt(b2),
+    TFCall(TRC(TTensorI(PRDFT(N, -1), b1*b2 ,APar, APar)), rec(fname := name, params := []))
 );
 
+conf := LocalConfig.fftx.confGPU();
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
-
 
