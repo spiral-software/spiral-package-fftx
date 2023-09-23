@@ -182,7 +182,7 @@ Class(OpenCLCodegen, CudaCodegen, rec(
 
 #using the Hipify base needed to perform same fix for shared memory variables as well as global memory variables
 FixUpOpenCL_Code := function (c, opts)
-    local kernels, kernel_inits, globals, locals, var_decls, var_dels, cx, v, dptr; 
+    local kernels, kernel_inits, globals, locals, var_decls, var_dels, cx, v, dptr, size; 
 
     if IsBound(opts.fixUpTeslaV_Code) and opts.fixUpTeslaV_Code then
         kernels := List(Collect(c, specifiers_func), k->k.id);
@@ -209,12 +209,17 @@ FixUpOpenCL_Code := function (c, opts)
 
         cx := chain(kernel_inits :: [var_decls]);
         for v in globals do
+            size := v.t.size;
             v.t := TPtr(v.t.t, ["global"]);
+            v.t.size := size;
         od;
+
 
         #SANIL CHANGE
         for v in locals do
+            size := v.t.size;
             v.t := TPtr(v.t.t, ["local"]);
+            v.t.size := size;
         od;
 
         c := SubstBottomUp(c, @(1, func, f -> f.id = "init"),
@@ -227,7 +232,8 @@ FixUpOpenCL_Code := function (c, opts)
             e -> chain(Filtered(@(1).val.cmds, e-> ObjId(e) <> func or e.id <> "init") :: Filtered(@(1).val.cmds, e -> ObjId(e) = func and e.id = "init"))
         );
 
-        
+        #Sanil CHANGE
+        c.cmds[1].vars := [];
     fi;
 
     return c;

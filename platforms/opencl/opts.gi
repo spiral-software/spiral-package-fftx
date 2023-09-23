@@ -34,6 +34,10 @@ doOpenCLify := function(opts)
     opts.operations := rec(Print := s -> Print("<FFTX OpenCLified CUDA options record>"));
     opts.unparser := OpenCLUnparser;
     opts.codegen := OpenCLCodegen;
+    opts.XType := TPtr(opts.XType.t, ["global"]);
+    opts.YType := TPtr(opts.YType.t, ["global"]);
+    opts.fixUpTeslaV_Code := true;
+    # opts.YPtr.t := TPtr(opts.YPtr.t.t, ["global"]);
     # opts.includes := ["\"hip/hip_runtime.h\""];
 #    opts.postProcessCode := (c, opts) -> FixUpHIP_Code(PingPong_3Stages(c, opts), opts);
     opts.postProcessCode := (c, opts) -> FixUpOpenCL_Code(c, opts);
