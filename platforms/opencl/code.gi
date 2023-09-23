@@ -182,9 +182,14 @@ Class(OpenCLCodegen, CudaCodegen, rec(
 
 #using the Hipify base needed to perform same fix for shared memory variables as well as global memory variables
 FixUpOpenCL_Code := function (c, opts)
-    local kernels, kernel_inits, globals, locals, var_decls, var_dels, cx, v, dptr, size; 
+    local kernels, kernel_inits, globals, locals, var_decls, var_dels, cx, v, dptr, size, params; 
 
     if IsBound(opts.fixUpTeslaV_Code) and opts.fixUpTeslaV_Code then
+
+        #SANIL CHANGE
+        opts.Xptr.t := TPtr(opts.Xptr.t.t, ["global"]);
+        opts.Yptr.t := TPtr(opts.Yptr.t.t, ["global"]);
+
         kernels := List(Collect(c, specifiers_func), k->k.id);
 
         dptr := var.fresh_t("hp", TPtr(TReal));
@@ -214,12 +219,28 @@ FixUpOpenCL_Code := function (c, opts)
             v.t.size := size;
         od;
 
-
         #SANIL CHANGE
         for v in locals do
             size := v.t.size;
             v.t := TPtr(v.t.t, ["local"]);
             v.t.size := size;
+        od;
+
+        #SANIL CHANGE
+        params := Collect(c, @(1, func, e-> e.id = "transform"))[1].params;
+        params := Filtered(params, d -> not d in [X,Y]);
+        for v in params do
+            if IsBound(v.t.size) then
+            size := v.t.size;
+            fi;
+            if ObjId(v.t) = TPtr then
+            v.t := TPtr(v.t.t, ["global"]);
+            else
+            Error("none pointer based inputs not supported, please convert TFCall params or opts.symbol to pointers\n");
+            fi;
+            if IsBound(v.t.size) then
+            v.t.size := size;
+            fi;
         od;
 
         c := SubstBottomUp(c, @(1, func, f -> f.id = "init"),
