@@ -17,8 +17,8 @@ Class(OpenCLUnparser, CudaUnparser, rec(
     simtBlockIdxY := (self, o, i, is) >> Print("get_group_id(1)"),
     simtBlockIdxZ := (self, o, i, is) >> Print("get_group_id(2)"),
 
-    simt_syncblock := (self, o, i, is) >> Print(Blanks(i), "barrier();\n"),
-    simt_synccluster := (self, o, i, is) >> Print(Blanks(i), "barrier();\n"),
+    simt_syncblock := (self, o, i, is) >> Print(Blanks(i), "barrier(CLK_LOCAL_MEM_FENCE);\n"),
+    simt_synccluster := (self, o, i, is) >> Print(Blanks(i), "barrier(CLK_LOCAL_MEM_FENCE);\n"),
 ));
 
 
