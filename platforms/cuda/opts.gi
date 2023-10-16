@@ -100,7 +100,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
-    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA,
+    local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA, _FourStageSizesCUDA,
     MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
@@ -119,6 +119,7 @@ ParseOptsCUDA := function(conf, t)
     
     # -- initial guard for 3 stages algorithm
     _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2 or e in [512];
+    _FourStageSizesCUDA := e -> e >= MAX_KERNEL^3 or e in [8192, 16384]; 
 
 #    _HPCSupportedSizesCUDA := [80, 96, 100, 224, 320];
 #    _thold := 16;
@@ -149,8 +150,10 @@ ParseOptsCUDA := function(conf, t)
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
                 fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
                
-            _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                filter := e-> ( (_ThreeStageSizesCUDA(e) and e[1] <= _thold) or When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))
+            _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
+                filter := e-> ((_ThreeStageSizesCUDA(e) and e[1] <= _thold and (e[2] <= 2^(2*LogInt(_thold,2)))) or 
+                    (_FourStageSizesCUDA(e) and e[1] <= 2^(2*LogInt(_thold,2)) and (e[2] <= 2^(2*LogInt(_thold,2)))) or
+                    When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, false))) # e[1] <= _thold and e[2] >= _thold)))
                     )]::_opts.breakdownRules.DFT;
  
 # For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
