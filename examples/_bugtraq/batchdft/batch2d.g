@@ -27,7 +27,7 @@ conf := LocalConfig.fftx.confGPU();
 # test
 N1 := 64;
 # up to N=16 CMatrix verification is ok
-N := 2048;
+N := 16;
 Nb := 4;
 
 
@@ -56,10 +56,10 @@ PrintTo("grid_dft"::"d_cont1a"::".c", opts.prettyPrint(c));
 cyc := CMeasure(c, opts);
 
 ## -- from here on only for smallsizes
-# mm := CMatrix(c, opts);;
-# m2 := MatSPL(t);;
-# InfinityNormMat(m2-mm);
-# 
+mm := CMatrix(c, opts);;
+m2 := MatSPL(t);;
+InfinityNormMat(m2-mm);
+
 
 
 #==

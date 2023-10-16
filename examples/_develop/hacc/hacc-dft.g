@@ -36,10 +36,18 @@ rt := opts.search(_tt);
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
+# does it run?
 cyc := CMeasure(c, opts);
 
-mt := MatSPL(tt);
-mc := CMatrix(c, opts);
+# quick correctness check for large sizes
+# get first non-trivial vector
+cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
+cv1 := cv{[1..Length(cv)/batch]};
+cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
 
-diff := InfinityNormMat(mc-mt);
+# correctnes test: true and \approx 10^-14 or so
+ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
+InfinityNormMat([cv1] - [cv1a]);
+
+
 
