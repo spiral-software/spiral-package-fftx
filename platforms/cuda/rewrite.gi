@@ -165,7 +165,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     # parallelize and flatten loop
     ss:= let(simtidx := ASIMTBlockDimX, 
         SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
-            e->let( #Error(), 
+            e->let(  
                     simtloop := @(1).val,
                     sx1c := @(2).val.children(),
                     doms := List(sx1c, c->c.domain),
@@ -182,6 +182,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
             ))
     );
     ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
+
 
 #    ss:= let(simtidx := ASIMTBlockDimX, 
 #        SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
@@ -289,7 +290,21 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 #    );
 #    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
 #    ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
-    
+
+    # normalize SIMTSums with too many threads but few enough iterations
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain <= opts.max_threads),
+    	e -> SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), @(1).val.var, @(1).val.domain, @(1).val.child(1)));
+
+    # split SIMTISums with too many iterations
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
+    	e -> let(i1 := Ind(opts.max_threads),
+    		i2 := Ind(@(1).val.simt_dim.params[1]/opts.max_threads),
+    		ii := i1 * i2.range + i2,
+    		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+    		xs := ISum(i2, cld),
+    		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), i1, opts.max_threads, xs)
+    ));
+
     return ss;
 end;
 
