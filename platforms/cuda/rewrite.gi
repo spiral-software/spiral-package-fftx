@@ -304,6 +304,17 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     		xs := ISum(i2, cld),
     		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), i1, opts.max_threads, xs)
     ));
+    
+    # split blocks for size > 32k
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),
+        e -> let(
+            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks),
+            i2 := Ind(opts.max_blocks),
+            ii := i1 * i2.range + i2,
+            cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+            xs := SIMTISum(ASIMTGridDimY(i2.range), i2, i2.range, cld),
+            SIMTISum(ASIMTKernelFlag(ASIMTGridDimX(i1.range)), i1, i1.range, xs)
+    ));
 
     return ss;
 end;

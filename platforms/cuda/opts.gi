@@ -149,6 +149,7 @@ ParseOptsCUDA := function(conf, t)
 
             # handle weird out of ressources problem for DFT(8k) and beyond
             if Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] > MAGIC_SIZE then _opts.max_threads := _opts.max_threads / 2; fi;
+            _opts.max_blocks := 32768;
             
             _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
