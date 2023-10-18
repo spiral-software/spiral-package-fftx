@@ -297,8 +297,8 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 
     # split SIMTISums with too many iterations
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
-    	e -> let(i1 := Ind(opts.max_threads),
-    		i2 := Ind(@(1).val.simt_dim.params[1]/opts.max_threads),
+    	e -> let(i1 := Ind(opts.max_threads),# Error(),
+    		i2 := Ind(@(1).val.domain/opts.max_threads),
     		ii := i1 * i2.range + i2,
     		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
     		xs := ISum(i2, cld),
@@ -308,7 +308,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     # split blocks for size > 32k
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),
         e -> let(
-            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks),
+            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), # careful that this is equal SIMTIsum.domain. should not be a problem here, but who knows
             i2 := Ind(opts.max_blocks),
             ii := i1 * i2.range + i2,
             cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
