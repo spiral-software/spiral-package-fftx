@@ -13,7 +13,8 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 16384; batch := 2;
+N := 14*15*16; batch := 2;
+# N := 16384; batch := 2;
 
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
