@@ -8,7 +8,7 @@ n := Length(fct);
 mapping := ApplyFunc(Cartesian, Replicate(n, [1..stages]));
 
 factors := [];
-for i in mapping do
+for m in mapping do
     buckets := Replicate(stages, 1);
     for j in [1..n] do
         buckets[m[j]] := buckets[m[j]] * fct[j];
@@ -16,4 +16,4 @@ for i in mapping do
     od;
 od;
 
-List(buckets, i -> AbsFloat(i - stageval));
+sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
