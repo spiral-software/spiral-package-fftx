@@ -17,3 +17,7 @@ for m in mapping do
 od;
 
 sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
+mn := Minimum(sad);
+idx := Position(sad, mn);
+bestFct := factors[idx];
+
