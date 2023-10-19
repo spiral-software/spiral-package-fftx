@@ -12,6 +12,8 @@ N := 2;
 #N := 4;
 #N := 8;
 
+b := 2;
+
 # reaL size
 #N := 256;
 #N1 := 256;
@@ -22,13 +24,14 @@ pat1 := APar; pat2 := APar;
 
 t := let(
     name := "grid_dft"::"d_cont",
-    TFCall(
-       TTensorI(IPRDFT(N1, -1), N*N, pat1, pat2) * 
-        Prm(fTensor(L(IPRDFT1(N1, -1).dims()[2]/2 * N*N, N*N), fId(2))), 
+    TFCall(TTensorI(
+       TTensorI(IPRDFT(N1, -1), N, pat1, pat2) * 
+        Prm(fTensor(L(IPRDFT1(N1, -1).dims()[2]/2 * N, N), fId(2))), 
 #         Tensor( 
 #             L(IPRDFT1(N1, -1).dims()[2]/2 * N*N, N*N),
 #             I(2)
 #         ),
+b, APar, APar),
         rec(fname := name, params := []))
 );
 opts := conf.getOpts(t);
