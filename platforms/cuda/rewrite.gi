@@ -317,8 +317,16 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     # split blocks for size > 32k. Assumes divisibility, can be generalized
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),
         e -> let(
-            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), # careful that this is equal SIMTIsum.domain. should not be a problem here, but who knows
-            i2 := Ind(opts.max_blocks),
+#            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), # careful that this is equal SIMTIsum.domain. should not be a problem here, but who knows
+#            i2 := Ind(opts.max_blocks),
+            i1domain := When(IsInt(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), 
+                opts.max_blocks, 
+                @(1).val.simt_dim.params[1].params[1] / _findFactor(@(1).val.simt_dim.params[1].params[1], opts.max_blocks)),
+            i2domain := When(IsInt(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), 
+                @(1).val.simt_dim.params[1].params[1]/opts.max_blocks, 
+                _findFactor(@(1).val.simt_dim.params[1].params[1], opts.max_blocks)),
+            i1 := Ind(i1domain),# Error(),
+    		i2 := Ind(i2domain),
             ii := i1 * i2.range + i2,
             cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
             xs := SIMTISum(ASIMTGridDimY(i2.range), i2, i2.range, cld),
