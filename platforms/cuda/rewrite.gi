@@ -4,6 +4,10 @@
 
 Class(RulesSIMTFission, RuleSet);
 
+
+_findFactor := (n, thresh) -> Last(Filtered(DivisorPairs(n), i->i[1] <= thresh))[2];
+
+
 RewriteRules(RulesSIMTFission, rec(
     FissionSIMTISum := Rule([@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = SIMTISum))],
         e-> let(gath := Gath(fTensor(fBase(@(1).val.var), fId(Cols(@(2).val.child(1))))),
@@ -297,15 +301,20 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 
     # split SIMTISums with too many iterations
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
-    	e -> let(i1 := Ind(opts.max_threads),# Error(),
-    		i2 := Ind(@(1).val.domain/opts.max_threads),
+    	e -> let(#Error(),
+            i1domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
+            i2domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
+            i1 := Ind(i1domain),# Error(),
+    		i2 := Ind(i2domain),
+#            i1 := Ind(opts.max_threads),# Error(),
+#    		 i2 := Ind(@(1).val.domain/opts.max_threads),
     		ii := i1 * i2.range + i2,
     		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
     		xs := ISum(i2, cld),
-    		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), i1, opts.max_threads, xs)
+    		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i1domain]), i1, i1domain, xs)
     ));
     
-    # split blocks for size > 32k
+    # split blocks for size > 32k. Assumes divisibility, can be generalized
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),
         e -> let(
             i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), # careful that this is equal SIMTIsum.domain. should not be a problem here, but who knows
