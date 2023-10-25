@@ -45,3 +45,30 @@ N := 30000;
 
 factors := bestFactors(N, 16);
 
+
+
+
+# -- alternative version
+#f1 := peelFactor(N);
+#f2 := peelFactorN(f1);
+#f3 := peelFactorN(f2);
+
+N := 30000;
+MAX_FACTOR := 26;
+
+peelFactor := n -> Filtered(DivisorPairs(n), e->e[1] <= MAX_FACTOR);
+peelFactorN := f -> let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e))), 
+    ApplyFunc(Concatenation, List(lst, a -> let(ll := Length(Filtered(a, v -> not IsList(v))), List(Drop(a, ll), v ->a{[1..ll]}::v)))));
+nthRoot := (n,r) -> exp(log(N)/r).v;
+
+
+factors := peelFactor(N);
+while not ForAny(factors, l -> ForAll(l, i -> i <= MAX_FACTOR)) do
+    factors := peelFactorN(factors);
+od;
+
+stageval := nthRoot(N, Length(factors[1]));
+sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
+mn := Minimum(sad);
+idx := Position(sad, mn);
+factors := factors[idx];

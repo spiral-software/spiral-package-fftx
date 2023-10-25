@@ -15,7 +15,8 @@ conf := LocalConfig.fftx.confGPU();
 
 # N := 30000; batch := 2;
 # N := 16384; batch := 2;
-N := 8192; batch := 70000;
+# N := 8192; batch := 70000;
+N := 1024; batch := 1024;
 
 
 # N := 1024; batch := 1024;
