@@ -53,22 +53,50 @@ factors := bestFactors(N, 16);
 #f2 := peelFactorN(f1);
 #f3 := peelFactorN(f2);
 
+# N := 30000;
+# MAX_FACTOR := 26;
+# 
+# peelFactor := n -> Filtered(DivisorPairs(n), e->e[1] <= MAX_FACTOR);
+# peelFactorN := f -> let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e))), 
+#     ApplyFunc(Concatenation, List(lst, a -> let(ll := Length(Filtered(a, v -> not IsList(v))), List(Drop(a, ll), v ->a{[1..ll]}::v)))));
+# nthRoot := (n,r) -> exp(log(N)/r).v;
+# 
+# 
+# factors := peelFactor(N);
+# while not ForAny(factors, l -> ForAll(l, i -> i <= MAX_FACTOR)) do
+#     factors := peelFactorN(factors);
+# od;
+# 
+# stageval := nthRoot(N, Length(factors[1]));
+# sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
+# mn := Minimum(sad);
+# idx := Position(sad, mn);
+# factors := factors[idx];
+
+
+#
 N := 30000;
 MAX_FACTOR := 26;
 
+# peelFactor := n -> Filtered(DivisorPairs(n), e->e[1] <= MAX_FACTOR);
+# expandFactors := f -> When(IsInt(f), When(Last(Factors(f)) > MAX_FACTOR, [], peelFactor(f)), let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e))), 
+#     ApplyFunc(Concatenation, List(lst, a -> let(ll := Length(Filtered(a, v -> not IsList(v))), List(Drop(a, ll), v ->a{[1..ll]}::v))))));
+# findFactors := lst -> When(not ForAny(lst, lst -> Last(lst) <= MAX_FACTOR), findFactors(expandFactors(lst)), lst);   
+# 
+
+
 peelFactor := n -> Filtered(DivisorPairs(n), e->e[1] <= MAX_FACTOR);
-peelFactorN := f -> let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e))), 
+expandFactors := f -> let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e))), 
     ApplyFunc(Concatenation, List(lst, a -> let(ll := Length(Filtered(a, v -> not IsList(v))), List(Drop(a, ll), v ->a{[1..ll]}::v)))));
-nthRoot := (n,r) -> exp(log(N)/r).v;
+findFactors := lst -> When(IsInt(lst), When(Last(Factors(lst)) > MAX_FACTOR, [], findFactors(peelFactor(lst))), When(not ForAny(lst, lst -> Last(lst) <= MAX_FACTOR), findFactors(expandFactors(lst)), lst));   
+factorize := n -> let(fct := When(Last(Factors(n)) > MAX_FACTOR, [[n]], findFactors(peelFactor(n))), nroot := exp(log(n)/Length(fct[1])).v, 
+    sad := List(fct, m -> Sum(List(m, i -> AbsFloat(i -nroot)))),  mn := Minimum(sad), Sort(fct[Position(sad, mn)]));
+
+factorize(N);
 
 
-factors := peelFactor(N);
-while not ForAny(factors, l -> ForAll(l, i -> i <= MAX_FACTOR)) do
-    factors := peelFactorN(factors);
-od;
 
-stageval := nthRoot(N, Length(factors[1]));
-sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
-mn := Minimum(sad);
-idx := Position(sad, mn);
-factors := factors[idx];
+
+
+
+
