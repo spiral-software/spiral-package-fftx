@@ -14,7 +14,7 @@ Debug(true);
 conf := LocalConfig.fftx.confGPU();
 
 #N := 100000; batch := 2;
- N := 768; batch := 768*2;
+ N := 768; batch := 768^2;
 # N := 16384; batch := 2;
 # N := 8192; batch := 70000;
 #N := 1024; batch := 1024;
@@ -33,6 +33,7 @@ conf := LocalConfig.fftx.confGPU();
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
 t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, params := []));
+#t := TFCall(TRC(TTensorI(DFT(N, -1), batch, AVec, APar)), rec(fname := name, params := []));
 #t := TFCall(TRC(DFT(N, -1)), rec(fname := name, params := [])); batch := 1;
 
 opts := conf.getOpts(t);
@@ -40,7 +41,7 @@ tt := opts.tagIt(t);
  
 _tt := opts.preProcess(tt);
 rt := opts.search(_tt);
-#opts.sumsRuleTree(rt);
+opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
