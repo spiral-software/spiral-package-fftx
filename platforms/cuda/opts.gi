@@ -8,46 +8,63 @@ ImportAll(realdft);
 ImportAll(dtt);
 
 
-knownFactors := [];
-knownFactors[30000] := [ 20, 10, 10, 15 ];
+#knownFactors := [];
+#knownFactors[30000] := [ 20, 10, 10, 15 ];
+#
+#
+#factorInto := function(N, stages)
+#    local stageval, fct, n, mapping, factors, m, buckets, j, sad, mn, idx, bestFct;
+#    stageval := exp(log(N)/stages).v;
+#    
+#    fct := Factors(N);
+#    n := Length(fct);
+#    mapping := ApplyFunc(Cartesian, Replicate(n, [1..stages]));
+#    
+#    factors := [];
+#    for m in mapping do
+#        buckets := Replicate(stages, 1);
+#        for j in [1..n] do
+#            buckets[m[j]] := buckets[m[j]] * fct[j];
+#           Add(factors, buckets);
+#        od;
+#    od;
+#    
+#    sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
+#    mn := Minimum(sad);
+#    idx := Position(sad, mn);
+#    bestFct := factors[idx];
+#
+#    return bestFct;
+#end;
+#
+#bestFactors := function(N, max_factor)
+#    local factors, i, f, bestf;
+#    
+#    if IsBound(knownFactors[N]) then return knownFactors[N]; fi;
+#    
+#    factors := List([2..4], i -> factorInto(N, i));
+#    
+#    bestf := Filtered(factors, f -> ForAll(f, i -> i < 26))[1];
+#    knownFactors[N] := bestf;
+#    return bestf;
+#end;
 
 
-factorInto := function(N, stages)
-    local stageval, fct, n, mapping, factors, m, buckets, j, sad, mn, idx, bestFct;
-    stageval := exp(log(N)/stages).v;
-    
-    fct := Factors(N);
-    n := Length(fct);
-    mapping := ApplyFunc(Cartesian, Replicate(n, [1..stages]));
-    
-    factors := [];
-    for m in mapping do
-        buckets := Replicate(stages, 1);
-        for j in [1..n] do
-            buckets[m[j]] := buckets[m[j]] * fct[j];
-           Add(factors, buckets);
-        od;
-    od;
-    
-    sad := List(factors, m -> Sum(List(m, i -> AbsFloat(i - stageval))));
-    mn := Minimum(sad);
-    idx := Position(sad, mn);
-    bestFct := factors[idx];
+peelFactor := (n, max_factor) -> Filtered(DivisorPairs(n), e->e[1] <= max_factor);
+expandFactors := (f, max_factor) -> let(lst := List(f, e -> DropLast(e, 1)::peelFactor(Last(e), max_factor)), 
+    rlst := ApplyFunc(Concatenation, List(lst, a -> let(ll := Length(Filtered(a, v -> not IsList(v))), List(Drop(a, ll), v ->a{[1..ll]}::v)))),
+    When(IsList(rlst[1]), rlst, [rlst]));
+findFactors := (lst, max_factor) -> When(IsInt(lst), When(Last(Factors(lst)) > max_factor, [], 
+    findFactors(peelFactor(lst, max_factor), max_factor)), When(not ForAny(lst, lst -> Last(lst) <= max_factor), 
+    findFactors(expandFactors(lst, max_factor), max_factor), lst));   
+factorize := (n, max_factor, max_prime) -> When(n <= max_factor, [n], let(fct := When(Last(Factors(n)) > max_prime, [[n]], findFactors(peelFactor(n, max_factor), max_factor)), 
+    nroot := exp(log(n)/Length(fct[1])).v, sad := List(fct, m -> Sum(List(m, i -> AbsFloat(i -nroot)))),  mn := Minimum(sad), 
+    Sort(fct[Position(sad, mn)])));
 
-    return bestFct;
-end;
 
-bestFactors := function(N, max_factor)
-    local factors, i, f, bestf;
-    
-    if IsBound(knownFactors[N]) then return knownFactors[N]; fi;
-    
-    factors := List([2..4], i -> factorInto(N, i));
-    
-    bestf := Filtered(factors, f -> ForAll(f, i -> i < 26))[1];
-    knownFactors[N] := bestf;
-    return bestf;
-end;
+
+
+
 
 Class(FFTXCUDAOpts, FFTXOpts, simt.TitanVDefaults, rec(
     tags := [],
@@ -198,15 +215,21 @@ ParseOptsCUDA := function(conf, t)
                 fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
                
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
-                filter := e-> 
-                When(2 ^ Log2Int(Product(e)) = Product(e),
-                    ((_ThreeStageSizesCUDA(e) and e[1] <= _thold and (e[2] <= 2^(2*LogInt(_thold,2)))) or 
-                        (_FourStageSizesCUDA(e) and e[1] <= 2^(2*LogInt(_thold,2)) and (e[2] <= 2^(2*LogInt(_thold,2)))) or
-                        When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, false)),
-                        let(fct := bestFactors(Product(e),  MAX_KERNEL), fct <> [] and 
-                            ((Length(fct) in [2,3] and e[1] = fct[1]) or (Length(fct) = 4 and e[1] = fct[1]*fct[2]))))
+                filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
+                    When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2]))
+                
+                
+#                When(2 ^ Log2Int(Product(e)) = Product(e),
+#                    ((_ThreeStageSizesCUDA(e) and e[1] <= _thold and (e[2] <= 2^(2*LogInt(_thold,2)))) or 
+#                        (_FourStageSizesCUDA(e) and e[1] <= 2^(2*LogInt(_thold,2)) and (e[2] <= 2^(2*LogInt(_thold,2)))) or
+#                        When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, false)),
+#                        let(fct := bestFactors(Product(e),  MAX_KERNEL), fct <> [] and 
+#                            ((Length(fct) in [2,3] and e[1] = fct[1]) or (Length(fct) = 4 and e[1] = fct[1]*fct[2]))))
                     )
-                )]::_opts.breakdownRules.DFT;
+                ),
+                CopyFields(DFT_Rader, rec(minSize := DFT_PD.maxSize + 1, maxSize := MAX_PRIME, switch := true))]::
+                _opts.breakdownRules.DFT;
+#                Filtered(_opts.breakdownRules.DFT, i->i<>DFT_CT);
  
 # For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
 #            _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT, PRDFT_PD ];        

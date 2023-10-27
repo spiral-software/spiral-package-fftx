@@ -13,10 +13,11 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-# N := 30000; batch := 2;
+#N := 100000; batch := 2;
+ N := 30000; batch := 2;
 # N := 16384; batch := 2;
 # N := 8192; batch := 70000;
-N := 1024; batch := 1024;
+#N := 1024; batch := 1024;
 
 
 # N := 1024; batch := 1024;
@@ -37,8 +38,8 @@ t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, par
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
  
-#_tt := opts.preProcess(tt);
-#rt := opts.search(_tt);
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
 #opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
