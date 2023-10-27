@@ -7,6 +7,8 @@
 Load(fftx);
 ImportAll(fftx);
 
+Debug(true);
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
@@ -30,8 +32,9 @@ t := TFCall(MDDFT(szcube, 1),
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
 
-#_tt := opts.preProcess(tt);
-#rt := opts.search(_tt);
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
+
 #opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);

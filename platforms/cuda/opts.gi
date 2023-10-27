@@ -60,9 +60,9 @@ findFactors := (lst, max_factor) -> When(IsInt(lst), When(Last(Factors(lst)) > m
 factorize := (n, max_factor, max_prime) -> When(n <= max_factor, [n], let(fct := When(Last(Factors(n)) > max_prime, [[n]], findFactors(peelFactor(n, max_factor), max_factor)), 
     nroot := exp(log(n)/Length(fct[1])).v, sad := List(fct, m -> Sum(List(m, i -> AbsFloat(i -nroot)))),  mn := Minimum(sad), 
     Sort(fct[Position(sad, mn)])));
-
-
-
+isSupported := (n, max_factor, max_prime) -> let(
+    fct := factorize(n, max_factor, max_prime),
+    Length(fct) > 1 and Length(fct) <= 4 or (Length(fct) = 1 and When(IsPrime(fct[1]), fct[1] < max_prime, fct[1] < max_factor)));
 
 
 
@@ -160,7 +160,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
     local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA, _FourStageSizesCUDA,
-    MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE;
+    MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE, _isHPCSupportedSizesCUDA;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
@@ -176,6 +176,8 @@ ParseOptsCUDA := function(conf, t)
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
     size1 := Filtered([MIN_SIZE..MAX_SIZE], i -> ForAny(DivisorPairs(i), filter) and ForAll(Factors(i), j -> not IsPrime(j) or j <= MAX_PRIME));
     _HPCSupportedSizesCUDA := size1;
+    
+    _isHPCSupportedSizesCUDA := n -> isSupported(n, MAX_KERNEL, MAX_PRIME);
     
     # -- initial guard for 3 stages algorithm
     _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2 or e in [512];
@@ -322,14 +324,15 @@ ParseOptsCUDA := function(conf, t)
         fi;
        
         # detect 3D DFT/Batch DFT
-        _tt := Collect(t, MDDFT)::Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, PrunedMDPRDFT)::Collect(t, PrunedIMDPRDFT);
+        _tt := Collect(t, MDDFT)::
+            Collect(t, MDPRDFT)::Collect(t, IMDPRDFT)::Collect(t, PrunedMDPRDFT)::Collect(t, PrunedIMDPRDFT);
         if Length(_tt) = 1 and Length(_tt[1].params[1]) = 3 then
             _conf := FFTXGlobals.confFFTCUDADevice();
             _opts := FFTXGlobals.getOpts(_conf);
 #                Error();
-
+# FIXME: this guard needs to separate DFT and PRDFT until everything works
             # opts for high performance CUDA cuFFT
-            if ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+            if ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
@@ -346,8 +349,17 @@ ParseOptsCUDA := function(conf, t)
                     fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]:: 
                     When(ForAny(_tt, _t -> ObjId(_t) in [PrunedMDPRDFT, PrunedIMDPRDFT]), 
                         [fftx.platforms.cuda.IxA_SIMT_peelof, fftx.platforms.cuda.IxA_SIMT_peelof2], [])::_opts.breakdownRules.TTensorI;
-                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+#                 _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+#                     filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
+                    filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
+                        When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2]))
+                    
+                        )
+                    ),
+                    CopyFields(DFT_Rader, rec(minSize := DFT_PD.maxSize + 1, maxSize := MAX_PRIME, switch := true))]::
+                    _opts.breakdownRules.DFT;
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
 #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
@@ -370,13 +382,12 @@ ParseOptsCUDA := function(conf, t)
                     _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                 fi;
 
-                _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
+#                _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
 
             fi;
             
             return _opts;
         fi;
-
         # detect 3D DFT/iDFT but non-convolution case
         _tt := Collect(t, MDDFT);
         if Length(_tt) = 2 and ForAll(_tt, i->Length(i.params[1]) = 3) and Sum(List(_tt, i->i.params[2])) = Product(_tt[1].params[1]) then
@@ -384,7 +395,7 @@ ParseOptsCUDA := function(conf, t)
             _opts := FFTXGlobals.getOpts(_conf);
 
             # opts for high performance CUDA cuFFT
-            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> i in _HPCSupportedSizesCUDA) then
+            if Length(Filtered(_tt, i -> ObjId(i) = MDDFT)) > 0 and ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.IMDPRDFT := [fftx.platforms.cuda.IMDPRDFT_tSPL_Pease_SIMT];
@@ -395,9 +406,18 @@ ParseOptsCUDA := function(conf, t)
 
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), 
                     fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::_opts.breakdownRules.TTensorI;
-                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
-                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
-                
+#                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, 
+#                    filter := e-> When(e[1]*e[2] <= _thold^2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold)))]::_opts.breakdownRules.DFT;
+
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
+                    filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
+                        When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2]))
+                    
+                        )
+                    ),
+                    CopyFields(DFT_Rader, rec(minSize := DFT_PD.maxSize + 1, maxSize := MAX_PRIME, switch := true))]::
+                    _opts.breakdownRules.DFT;
+               
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
                 _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
                     FixUpCUDASigmaSPL_3Stage(s1, opts)); 
