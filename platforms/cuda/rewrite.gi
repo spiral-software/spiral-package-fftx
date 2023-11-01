@@ -299,20 +299,33 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain <= opts.max_threads),
     	e -> SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), @(1).val.var, @(1).val.domain, @(1).val.child(1)));
 
-    # split SIMTISums with too many iterations
+    # split SIMTISums with too many iterations -- pull the peeled iterations into GridDim
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
     	e -> let(#Error(),
-            i1domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
-            i2domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
-            i1 := Ind(i1domain),# Error(),
+            i1domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
+            i2domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
+            i1 := Ind(i1domain),
     		i2 := Ind(i2domain),
-#            i1 := Ind(opts.max_threads),# Error(),
-#    		 i2 := Ind(@(1).val.domain/opts.max_threads),
     		ii := i1 * i2.range + i2,
     		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
-    		xs := ISum(i2, cld),
-    		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i1domain]), i1, i1domain, xs)
+#    		xs := ISum(i2, cld),
+    		xs := SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i2domain]), i2, i2domain, cld),
+    		SIMTISum(ASIMTGridDimZ(i1domain), i1, i1domain, xs)
     ));
+
+
+#     # split SIMTISums with too many iterations
+#     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
+#     	e -> let(#Error(),
+#             i1domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
+#             i2domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
+#             i1 := Ind(i1domain),# Error(),
+#     		i2 := Ind(i2domain),
+#     		ii := i1 * i2.range + i2,
+#     		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+#     		xs := ISum(i2, cld),
+#     		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i1domain]), i1, i1domain, xs)
+#     ));
     
     # split blocks for size > 32k. Assumes divisibility, can be generalized
     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),

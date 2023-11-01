@@ -101,15 +101,8 @@ isSupported := (n, max_factor, max_prime) -> let(
     Length(fct) > 1 and Length(fct) <= 4 or (Length(fct) = 1 and When(IsPrime(fct[1]), fct[1] < max_prime, fct[1] < max_factor)));
 
 
-
-
-
-    working := Filtered(factorizations, i->Length(i) > 1 and Length(i) <= 4 or (Length(i) = 1 and When(IsPrime(i[1]), i[1] < max_prime, i[1] < MAX_KERNEL))),
-
-
-
 _HPCSupportedSizesCUDA := let(
-    factorizations := List([2..65536], x -> factorize(x, MAX_KERNEL, MAX_PRIME)),
+    factorizations := List([2^16-100..2^16+100], x -> factorize(x, MAX_KERNEL, MAX_PRIME)),
     working := Filtered(factorizations, i->Length(i) > 1 and Length(i) <= 4 or (Length(i) = 1 and When(IsPrime(i[1]), i[1] < MAX_PRIME, i[1] < MAX_KERNEL))),
     List(working, Product));
 

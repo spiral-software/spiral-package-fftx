@@ -14,11 +14,15 @@ Debug(true);
 conf := LocalConfig.fftx.confGPU();
 
 #N := 100000; batch := 2;
- N := 768; batch := 768^2;
+# N := 768; batch := 768^2;
 # N := 16384; batch := 2;
-# N := 8192; batch := 70000;
-#N := 1024; batch := 1024;
+# N := 8192; batch := 2;
+# N := 1024; batch := 1024;
 
+# N := 4096*3; batch := 2;
+
+
+# N := 100000; batch := 2;
 
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
@@ -27,8 +31,16 @@ conf := LocalConfig.fftx.confGPU();
 
 
 # N := 16384; batch := 16;
-# N := 32768; batch := 16;
-# N := 65536; batch := 16;
+ #N := 32768; batch := 16;
+# N := 68040; batch := 2;
+# N := 72250 ; batch := 2;
+# N := 65536; batch := 2;
+# N := 65625; batch := 2;
+ N := 32768*3; batch := 2;
+ 
+ 
+# [ 65450, 65520, 65536, 65625 ]
+ 
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
@@ -39,9 +51,9 @@ t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, par
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
  
-_tt := opts.preProcess(tt);
-rt := opts.search(_tt);
-opts.sumsRuleTree(rt);
+# _tt := opts.preProcess(tt);
+# rt := opts.search(_tt);
+# ss := opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
