@@ -226,11 +226,28 @@ ParseOptsCUDA := function(conf, t)
                 _opts.breakdownRules.DFT;
  
 # For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
-#            _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, PRDFT1_CT, PRDFT_PD ];        
-#            _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, IPRDFT1_CT, IPRDFT_PD ];
+            _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, CopyFields(PRDFT1_CT, rec(
+                allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
+                    e-> P[1] < MAX_KERNEL or let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+                        When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))
+            )), PRDFT_PD ];        
+            _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT, rec(
+                allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
+                    e-> P[1] < MAX_KERNEL or let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+                        When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))            
+            )), IPRDFT_PD ];
+            
+# _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
+#     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+#         When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
+# 
+# _opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
+#     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+#         When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
+            
 # this is a quick hack to get correct code for up to 1024, but the code is slow as all parallelism is dropped by the legacy PRDFT rule
-            _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);    
-            _opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);
+#            _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);    
+#            _opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), i -> i[1].params[1] <= _thold_prdft);
            
             _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
             _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
