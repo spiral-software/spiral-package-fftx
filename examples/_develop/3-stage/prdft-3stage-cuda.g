@@ -14,7 +14,7 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 512;
+N := 256;
 batch := 2;
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
