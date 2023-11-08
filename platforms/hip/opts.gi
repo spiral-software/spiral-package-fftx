@@ -26,6 +26,10 @@ doHIPify := function(opts)
 #    opts.postProcessCode := (c, opts) -> FixUpHIP_Code(PingPong_3Stages(c, opts), opts);
     opts.postProcessCode := (c, opts) -> FixUpHIP_Code(c, opts);
 
+    ##  Set options target to "linux-hip" so profiler can build for HIP
+    ##  HIP is currently only on Linux but see cuda/opts.gi if a more generic approach to target is ever needed.
+    opts.target := rec ( name := "linux-hip" );
+
     return opts;
 end;
 
