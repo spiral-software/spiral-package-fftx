@@ -13,10 +13,11 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 100000; batch := 2;
+N := 16; batch := 4;
+# N := 256; batch := 4;
 # N := 768; batch := 768^2;
 # N := 16384; batch := 2;
- N := 8192; batch := 2;
+# N := 8192; batch := 2;
 # N := 1024; batch := 1024;
 
 # N := 4096*3; batch := 2;
@@ -35,9 +36,9 @@ N := 100000; batch := 2;
 # N := 68040; batch := 2;
 # N := 72250 ; batch := 2;
 # N := 65536; batch := 2;
- #N := 65625; batch := 2;
+# N := 65625; batch := 2;
 # N := 32768*3; batch := 2;
-#N := 68040; batch := 2;
+# N := 68040; batch := 2;
  
  
 # [ 65450, 65520, 65536, 65625 ]
@@ -51,6 +52,9 @@ t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, par
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
+
+#Add(opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
+#opts.breakdownRules.TTensorI := opts.breakdownRules.TTensorI{[1,2,5,6,7]};
  
 # _tt := opts.preProcess(tt);
 # rt := opts.search(_tt);
@@ -71,14 +75,14 @@ cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
 # correctnes test: true and \approx 10^-14 or so
 ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
 InfinityNormMat([cv1] - [cv1a]);
-
-# find the problems...
-x := List([1..Length(cv1a)], i->cv1[i] - cv1a[i]);
-xa := List(x, i->abs(i).v);
-xx := Zip2(xa, [1..Length(xa)]);
-y := Filtered(xx, i-> i[1] > 1e-5);
-idx := List(y, i->i[2]);
-
-dists := List([1..Length(idx)-1], j-> idx[j+1]-idx[j]);
-dd := Set(Filtered(dists, i-> i<> 1));
-
+# 
+# # find the problems...
+# x := List([1..Length(cv1a)], i->cv1[i] - cv1a[i]);
+# xa := List(x, i->abs(i).v);
+# xx := Zip2(xa, [1..Length(xa)]);
+# y := Filtered(xx, i-> i[1] > 1e-5);
+# idx := List(y, i->i[2]);
+# 
+# dists := List([1..Length(idx)-1], j-> idx[j+1]-idx[j]);
+# dd := Set(Filtered(dists, i-> i<> 1));
+# 
