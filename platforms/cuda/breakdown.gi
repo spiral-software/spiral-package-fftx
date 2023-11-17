@@ -397,10 +397,12 @@ NewRulesFor(TTensorI, rec(
 #   (I x A) 
     IxA_SIMT_peelof3 := rec(
         forTransposition := false,
+        maxKernel := 26,
         
         # these config parameters need to be moved into the opts...
        
-        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and Length(nt.tags) > 1 and IsParPar(nt.params) and not IsPrime(nt.params[2]), 
+        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and Length(nt.tags) > 1 and IsParPar(nt.params) and not IsPrime(nt.params[2]) and
+            ForAll(nt.params[1].dims(), i -> i <= self.maxKernel), 
         children := (self, nt) >> 
             Map2(DivisorPairs(nt.params[2]), (m, n) -> [ InfoNt(n), TTensorI(nt.params[1], m, APar, APar).withTags(Drop(nt.getTags(), 1)) ]),
         apply := (nt, c, cnt) -> 

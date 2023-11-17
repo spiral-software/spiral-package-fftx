@@ -399,6 +399,13 @@ ParseOptsCUDA := function(conf, t)
                     else
                         _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                     fi;
+                    if ObjId(_tt[1]) = MDDFT and ForAny(_tt[1].params[1], i -> i <= MAX_KERNEL) then
+                        Add(_opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
+                        _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                            FixUpCUDASigmaSPL(When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
+                                FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
+                                FixUpCUDASigmaSPL_3Stage_Real(s1, opts)), opts)); 
+                    fi;
                 fi;
 
 #                _opts.HPCSupportedSizesCUDA := _HPCSupportedSizesCUDA;
