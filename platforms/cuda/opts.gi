@@ -217,14 +217,16 @@ ParseOptsCUDA := function(conf, t)
             
             _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), CopyFields(L_IxA_split, rec(switch := true)),
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
-                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
+# FIX-FOR-NOW: disable tiling for now
+#                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT
+            ]::DropLast(_opts.breakdownRules.TTensorI, 1);
 
             # support for single kernel batches                
             if (Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] <= MAX_KERNEL) or 
                (Length(Collect(t, PRDFT)) = 1 and Collect(t, PRDFT)[1].params[1] <= MAX_KERNEL) or
                (Length(Collect(t, IPRDFT)) = 1 and Collect(t, IPRDFT)[1].params[1] <= MAX_KERNEL) then 
                 Add(_opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
-                _opts.breakdownRules.TTensorI := _opts.breakdownRules.TTensorI{[1,2,5,6,7]};
+#                _opts.breakdownRules.TTensorI := _opts.breakdownRules.TTensorI{[1,2,5,6,7]};
             fi;                
                 
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
