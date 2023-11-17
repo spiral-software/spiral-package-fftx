@@ -13,7 +13,7 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 16; batch := 4;
+# N := 16; batch := 4;
 # N := 256; batch := 4;
 # N := 768; batch := 768^2;
 # N := 16384; batch := 2;
@@ -39,6 +39,8 @@ N := 16; batch := 4;
 # N := 65625; batch := 2;
 # N := 32768*3; batch := 2;
 # N := 68040; batch := 2;
+
+N := 2048; batch := 4096;
  
  
 # [ 65450, 65520, 65536, 65625 ]
@@ -56,8 +58,8 @@ tt := opts.tagIt(t);
 #Add(opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
 #opts.breakdownRules.TTensorI := opts.breakdownRules.TTensorI{[1,2,5,6,7]};
  
-# _tt := opts.preProcess(tt);
-# rt := opts.search(_tt);
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
 # ss := opts.sumsRuleTree(rt);
 
 c := opts.fftxGen(tt);
