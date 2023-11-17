@@ -25,13 +25,14 @@ conf := LocalConfig.fftx.confGPU();
 
 # N := 100000; batch := 2;
 
+N := 1024; batch := 4;
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
 # N := 4096; batch := 16384;
 # N := 8192; batch := 65536;
 
 
-N := 16384; batch := 16;
+# N := 16384; batch := 16;
 # N := 32768; batch := 16;
 # N := 68040; batch := 2;
 # N := 72250 ; batch := 2;
@@ -68,11 +69,21 @@ opts.prettyPrint(c);
 # does it run?
 cyc := CMeasure(c, opts);
 
+## quick correctness check for large sizes
+## get first non-trivial vector
+#cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
+#cv1 := cv{[1..Length(cv)/batch]};
+#cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+
+
 # quick correctness check for large sizes
 # get first non-trivial vector
 cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
-cv1 := cv{[1..Length(cv)/batch]};
+gather := List(fTensor(fId(1024), fBase(4, 0),fId(2)).tolist(), _unwrap)+1;
+cv1 := cv{gather};
 cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+
+
 
 # correctnes test: true and \approx 10^-14 or so
 ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
