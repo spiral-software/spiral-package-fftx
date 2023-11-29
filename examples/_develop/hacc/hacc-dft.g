@@ -9,11 +9,13 @@ ImportAll(fftx);
 
 Debug(true);
 
+control := true;
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-N := 16; batch := 4;
+# N := 16; batch := 4;
 # N := 256; batch := 4;
 # N := 768; batch := 768^2;
 # N := 16384; batch := 2;
@@ -26,7 +28,7 @@ N := 16; batch := 4;
 # N := 100000; batch := 2;
 
 # N := 1024; batch := 4;
-# N := 1024; batch := 1024;
+N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
 # N := 4096; batch := 16384;
 # N := 8192; batch := 65536;
@@ -49,8 +51,11 @@ N := 16; batch := 4;
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
-#t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, params := []));
-t := TFCall(TRC(TTensorI(DFT(N, -1), batch, AVec, APar)), rec(fname := name, params := []));
+if control then
+    t := TFCall(TRC(TTensorI(DFT(N, -1), batch, APar, AVec)), rec(fname := name, params := []));
+else
+    t := TFCall(TRC(TTensorI(DFT(N, -1), batch, AVec, APar)), rec(fname := name, params := []));
+fi;
 #t := TFCall(TRC(DFT(N, -1)), rec(fname := name, params := [])); batch := 1;
 
 opts := conf.getOpts(t);
@@ -71,29 +76,28 @@ cyc := CMeasure(c, opts);
 
 ## quick correctness check for large sizes, APar/AVec
 ## get first non-trivial vector
-#cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
-#cv1 := cv{[1..Length(cv)/batch]};
-#cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
-# correctnes test: true and \approx 10^-14 or so
-#ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
-#InfinityNormMat([cv1] - [cv1a]);
-
-
+if control then
+    cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
+    cv1 := cv{[1..Length(cv)/batch]};
+    cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+    # correctnes test: true and \approx 10^-14 or so
+    zeroesOk := ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
+    rootsOk := InfinityNormMat([cv1] - [cv1a]);
+else
 # quick correctness check for large sizes, AVec/APAR
 # get first non-trivial vector
-cv := CVector(c, Replicate(2, 0)::[1], opts);
-gather := List(fTensor(fId(N), fBase(batch, 0),fId(2)).tolist(), _unwrap)+1;
-cv1 := cv{gather};
-cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+    cv := CVector(c, Replicate(2, 0)::[1], opts);
+    gather := List(fTensor(fId(N), fBase(batch, 0),fId(2)).tolist(), _unwrap)+1;
+    cv1 := cv{gather};
+    cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+    zgather := [1..N * batch * 2];
+    SubtractSet(zgather, gather);
+    zeroesOk := ForAll(cv{zgather}, i->i=0.0);
+    rootsOk := InfinityNormMat([cv1] - [cv1a]);
+fi;
 
-zgather := [1..N * batch * 2];
-SubtractSet(zgather, gather);
-ForAll(cv{zgather}, i->i=0.0);
-
-InfinityNormMat([cv1] - [cv1a]);
-
-
-
+zeroesOk;
+rootsOk;
 
 
 
