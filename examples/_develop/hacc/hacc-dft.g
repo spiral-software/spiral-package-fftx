@@ -13,7 +13,7 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-# N := 16; batch := 4;
+N := 16; batch := 4;
 # N := 256; batch := 4;
 # N := 768; batch := 768^2;
 # N := 16384; batch := 2;
@@ -25,7 +25,7 @@ conf := LocalConfig.fftx.confGPU();
 
 # N := 100000; batch := 2;
 
-N := 1024; batch := 4;
+# N := 1024; batch := 4;
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
 # N := 4096; batch := 16384;
@@ -69,25 +69,34 @@ opts.prettyPrint(c);
 # does it run?
 cyc := CMeasure(c, opts);
 
-## quick correctness check for large sizes
+## quick correctness check for large sizes, APar/AVec
 ## get first non-trivial vector
 #cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
 #cv1 := cv{[1..Length(cv)/batch]};
 #cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+# correctnes test: true and \approx 10^-14 or so
+#ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
+#InfinityNormMat([cv1] - [cv1a]);
 
 
-# quick correctness check for large sizes
+# quick correctness check for large sizes, AVec/APAR
 # get first non-trivial vector
-cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
-gather := List(fTensor(fId(1024), fBase(4, 0),fId(2)).tolist(), _unwrap)+1;
+cv := CVector(c, Replicate(2, 0)::[1], opts);
+gather := List(fTensor(fId(N), fBase(batch, 0),fId(2)).tolist(), _unwrap)+1;
 cv1 := cv{gather};
 cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
 
+zgather := [1..N * batch * 2];
+SubtractSet(zgather, gather);
+ForAll(cv{zgather}, i->i=0.0);
 
-
-# correctnes test: true and \approx 10^-14 or so
-ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
 InfinityNormMat([cv1] - [cv1a]);
+
+
+
+
+
+
 # 
 # # find the problems...
 # x := List([1..Length(cv1a)], i->cv1[i] - cv1a[i]);
