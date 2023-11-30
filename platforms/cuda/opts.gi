@@ -217,8 +217,18 @@ ParseOptsCUDA := function(conf, t)
             
             _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), CopyFields(L_IxA_split, rec(switch := true)),
 #                    CopyFields(TTensorI_vecrec, rec(switch := true, minSize := 16, supportedNTs := [DFT], numTags := 2)),
-                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]::DropLast(_opts.breakdownRules.TTensorI, 1);
-               
+# FIX-FOR-NOW: disable tiling for now
+#                fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT
+            ]::DropLast(_opts.breakdownRules.TTensorI, 1);
+
+            # support for single kernel batches                
+            if (Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] <= MAX_KERNEL) or 
+               (Length(Collect(t, PRDFT)) = 1 and Collect(t, PRDFT)[1].params[1] <= MAX_KERNEL) or
+               (Length(Collect(t, IPRDFT)) = 1 and Collect(t, IPRDFT)[1].params[1] <= MAX_KERNEL) then 
+                Add(_opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
+#                _opts.breakdownRules.TTensorI := _opts.breakdownRules.TTensorI{[1,2,5,6,7]};
+            fi;                
+                
             _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
                 filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
                     When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2])))),
@@ -388,6 +398,13 @@ ParseOptsCUDA := function(conf, t)
                                 FixUpCUDASigmaSPL_3Stage_Real(s1, opts))); 
                     else
                         _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
+                    fi;
+                    if ObjId(_tt[1]) = MDDFT and ForAny(_tt[1].params[1], i -> i <= MAX_KERNEL) then
+                        Add(_opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
+                        _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
+                            FixUpCUDASigmaSPL(When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 
+                                FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
+                                FixUpCUDASigmaSPL_3Stage_Real(s1, opts)), opts)); 
                     fi;
                 fi;
 
