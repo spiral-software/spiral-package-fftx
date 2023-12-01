@@ -84,9 +84,8 @@ Class(OpenCLCodegen, CudaCodegen, rec(
             #>>>>> new
             check_args := Filtered(ker_args, d -> not IsBound(d.value));
             for v in check_args do
-                if ObjId(v.t) = TPtr and not IsBound(v.decl_specs) and (IsBound(v.t.qualifiers) and v.t.qualifiers = []) then
+                if ObjId(v.t) = TPtr and (IsBound(v.t.qualifiers) and v.t.qualifiers = []) then
                 v.t := TPtr(v.t.t, ["global"]);
-                v.("decl_specs") := ["global"];
                 fi;
             od;
             cuda_ker := specifiers_func(["kernel"], TVoid, cuda_sub::StringInt(ker_cnt), check_args, tbody );
@@ -242,7 +241,6 @@ FixUpOpenCL_Code := function (c, opts)
             fi;
             if ObjId(v.t) = TPtr then
             v.t := TPtr(v.t.t, ["global"]);
-            v.("decl_specs") := ["global"];
             else
             Error("none pointer based inputs not supported, please convert TFCall params or opts.symbol to pointers\n");
             fi;
