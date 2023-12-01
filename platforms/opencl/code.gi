@@ -28,7 +28,7 @@ Class(OpenCLCodegen, CudaCodegen, rec(
     #cleanup for static arrays and sizes is FixUpOpenCL_Code function
     make_kernels := meth(self, full_kernel, device_data, full_args, opts)
         local kercx, ker_cnt, ker, ker_args, ker_datas, cuda_ker, cuda_desc, cuda_icode, cuda_sub, 
-                dim_grid, dim_block, tbody, tas_grid, tas_block_shmem, cross_ker_tas, ta;
+                dim_grid, dim_block, tbody, tas_grid, tas_block_shmem, cross_ker_tas, ta, check_args, v;
 				
 		cuda_sub := Cond(IsBound(opts.cudasubName), Concat("ker_",opts.cudasubName), "ker_code");
 
@@ -82,7 +82,14 @@ Class(OpenCLCodegen, CudaCodegen, rec(
             #<<<< old
             # cuda_ker := specifiers_func(["kernel"], TVoid, cuda_sub::StringInt(ker_cnt), Filtered(ker_args, d -> not IsBound(d.("decl_specs")) or not "__constant__" in d.("decl_specs")), tbody );
             #>>>>> new
-            cuda_ker := specifiers_func(["kernel"], TVoid, cuda_sub::StringInt(ker_cnt), Filtered(ker_args, d -> not IsBound(d.value)), tbody );
+            check_args := Filtered(ker_args, d -> not IsBound(d.value));
+            for v in check_args do
+                if ObjId(v.t) = TPtr and not IsBound(v.decl_specs) and (IsBound(v.t.qualifiers) and v.t.qualifiers = []) then
+                v.t := TPtr(v.t.t, ["global"]);
+                v.("decl_specs") := ["global"];
+                fi;
+            od;
+            cuda_ker := specifiers_func(["kernel"], TVoid, cuda_sub::StringInt(ker_cnt), check_args, tbody );
             #----------
             Add(cuda_desc.cuda_kers,  rec(dim_grid := dim_grid, dim_block := dim_block, cuda_ker := cuda_ker));
 
@@ -235,6 +242,7 @@ FixUpOpenCL_Code := function (c, opts)
             fi;
             if ObjId(v.t) = TPtr then
             v.t := TPtr(v.t.t, ["global"]);
+            v.("decl_specs") := ["global"];
             else
             Error("none pointer based inputs not supported, please convert TFCall params or opts.symbol to pointers\n");
             fi;
