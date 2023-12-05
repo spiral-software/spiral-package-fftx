@@ -392,9 +392,23 @@ NewRulesFor(TTensorI, rec(
         children := (self, nt) >> let(n := Cols(nt.params[1]), m:= nt.params[2], peelof := self._peelof(n,m), remainder := m/peelof, 
             [[  TTensorI(TTensorI(nt.params[1], peelof, APar, APar), remainder, APar, APar).withTags(nt.getTags()) ]]),
         apply := (nt, c, cnt) -> c[1]
-    )
+    ),
     
-  
+#   (I x A) 
+    IxA_SIMT_peelof3 := rec(
+        forTransposition := false,
+        maxKernel := 26,
+        
+        # these config parameters need to be moved into the opts...
+       
+        applicable := (self, nt) >> nt.hasTags() and _isSIMTTag(nt.firstTag()) and Length(nt.tags) > 1 and IsParPar(nt.params) and not IsPrime(nt.params[2]) and
+            ForAll(nt.params[1].dims(), i -> i <= self.maxKernel), 
+        children := (self, nt) >> 
+            Map2(DivisorPairs(nt.params[2]), (m, n) -> [ InfoNt(n), TTensorI(nt.params[1], m, APar, APar).withTags(Drop(nt.getTags(), 1)) ]),
+        apply := (nt, c, cnt) -> 
+            SIMTTensor(_toSIMTDim(nt.getTags(), cnt[1].params[1]), I(cnt[1].params[1]), c[2])
+    ),
+ 
 ));
 
 
