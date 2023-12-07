@@ -35,9 +35,11 @@ t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, 
 
 opts := conf.getOpts(t);
 
+opts.globalUnrolling := 64;
+
+
 MAX_KERNEL := 26;
 MAX_PRIME := 17;
-opts.globalUnrolling := 64;
 
 opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
@@ -54,17 +56,14 @@ tt := opts.tagIt(t);
 _tt := opts.preProcess(tt);
 rt := opts.search(_tt);
 
-#-- breakdown seems fine, but SumsSPL doesn't do the right thing
-
 
 ss := opts.sumsRuleTree(rt);
-
+ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
 
 c := opts.codeSums(ss);
-# ==
 
-c := opts.fftxGen(tt);
-opts.prettyPrint(c);
+#c := opts.fftxGen(tt);
+#opts.prettyPrint(c);
 
 cyc := CMeasure(c, opts);
 
@@ -72,6 +71,11 @@ mt := MatSPL(tt);
 mc := CMatrix(c, opts);
 
 diff := InfinityNormMat(mc-mt);
+
+# =====
+
+
+
 # 
 # c := opts.fftxGen(tt);
 # opts.prettyPrint(c);

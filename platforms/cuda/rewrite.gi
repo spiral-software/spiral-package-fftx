@@ -201,7 +201,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 #            ))
 #    );
 
-    # loop distribution Y(X*X)
+    # loop distribution Block Y(X*X)
     ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
         e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
             nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
@@ -487,6 +487,16 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
             SIMTISum(@(1).val.simt_dim, ii, nch, SUM(List([0..nch-1], 
                i->COND(eq(ii, V(i)), _fBaseVar(ch[i+1], ii, i), ApplyFunc(OO, ch[i+1].dims()))))))
     );
+
+    # loop distribution Grid Y(X*X)
+    ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag), Compose], 
+        e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            Compose(List(nch, c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.var.range, c)))
+            ));
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
     
     # loop distribution X(X*X)
     ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), Compose], 

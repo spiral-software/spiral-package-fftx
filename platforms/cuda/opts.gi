@@ -209,7 +209,7 @@ ParseOptsCUDA := function(conf, t)
             _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
 #                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
             
-            _opts.globalUnrolling := 2*_thold + 1;
+            _opts.globalUnrolling := When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 2*_thold + 1, 4*_thold);
 
             # handle weird out of ressources problem for DFT(8k) and beyond
             if Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] > MAGIC_SIZE then _opts.max_threads := _opts.max_threads / 2; fi;
@@ -237,15 +237,17 @@ ParseOptsCUDA := function(conf, t)
  
 # For PRDFT bigger surgery is needed: 1) upgrade CT rules to NewRules to guard against tags, and 2) tspl_CT version of the PRDFT_CT rule                    
             _opts.breakdownRules.PRDFT := [ PRDFT1_Base1, PRDFT1_Base2, CopyFields(PRDFT1_CT, rec(
-                allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
-                    e-> P[1] < MAX_KERNEL or let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-                        When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))
-            )), PRDFT_PD ];        
+                    allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
+                        e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+                            Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))
+                        )), 
+                PRDFT_PD ];        
             _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT, rec(
-                allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
-                    e-> P[1] < MAX_KERNEL or let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-                        When(Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))            
-            )), IPRDFT_PD ];
+                    allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
+                        e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+                            Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])))
+                        )), 
+                IPRDFT_PD ];
             
 # _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
 #     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
