@@ -16,8 +16,8 @@ Debug(true);
 conf := LocalConfig.fftx.confGPU();
 
 
-# N := 256; batch := 2;
 N := 512; batch := 2;
+# N := 128; batch := 2;
 # N := 1024; batch := 2;
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
@@ -32,6 +32,13 @@ name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
 t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
 #t := TFCall(TRC(TTensorI(IPRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
+
+
+
+
+
+## Make sure the right opts are selected for sizes 512 and higher!
+
 
 opts := conf.getOpts(t);
 
