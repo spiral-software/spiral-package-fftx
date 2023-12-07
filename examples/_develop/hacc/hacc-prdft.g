@@ -17,10 +17,10 @@ conf := LocalConfig.fftx.confGPU();
 
 # N := 128; batch := 2;
 # N := 256; batch := 2;
-N := 512; batch := 2;
+# N := 512; batch := 2;
 # N := 1024; batch := 2;
 # N := 1024; batch := 1024;
-# N := 2048; batch := 4096;
+N := 2048; batch := 4096;
 # N := 4096; batch := 16384;
 # N := 8192; batch := 65536;
 
