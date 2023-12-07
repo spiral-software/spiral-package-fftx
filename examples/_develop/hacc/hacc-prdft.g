@@ -15,9 +15,9 @@ Debug(true);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-
-N := 512; batch := 2;
 # N := 128; batch := 2;
+# N := 256; batch := 2;
+N := 512; batch := 2;
 # N := 1024; batch := 2;
 # N := 1024; batch := 1024;
 # N := 2048; batch := 4096;
@@ -30,47 +30,43 @@ N := 512; batch := 2;
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
-t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
-#t := TFCall(TRC(TTensorI(IPRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
-
-
-
-
+#t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
+t := TFCall(TRC(TTensorI(IPRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
 
 ## Make sure the right opts are selected for sizes 512 and higher!
 
 
 opts := conf.getOpts(t);
 
-opts.globalUnrolling := 64;
-
-
-MAX_KERNEL := 26;
-MAX_PRIME := 17;
-
-opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
-    e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-        Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
-
-opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
-    e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-        Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
-
+#opts.globalUnrolling := 64;
+#
+#
+#MAX_KERNEL := 26;
+#MAX_PRIME := 17;
+#
+#opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
+#    e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+#        Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
+#
+#opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
+#    e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
+#        Cond(Length(factors) = 1 , true, Length(factors) <= 3, e[1].params[1] = factors[1], e[1].params[1] = factors[1]*factors[2])));
+#
 
 tt := opts.tagIt(t);
 
-# ==
-_tt := opts.preProcess(tt);
-rt := opts.search(_tt);
+## ==
+#_tt := opts.preProcess(tt);
+#rt := opts.search(_tt);
+#
+#
+#ss := opts.sumsRuleTree(rt);
+#ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
+#
+#c := opts.codeSums(ss);
 
-
-ss := opts.sumsRuleTree(rt);
-ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
-
-c := opts.codeSums(ss);
-
-#c := opts.fftxGen(tt);
-#opts.prettyPrint(c);
+c := opts.fftxGen(tt);
+opts.prettyPrint(c);
 
 cyc := CMeasure(c, opts);
 

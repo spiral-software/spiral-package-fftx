@@ -160,7 +160,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
     local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA, _FourStageSizesCUDA,
-    MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE, _isHPCSupportedSizesCUDA, _isSupportedAtAll;
+    MAX_TWOPOWER, MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE, _isHPCSupportedSizesCUDA, _isSupportedAtAll;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
@@ -169,6 +169,7 @@ ParseOptsCUDA := function(conf, t)
     MIN_SIZE := 32;
     MAX_SIZE := 680;
     MAGIC_SIZE := 4096;
+    MAX_TWOPOWER := 16;
 
     _thold := MAX_KERNEL;
     _thold_prdft := MAX_PRIME;
@@ -179,7 +180,7 @@ ParseOptsCUDA := function(conf, t)
     
     _isHPCSupportedSizesCUDA := n -> isSupported(n, MAX_KERNEL, MAX_PRIME);
     
-    _isSupportedAtAll := (t, n) -> When(t in [DFT, MDDFT], _isHPCSupportedSizesCUDA(n), n in _HPCSupportedSizesCUDA);
+    _isSupportedAtAll := (t, n) -> When(t in [DFT, MDDFT, PRDFT, IPRDFT], _isHPCSupportedSizesCUDA(n), n in _HPCSupportedSizesCUDA);
     
     # -- initial guard for 3 stages algorithm
     _ThreeStageSizesCUDA := e -> e >= MAX_KERNEL^2 or e in [512];
@@ -209,7 +210,7 @@ ParseOptsCUDA := function(conf, t)
             _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
 #                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
             
-            _opts.globalUnrolling := When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 2*_thold + 1, 4*_thold);
+            _opts.globalUnrolling := When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 2*_thold + 1, 4 * MAX_TWOPOWER);
 
             # handle weird out of ressources problem for DFT(8k) and beyond
             if Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] > MAGIC_SIZE then _opts.max_threads := _opts.max_threads / 2; fi;
