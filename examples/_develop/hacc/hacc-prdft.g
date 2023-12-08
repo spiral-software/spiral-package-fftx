@@ -23,13 +23,12 @@ conf := LocalConfig.fftx.confGPU();
 # N := 2048; batch := 2;
 # N := 4096; batch := 16384;
 # N := 8192; batch := 65536;
-
 # N := 8192; batch := 2;
-
-
 # N := 16384; batch := 16;
 # N := 32768; batch := 16;
-N := 65536; batch := 16;
+# N := 65536; batch := 16;
+
+N := 21^3; batch := 2;
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
@@ -58,18 +57,18 @@ opts := conf.getOpts(t);
  
 tt := opts.tagIt(t);
  
-# ## ==
-# _tt := opts.preProcess(tt);
-# rt := opts.search(_tt);
-# #
-# #
-# ss := opts.sumsRuleTree(rt);
-# 
-# 
-# 
-# ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
+## ==
+_tt := opts.preProcess(tt);
+rt := opts.search(_tt);
 #
-# c := opts.codeSums(ss);
+#
+ss := opts.sumsRuleTree(rt);
+
+
+
+#ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
+#
+c := opts.codeSums(ss);
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);

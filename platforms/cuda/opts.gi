@@ -210,7 +210,7 @@ ParseOptsCUDA := function(conf, t)
             _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
 #                _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimX];
             
-            _opts.globalUnrolling := When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 2*_thold + 1, 4 * MAX_TWOPOWER);
+            _opts.globalUnrolling := When(Collect(t, PRDFT)::Collect(t, IPRDFT) = [], 2*_thold + 1, 8 * MAX_TWOPOWER);
 
             # handle weird out of ressources problem for DFT(8k) and beyond
             if Length(Collect(t, DFT)) = 1 and Collect(t, DFT)[1].params[1] > MAGIC_SIZE then _opts.max_threads := _opts.max_threads / 2; fi;
