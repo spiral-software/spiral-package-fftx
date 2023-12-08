@@ -569,7 +569,36 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
         )
     );
 
-   
+# == this is for 4 stages =========================
+    # flatten SIMTIsum/ISum loops
+    ss := SubstTopDown(ss, 
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(2, ISum) ],
+        e->let(s1 := @(1).val,
+            i1 := s1.var,
+            i2 := s1.child(1).var,
+            rng := i1.range * i2.range,
+            ii := Ind(rng),
+            sr := rec(
+                (i1.id) := idiv(ii, i2.range),
+                (i2.id) := imod(ii, i2.range)
+            ),
+            sdim := ASIMTBlockDimX(rng),
+            SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
+        )
+    );
+  
+    # loop distribution Grid Y(X*X)
+    ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag), Compose], 
+        e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            Compose(List(nch, c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.var.range, c)))
+            ));
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
+
+# == /this is for 4 stages =========================
+  
     
     # fix loop iterations
     if ObjId(ss) = Compose then         
