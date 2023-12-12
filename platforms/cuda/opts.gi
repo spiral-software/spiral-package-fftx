@@ -242,13 +242,13 @@ ParseOptsCUDA := function(conf, t)
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                PRDFT_PD ];        
+                CopyFields(PRDFT_PD, rec(maxSize := MAX_PRIME)) ];        
             _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT, rec(
                     allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                IPRDFT_PD ];
+                CopyFields(IPRDFT_PD, rec(maxSize := MAX_PRIME)) ];
             
 # _opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
 #     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
@@ -396,13 +396,13 @@ ParseOptsCUDA := function(conf, t)
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                PRDFT_PD ];        
+                CopyFields(PRDFT_PD, rec(maxSize := MAX_PRIME)) ];        
             _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT, rec(
                     allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                IPRDFT_PD ];
+                CopyFields(IPRDFT_PD, rec(maxSize := MAX_PRIME)) ];
 
 #===================
 
