@@ -14,7 +14,7 @@ conf := LocalConfig.fftx.confGPU();
 fwd := true;
 #fwd := false;
 
-#N := 16;
+N := 16;
 #N := 32;
 #N := 35;
 #N := 272; #has prime factor 17
@@ -29,9 +29,12 @@ fwd := true;
 #N := 7*9*5;
 #N := 768;
 #N := 1024;
-#szcube :=       Replicate(3, N);
+szcube :=       Replicate(3, N);
 
-szcube := [80, 80, 374];
+#szcube := [80, 80, 374];
+#szcube := [96, 96, 374];
+#szcube := [24, 32, 40];
+#szcube := [80, 80, 680];
 
 if fwd then
     prdft := MDPRDFT;

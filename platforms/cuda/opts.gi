@@ -156,6 +156,7 @@ cudaDeviceConf := rec(
 
 fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 
+_globalSize1 := [];
 
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
@@ -177,6 +178,7 @@ ParseOptsCUDA := function(conf, t)
     filter := (e) -> When(e[1] * e[2] <= _thold ^ 2, e[1] <= _thold and e[2] <= _thold, e[1] <= _thold and e[2] >= _thold);
     size1 := Filtered([MIN_SIZE..MAX_SIZE], i -> ForAny(DivisorPairs(i), filter) and ForAll(Factors(i), j -> not IsPrime(j) or j <= MAX_PRIME));
     _HPCSupportedSizesCUDA := size1;
+    _globalSize1 := size1;
     
     _isHPCSupportedSizesCUDA := n -> isSupported(n, MAX_KERNEL, MAX_PRIME);
     _isHPCSupportedSizesOld := n -> n in _HPCSupportedSizesCUDA;
@@ -342,10 +344,10 @@ ParseOptsCUDA := function(conf, t)
                 _conf := FFTXGlobals.confFFTCUDADevice();
 #            fi;
             _opts := FFTXGlobals.getOpts(_conf);
-            
+           
             # opts for high performance CUDA cuFFT
-            if ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
-               #ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k))) then
+            if #ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
+               ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k))) then
             
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
@@ -361,21 +363,21 @@ ParseOptsCUDA := function(conf, t)
                 fi;
                 
                 _opts.globalUnrolling := 2*_thold + 1;
-#Error();
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), CopyFields(L_IxA_split, rec(switch := true)),
                     fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]:: 
                     When(ForAny(_tt, _t -> ObjId(_t) in [PrunedMDPRDFT, PrunedIMDPRDFT]), 
                         [fftx.platforms.cuda.IxA_SIMT_peelof, fftx.platforms.cuda.IxA_SIMT_peelof2], [])::_opts.breakdownRules.TTensorI;
 
-#                 _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
-#                     filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
-#                         When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2]))
-#                     
-#                         )
-#                     ),
-#                     CopyFields(DFT_Rader, rec(minSize := DFT_PD.maxSize + 1, maxSize := MAX_PRIME, switch := true))]::
-#                     _opts.breakdownRules.DFT;
-
+if ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesOld(i)) then
+                _opts.breakdownRules.DFT := [CopyFields(DFT_tSPL_CT, rec(switch := true, # here we need to make sure to get the right decomposition fo r3 and 4 stages, TBD/FIXME
+                    filter := e-> let(factors := factorize(e[1]*e[2], MAX_KERNEL, MAX_PRIME), 
+                        When(Length(factors) <= 3, e[1] = factors[1], e[1] = factors[1]*factors[2]))
+                    
+                        )
+                    ),
+                    CopyFields(DFT_Rader, rec(minSize := DFT_PD.maxSize + 1, maxSize := MAX_PRIME, switch := true))]::
+                    _opts.breakdownRules.DFT;
+else
 
 #===================
 #             # support for single kernel batches                
@@ -397,17 +399,17 @@ ParseOptsCUDA := function(conf, t)
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                CopyFields(PRDFT_PD, rec(maxSize := MAX_PRIME)) ];        
+                CopyFields(PRDFT_PD, rec(maxSize := MAX_PRIME, switch := true)) ];        
             _opts.breakdownRules.IPRDFT := [ IPRDFT1_Base1, IPRDFT1_Base2, CopyFields(IPRDFT1_CT, rec(
                     allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
                         e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
                             Cond(Length(factors) = 1, true, e[1].params[1] = factors[1])))
                         )), 
-                CopyFields(IPRDFT_PD, rec(maxSize := MAX_PRIME)) ];
+                CopyFields(IPRDFT_PD, rec(maxSize := MAX_PRIME, switch := true)) ];
 
 #===================
 
-
+fi;
                 
                 _opts.unparser.simt_synccluster := _opts.unparser.simt_syncblock;
 #                _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
@@ -437,6 +439,10 @@ ParseOptsCUDA := function(conf, t)
                     else
                         _opts.tags := [ASIMTKernelFlag(ASIMTGridDimX), ASIMTBlockDimY, ASIMTBlockDimX];
                     fi;
+                    
+                    
+if ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesOld(i)) then
+                    
                     if ObjId(_tt[1]) = MDDFT and ForAny(_tt[1].params[1], i -> i <= MAX_KERNEL) then
                         Add(_opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
                         _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
@@ -444,8 +450,9 @@ ParseOptsCUDA := function(conf, t)
                                 FixUpCUDASigmaSPL(FixUpCUDASigmaSPL_3Stage(s1, opts), opts),
                                 FixUpCUDASigmaSPL_3Stage_Real(s1, opts)), opts)); 
                     fi;
-                    
+else                    
 #==================
+
                     if ObjId(_tt[1]) in [MDPRDFT, IMDPRDFT] and ForAll(_tt[1].params[1], i -> i > MAX_KERNEL) then
 
                         _opts.postProcessSums := (s, opts) -> let(s1 := ApplyStrategy(s, [ MergedRuleSet(RulesFuncSimp, RulesSums, RulesSIMTFission) ], BUA, opts),
@@ -456,7 +463,9 @@ ParseOptsCUDA := function(conf, t)
                                 s1, opts)
                                 , opts)
                                 )); 
+                        _opts.operations.Print := s -> Print("<FFTX CUDA HPC 3+ stage MDDFT/MDPRDFT/MDIPRDFT options record>");
                     fi;
+fi;
 #=======================                    
                     
                     
