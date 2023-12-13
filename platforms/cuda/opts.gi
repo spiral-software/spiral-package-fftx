@@ -347,7 +347,7 @@ ParseOptsCUDA := function(conf, t)
            
             # opts for high performance CUDA cuFFT
             if #ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
-               ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k))) then
+               ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k) and k > Minimum(_HPCSupportedSizesCUDA))) then
             
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];

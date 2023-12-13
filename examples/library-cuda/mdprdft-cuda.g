@@ -6,6 +6,7 @@
 
 Load(fftx);
 ImportAll(fftx);
+Debug(true);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
@@ -29,11 +30,11 @@ N := 16;
 #N := 7*9*5;
 #N := 768;
 #N := 1024;
-szcube :=       Replicate(3, N);
+#szcube :=       Replicate(3, N);
 
 #szcube := [80, 80, 374];
 #szcube := [96, 96, 374];
-#szcube := [24, 32, 40];
+szcube := [24, 32, 40];
 #szcube := [80, 80, 680];
 
 if fwd then
