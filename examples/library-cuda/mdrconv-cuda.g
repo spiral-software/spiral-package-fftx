@@ -7,11 +7,13 @@
 Load(fftx);
 ImportAll(fftx);
 
+Debug(true);
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-n := 384;
+n := 189;
 d := 3;
 szcube :=  Replicate(d, n);
     
@@ -19,12 +21,23 @@ name := "mdrconv"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(Concatena
 
 symvar := var("sym", TPtr(TReal));
 
-t := TFCall(IMDPRDFT(szcube, 1) * RCDiag(FDataOfs(symvar, 2*Product(DropLast(szcube, 1))* (Last(szcube)/2+1), 0)) * MDPRDFT(szcube, -1), 
+t := TFCall(IMDPRDFT(szcube, 1) * RCDiag(FDataOfs(symvar, MDPRDFT(szcube, -1).dims()[1], 0)) * MDPRDFT(szcube, -1), 
         rec(fname := name, params := [symvar])
 );
 
 opts := conf.getOpts(t);
 tt := opts.tagIt(t);
+
+# _tt := opts.preProcess(tt);
+# rt := opts.search(_tt);
+# sp := SPLRuleTree(rt);
+# 
+# ss := opts.sumsRuleTree(rt);
+# c := opts.codeSums(ss);
+# 
+
+
+
 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);

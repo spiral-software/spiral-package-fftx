@@ -48,7 +48,7 @@ NewRulesFor(MDRConv, rec(
 
         # nonterminal, children, children non-terminals
         apply          := (nt, C, Nonterms) -> C[2] * 
-                            RCDiag(FDataOfs(nt.params[2], 2*Product(DropLast(nt.params[1], 1))* (Last(nt.params[1])/2+1), 0)) *
+                            RCDiag(FDataOfs(nt.params[2], C[1].dims()[1], 0)) *
                             C[1]
     ),
 
