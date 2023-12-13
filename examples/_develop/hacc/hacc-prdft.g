@@ -49,8 +49,8 @@ opts := conf.getOpts(t);
 tt := opts.tagIt(t);
  
 ## ==
-_tt := opts.preProcess(tt);
-rt := opts.search(_tt);
+#_tt := opts.preProcess(tt);
+#rt := opts.search(_tt);
 # ss := opts.sumsRuleTree(rt);
 # c := opts.codeSums(ss);
 # 

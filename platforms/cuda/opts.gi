@@ -362,7 +362,8 @@ ParseOptsCUDA := function(conf, t)
                     _opts.breakdownRules.TFCall := _opts.breakdownRules.TFCall{[1]};    # when is rule [2] needed?
                 fi;
                 
-                _opts.globalUnrolling := 2*_thold + 1;
+                _opts.globalUnrolling := 4 * MAX_TWOPOWER;
+#                _opts.globalUnrolling := 2*_thold + 1;
                 _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)), CopyFields(L_IxA_split, rec(switch := true)),
                     fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT]:: 
                     When(ForAny(_tt, _t -> ObjId(_t) in [PrunedMDPRDFT, PrunedIMDPRDFT]), 
