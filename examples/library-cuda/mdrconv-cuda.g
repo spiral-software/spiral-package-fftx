@@ -11,7 +11,7 @@ ImportAll(fftx);
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-n := 64;
+n := 384;
 d := 3;
 szcube :=  Replicate(d, n);
     

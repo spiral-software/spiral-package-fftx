@@ -18,7 +18,7 @@ fwd := true;
 #N := 32;
 #N := 35;
 #N := 272; #has prime factor 17
-N := 128*3;
+#N := 128*3;
 #N := 80;
 #N := 81;
 #N := 512;
@@ -29,9 +29,9 @@ N := 128*3;
 #N := 7*9*5;
 #N := 768;
 #N := 1024;
+#szcube :=       Replicate(3, N);
 
-szcube :=       Replicate(3, N);
-
+szcube := [80, 80, 374];
 
 if fwd then
     prdft := MDPRDFT;

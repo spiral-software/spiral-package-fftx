@@ -160,7 +160,7 @@ fftx.FFTXGlobals.registerConf(cudaDeviceConf);
 # this is a first experimental opts-deriving logic. This needs to be done extensible and properly
 ParseOptsCUDA := function(conf, t)
     local tt, _tt, _tt2, _conf, _opts, _HPCSupportedSizesCUDA, _thold, _thold_prdft, _ThreeStageSizesCUDA, _FourStageSizesCUDA,
-    MAX_TWOPOWER, MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE, _isHPCSupportedSizesCUDA, _isSupportedAtAll;
+    MAX_TWOPOWER, MAX_KERNEL, MAX_PRIME, MIN_SIZE, MAX_SIZE, size1, filter, MAGIC_SIZE, _isHPCSupportedSizesCUDA, _isSupportedAtAll, _isHPCSupportedSizesOld;
     
     # all dimensions need to be inthis array for the high perf MDDFT conf to kick in for now
     # size 320 is problematic at this point and needs attention. Need support for 3 stages to work first
@@ -179,6 +179,7 @@ ParseOptsCUDA := function(conf, t)
     _HPCSupportedSizesCUDA := size1;
     
     _isHPCSupportedSizesCUDA := n -> isSupported(n, MAX_KERNEL, MAX_PRIME);
+    _isHPCSupportedSizesOld := n -> n in _HPCSupportedSizesCUDA;
     
     _isSupportedAtAll := (t, n) -> When(t in [DFT, MDDFT, PRDFT, IPRDFT, MDPRDFT, IMDPRDFT], _isHPCSupportedSizesCUDA(n), n in _HPCSupportedSizesCUDA);
     
@@ -343,8 +344,8 @@ ParseOptsCUDA := function(conf, t)
             _opts := FFTXGlobals.getOpts(_conf);
             
             # opts for high performance CUDA cuFFT
-            if #ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
-                ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k))) then
+            if ForAll(_tt[1].params[1], i-> _isHPCSupportedSizesCUDA(i)) then
+               #ForAll(Flat(List(_tt, j -> rec(n:=j.params[1], id := ObjId(j)))), j -> ForAll(j.n, k-> _isSupportedAtAll(j.id, k))) then
             
                 _opts.breakdownRules.MDDFT := [fftx.platforms.cuda.MDDFT_tSPL_Pease_SIMT];
                 _opts.breakdownRules.MDPRDFT := [fftx.platforms.cuda.MDPRDFT_tSPL_Pease_SIMT];
