@@ -28,78 +28,52 @@ conf := LocalConfig.fftx.confGPU();
 # N := 32768; batch := 16;
 # N := 65536; batch := 16;
 
-N := 21^3; batch := 2;
+N := 640; batch := 2;
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
 t := TFCall(TRC(TTensorI(PRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
 #t := TFCall(TRC(TTensorI(IPRDFT1(N, -1), batch, APar, APar)), rec(fname := name, params := []));
 
-## Make sure the right opts are selected for sizes 512 and higher!
-
-
 opts := conf.getOpts(t);
-
-#opts.globalUnrolling := 64;
-#
-#
-# MAX_KERNEL := 26;
-# MAX_PRIME := 17;
-# 
-# opts.breakdownRules.PRDFT[3].allChildren := P -> Filtered(PRDFT1_CT.allChildren(P), 
-#    e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-#        Cond(Length(factors) = 1 , true, e[1].params[1] = factors[1])));
-# 
-# opts.breakdownRules.IPRDFT[3].allChildren := P -> Filtered(IPRDFT1_CT.allChildren(P), 
-#     e-> let(factors := factorize(e[1].params[1]*e[3].params[1], MAX_KERNEL, MAX_PRIME), 
-#         Cond(Length(factors) = 1 , true, e[1].params[1] = factors[1])));
- 
- 
 tt := opts.tagIt(t);
  
 ## ==
-_tt := opts.preProcess(tt);
-rt := opts.search(_tt);
-#
-#
-ss := opts.sumsRuleTree(rt);
-
-
-
-#ss := FixUpCUDASigmaSPL_3Stage_Real(ss, opts);
-#
-c := opts.codeSums(ss);
-
+# _tt := opts.preProcess(tt);
+# rt := opts.search(_tt);
+# ss := opts.sumsRuleTree(rt);
+# c := opts.codeSums(ss);
+# 
 c := opts.fftxGen(tt);
 opts.prettyPrint(c);
 
 cyc := CMeasure(c, opts);
 
-mt := MatSPL(tt);
-mc := CMatrix(c, opts);
-
-diff := InfinityNormMat(mc-mt);
-
-# =====
-
-
-
+# mt := MatSPL(tt);
+# mc := CMatrix(c, opts);
 # 
-# c := opts.fftxGen(tt);
-# opts.prettyPrint(c);
-
-# does it run?
-cyc := CMeasure(c, opts);
-
-# quick correctness check for large sizes
-# get first non-trivial vector
-cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
-cv1 := cv{[1..Length(cv)/batch]};
-cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
-
-# correctnes test: true and \approx 10^-14 or so
-ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
-InfinityNormMat([cv1] - [cv1a]);
-
-
-
+# diff := InfinityNormMat(mc-mt);
+# 
+# # =====
+# 
+# 
+# 
+# # 
+# # c := opts.fftxGen(tt);
+# # opts.prettyPrint(c);
+# 
+# # does it run?
+# cyc := CMeasure(c, opts);
+# 
+# # quick correctness check for large sizes
+# # get first non-trivial vector
+# cv := CVector(c, Replicate(2*batch, 0)::[1], opts);
+# cv1 := cv{[1..Length(cv)/batch]};
+# cv1a := Flat(List([0..N-1], k -> [re(E(N)^k).v, -im(E(N)^k).v]));
+# 
+# # correctnes test: true and \approx 10^-14 or so
+# ForAll(cv{[Length(cv)/batch+1..Length(cv)]}, i -> i = 0.0);
+# InfinityNormMat([cv1] - [cv1a]);
+# 
+# 
+# 

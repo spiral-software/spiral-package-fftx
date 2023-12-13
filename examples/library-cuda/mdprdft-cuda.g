@@ -30,11 +30,13 @@ N := 16;
 #N := 7*9*5;
 #N := 768;
 #N := 1024;
-#szcube :=       Replicate(3, N);
+#N := 640;
+N := 648;
+szcube :=       Replicate(3, N);
 
 #szcube := [80, 80, 374];
 #szcube := [96, 96, 374];
-szcube := [24, 32, 40];
+#szcube := [24, 32, 40];
 #szcube := [80, 80, 680];
 
 if fwd then
