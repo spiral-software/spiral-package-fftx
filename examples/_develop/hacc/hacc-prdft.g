@@ -34,7 +34,11 @@ conf := LocalConfig.fftx.confGPU();
 # c.	Sizes that fail:  4500, 4750, 5500, 5750, 6000, 6500, 6750, 7250, 7500, 7750, 8250, 8500, 9250, 9500, 9750, 10250, 10750, 11500, 11750
 # c.	Sizes that fail:   4352, 4864, 5888, 7424, 7936
 
-N := 5500; batch := 2;
+sizes := [4500, 4750, 5500, 5750, 6000, 6500, 6750, 7250, 7500, 7750, 8250, 8500, 9250, 9500, 9750, 10250, 10750, 11500, 11750, 4352, 4864, 5888, 7424, 7936];
+sizes := Filtered(sizes, i -> Length(factorize(i, 26, 13)) = 3);
+
+
+N := sizes[5]; batch := 2;
 
 name := "batch_dft_"::StringInt(batch)::"x"::StringInt(N);
 
