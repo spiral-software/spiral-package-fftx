@@ -549,7 +549,8 @@ fi;
                     _opts.breakdownRules.PrunedIMDDFT := [PrunedIMDDFT_tSPL_Base, PrunedIMDDFT_tSPL_RowCol];
                     _opts.breakdownRules.IOPrunedMDRConv := [IOPrunedMDRConv_tSPL_InvDiagFwd];
                     
-                    _opts.globalUnrolling := 2*_thold + 1;
+#                    _opts.globalUnrolling := 2*_thold + 1;
+                    _opts.globalUnrolling := 4*MAX_TWOPOWER;
     
                     _opts.breakdownRules.TTensorI := [CopyFields(IxA_L_split, rec(switch := true)),
                         fftx.platforms.cuda.L_IxA_SIMT, fftx.platforms.cuda.IxA_L_SIMT,
