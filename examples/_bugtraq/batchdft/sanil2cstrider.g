@@ -17,8 +17,8 @@ N := 2;
 #N1 := 256;
 
 # testing
-pat1 := APar; pat2 := APar;
-#pat1 := AVec; pat2 := APar;
+#pat1 := APar; pat2 := APar;
+pat1 := AVec; pat2 := APar;
 
 t := let(
     name := "grid_dft"::"d_cont",
@@ -49,12 +49,12 @@ mm := CMatrix(c, opts);;
 m2 := MatSPL(t);;
 InfinityNormMat(m2-mm);
 
-#i := 1;
-n := Length(m2);
-i := Random([0..n-1]);
-v := BasisVec(n, i);;
-mv := CVector(c, v, opts);;
-mv2 := List(mm, j->j[i+1]);;
-InfinityNormMat([mv] - [mv2]);
-
-
+# #i := 1;
+# n := Length(m2);
+# i := Random([0..n-1]);
+# v := BasisVec(n, i);;
+# mv := CVector(c, v, opts);;
+# mv2 := List(mm, j->j[i+1]);;
+# InfinityNormMat([mv] - [mv2]);
+# 
+# 

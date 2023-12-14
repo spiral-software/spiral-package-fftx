@@ -9,7 +9,7 @@ ImportAll(fftx);
 
 Debug(true);
 
-control := true;
+control := false;
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
@@ -28,7 +28,9 @@ conf := LocalConfig.fftx.confGPU();
 # N := 100000; batch := 2;
 
 # N := 1024; batch := 4;
-N := 1024; batch := 1024;
+# N := 1024; batch := 1024;
+# N := 2048; batch := 1024;
+N := 4096; batch := 1024;
 # N := 2048; batch := 4096;
 # N := 4096; batch := 16384;
 # N := 8192; batch := 65536;
