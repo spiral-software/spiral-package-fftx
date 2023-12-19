@@ -4,6 +4,10 @@
 
 Class(RulesSIMTFission, RuleSet);
 
+
+_findFactor := (n, thresh) -> Last(Filtered(DivisorPairs(n), i->i[1] <= thresh))[2];
+
+
 RewriteRules(RulesSIMTFission, rec(
     FissionSIMTISum := Rule([@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = SIMTISum))],
         e-> let(gath := Gath(fTensor(fBase(@(1).val.var), fId(Cols(@(2).val.child(1))))),
@@ -165,7 +169,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     # parallelize and flatten loop
     ss:= let(simtidx := ASIMTBlockDimX, 
         SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
-            e->let( #Error(), 
+            e->let(  
                     simtloop := @(1).val,
                     sx1c := @(2).val.children(),
                     doms := List(sx1c, c->c.domain),
@@ -183,6 +187,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
     );
     ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
 
+
 #    ss:= let(simtidx := ASIMTBlockDimX, 
 #        SubstBottomUp(ss, [@(1, SIMTISum), @(2, Compose, e->ForAll(e.children(), c->ObjId(c) = ISum))], 
 #            e->let(sx1c := @(2).val.children(),
@@ -196,7 +201,7 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 #            ))
 #    );
 
-    # loop distribution Y(X*X)
+    # loop distribution Block Y(X*X)
     ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimY), Compose], 
         e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
             nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
@@ -289,7 +294,58 @@ FixUpCUDASigmaSPL_3Stage := function(ss, opts)
 #    );
 #    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
 #    ss := SubstTopDown(ss, @(1, Grp), e->e.child(1));
+
+    # normalize SIMTSums with too many threads but few enough iterations
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain <= opts.max_threads),
+    	e -> SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [opts.max_threads]), @(1).val.var, @(1).val.domain, @(1).val.child(1)));
+
+    # split SIMTISums with too many iterations -- pull the peeled iterations into GridDim
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
+    	e -> let(#Error(),
+            i1domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
+            i2domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
+            i1 := Ind(i1domain),
+    		i2 := Ind(i2domain),
+    		ii := i1 * i2.range + i2,
+    		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+#    		xs := ISum(i2, cld),
+    		xs := SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i2domain]), i2, i2domain, cld),
+    		SIMTISum(ASIMTGridDimZ(i1domain), i1, i1domain, xs)
+    ));
+
+
+#     # split SIMTISums with too many iterations
+#     ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX and e.simt_dim.params[1] > opts.max_threads and e.domain > opts.max_threads),
+#     	e -> let(#Error(),
+#             i1domain := When(IsInt(@(1).val.domain/opts.max_threads), opts.max_threads, @(1).val.domain / _findFactor(@(1).val.domain, opts.max_threads)),
+#             i2domain := When(IsInt(@(1).val.domain/opts.max_threads), @(1).val.domain/opts.max_threads, _findFactor(@(1).val.domain, opts.max_threads)),
+#             i1 := Ind(i1domain),# Error(),
+#     		i2 := Ind(i2domain),
+#     		ii := i1 * i2.range + i2,
+#     		cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+#     		xs := ISum(i2, cld),
+#     		SIMTISum(ApplyFunc(ObjId(@(1).val.simt_dim), [i1domain]), i1, i1domain, xs)
+#     ));
     
+    # split blocks for size > 32k. Assumes divisibility, can be generalized
+    ss := SubstTopDown(ss, @(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag and ObjId(e.simt_dim.params[1]) = ASIMTGridDimX and e.simt_dim.params[1].params[1] >opts.max_blocks),
+        e -> let(
+#            i1 := Ind(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), # careful that this is equal SIMTIsum.domain. should not be a problem here, but who knows
+#            i2 := Ind(opts.max_blocks),
+            i1domain := When(IsInt(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), 
+                opts.max_blocks, 
+                @(1).val.simt_dim.params[1].params[1] / _findFactor(@(1).val.simt_dim.params[1].params[1], opts.max_blocks)),
+            i2domain := When(IsInt(@(1).val.simt_dim.params[1].params[1]/opts.max_blocks), 
+                @(1).val.simt_dim.params[1].params[1]/opts.max_blocks, 
+                _findFactor(@(1).val.simt_dim.params[1].params[1], opts.max_blocks)),
+            i1 := Ind(i1domain),# Error(),
+    		i2 := Ind(i2domain),
+            ii := i1 * i2.range + i2,
+            cld := SubstVars(Copy(@(1).val.child(1)), rec((@(1).val.var.id) := ii)),
+            xs := SIMTISum(ASIMTGridDimY(i2.range), i2, i2.range, cld),
+            SIMTISum(ASIMTKernelFlag(ASIMTGridDimX(i1.range)), i1, i1.range, xs)
+    ));
+
     return ss;
 end;
 
@@ -431,6 +487,16 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
             SIMTISum(@(1).val.simt_dim, ii, nch, SUM(List([0..nch-1], 
                i->COND(eq(ii, V(i)), _fBaseVar(ch[i+1], ii, i), ApplyFunc(OO, ch[i+1].dims()))))))
     );
+
+    # loop distribution Grid Y(X*X)
+    ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag), Compose], 
+        e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            Compose(List(nch, c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.var.range, c)))
+            ));
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
     
     # loop distribution X(X*X)
     ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), Compose], 
@@ -503,7 +569,36 @@ FixUpCUDASigmaSPL_3Stage_Real := function(ss, opts)
         )
     );
 
-   
+# == this is for 4 stages =========================
+    # flatten SIMTIsum/ISum loops
+    ss := SubstTopDown(ss, 
+        [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTBlockDimX), @(2, ISum) ],
+        e->let(s1 := @(1).val,
+            i1 := s1.var,
+            i2 := s1.child(1).var,
+            rng := i1.range * i2.range,
+            ii := Ind(rng),
+            sr := rec(
+                (i1.id) := idiv(ii, i2.range),
+                (i2.id) := imod(ii, i2.range)
+            ),
+            sdim := ASIMTBlockDimX(rng),
+            SIMTISum(sdim, ii, ii.range, SubstVars(s1.child(1).child(1), sr))
+        )
+    );
+  
+    # loop distribution Grid Y(X*X)
+    ss := SubstBottomUp(ss, [@(1, SIMTISum, e->ObjId(e.simt_dim) = ASIMTKernelFlag), Compose], 
+        e -> let(ch := @(1).val.child(1).children(), i := @(1).val.var, 
+            nch := [ch[1] * Gath(fTensor(fBase(i), fId(Cols(ch[1]))))] :: 
+                List(ch{[2..Length(ch)-1]}, c -> Scat(fTensor(fBase(i), fId(Rows(c)))) * c * Gath(fTensor(fBase(i), fId(Cols(c))))) :: 
+                [ Scat(fTensor(fBase(i), fId(Rows(Last(ch))))) * Last(ch)],
+            Compose(List(nch, c -> SIMTISum(@(1).val.simt_dim, @(1).val.var, @(1).val.var.range, c)))
+            ));
+    ss := ApplyStrategy(ss, opts.formulaStrategies.sigmaSpl, BUA, opts);
+
+# == /this is for 4 stages =========================
+  
     
     # fix loop iterations
     if ObjId(ss) = Compose then         

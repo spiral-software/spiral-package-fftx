@@ -7,21 +7,18 @@
 Load(fftx);
 ImportAll(fftx);
 
+Debug(true);
+
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
 conf := LocalConfig.fftx.confGPU();
 
-#sizes := [
-#     [ 96, 96, 320],
-#     [ 100, 100, 100],
-#     [ 224, 224, 100],
-#     [270, 270, 270],
-#     [272, 272, 272],
-szcube :=    [648, 648, 648 ];
+d := 3;
+szcube :=  Replicate(d, 768);
+#szcube :=  Replicate(d, 1024);
+#szcube :=  Replicate(d, 1280);
 
-# for szcube in sizes do
-#     var.flush();
-d := Length(szcube);
+#szcube := [ 24, 32, 40 ];
 
 name := "mddft"::StringInt(d)::"d_"::StringInt(szcube[1])::ApplyFunc(ConcatenationString, List(Drop(szcube, 1), s->"x"::StringInt(s)));
 
@@ -31,17 +28,23 @@ t := TFCall(MDDFT(szcube, 1),
         rec(fname := name, params := []));
 
 opts := conf.getOpts(t);
+#Add(opts.breakdownRules.TTensorI, fftx.platforms.cuda.IxA_SIMT_peelof3);
+
 tt := opts.tagIt(t);
 
 _tt := opts.preProcess(tt);
 rt := opts.search(_tt);
 ss := opts.sumsRuleTree(rt);
+
+#ImportAll(fftx.platforms.cuda);
+#ss := FixUpCUDASigmaSPL(ss, opts);
 c := opts.codeSums(ss);
+#c := opts.fftxGen(tt);
+#c.ruletree:=rt;
 
-c := opts.fftxGen(tt);
 opts.prettyPrint(c);
-PrintTo(name::".cu", opts.prettyPrint(c));
-#od;
 
-CMeasure(c, opts);
+# does it run?
+cyc := CMeasure(c, opts);
+
 

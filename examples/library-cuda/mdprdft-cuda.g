@@ -6,6 +6,7 @@
 
 Load(fftx);
 ImportAll(fftx);
+Debug(true);
 
 # startup script should set LocalConfig.fftx.defaultConf() -> LocalConfig.fftx.confGPU() 
 # conf := LocalConfig.fftx.defaultConf();  
@@ -14,8 +15,29 @@ conf := LocalConfig.fftx.confGPU();
 fwd := true;
 #fwd := false;
 
-##  szcube :=       [272, 272, 272];
-szcube :=       [80, 80, 80];
+N := 16;
+#N := 32;
+#N := 35;
+#N := 272; #has prime factor 17
+#N := 128*3;
+#N := 80;
+#N := 81;
+#N := 512;
+#N := 128*5;
+#N := 64*5;
+#N := 16*5*5;
+#N := 9*5*5;
+#N := 7*9*5;
+#N := 768;
+#N := 1024;
+#N := 640;
+N := 648;
+szcube :=       Replicate(3, N);
+
+#szcube := [80, 80, 374];
+#szcube := [96, 96, 374];
+#szcube := [24, 32, 40];
+#szcube := [80, 80, 680];
 
 if fwd then
     prdft := MDPRDFT;
